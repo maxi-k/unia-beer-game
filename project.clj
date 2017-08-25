@@ -2,9 +2,15 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.908"]
                  [reagent "0.7.0"]
-                 [re-frame "0.10.1"]]
+                 [re-frame "0.10.1"]
+                 [re-frisk "0.4.5"]
+                 [secretary "1.2.3"]
+                 [compojure "1.5.0"]
+                 [yogthos/config "0.8"]
+                 [ring "1.4.0"]]
 
-  :plugins [[lein-cljsbuild "1.1.5"]]
+  :plugins [[lein-cljsbuild "1.1.5"]
+            [lein-less "1.7.5"]]
 
   :min-lein-version "2.5.3"
 
@@ -12,11 +18,19 @@
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
-  :figwheel {:css-dirs ["resources/public/css"]}
+  :figwheel {:css-dirs ["resources/public/css"]
+             :ring-handler beer-game.handler/dev-handler}
+
+  :less {:source-paths ["less"]
+         :target-path  "resources/public/css"}
+
+  :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
   :profiles
   {:dev
-   {:dependencies [[binaryage/devtools "0.9.4"]]
+   {:dependencies [[binaryage/devtools "0.9.4"]
+                   [figwheel-sidecar "0.5.13"]
+                   [com.cemerick/piggieback "0.2.2"]]
 
     :plugins      [[lein-figwheel "0.5.13"]]
     }}
@@ -37,6 +51,7 @@
 
     {:id           "min"
      :source-paths ["src/cljs"]
+     :jar true
      :compiler     {:main            beer-game.core
                     :output-to       "resources/public/js/compiled/app.js"
                     :optimizations   :advanced
@@ -46,4 +61,11 @@
 
     ]}
 
+  :main beer-game.server
+
+  :aot [beer-game.server]
+
+  :uberjar-name "beer-game.jar"
+
+  :prep-tasks [["cljsbuild" "once" "min"]["less" "once"] "compile"]
   )
