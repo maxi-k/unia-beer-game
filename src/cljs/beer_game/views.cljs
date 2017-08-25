@@ -1,36 +1,39 @@
 (ns beer-game.views
-  (:require [re-frame.core :as re-frame]))
+  (:require [re-frame.core :as re-frame]
+            [reagent.core :as reagent]
+            [beer-game.util :as util]
+            [soda-ash.core :as sa]
+            [beer-game.components.sidebar :refer [app-menu]]
+            [beer-game.views.overview :as overview]
+            [beer-game.views.statistics :as statistics]))
 
-
-;; home
-
-(defn home-panel []
-  (let [name (re-frame/subscribe [:name])]
-    (fn []
-      [:div (str "Hello from " @name ". This is the Home Page.")
-       [:div [:a {:href "#/about"} "go to About Page"]]])))
-
-
-;; about
-
-(defn about-panel []
-  (fn []
-    [:div "This is the About Page."
-     [:div [:a {:href "#/"} "go to Home Page"]]]))
-
-
-;; main
-
-(defn- panels [panel-name]
-  (case panel-name
-    :home-panel [home-panel]
-    :about-panel [about-panel]
-    [:div]))
+(def panels
+  {:home-panel {:title "Übersicht"
+                :path "#/"
+                :icon "dashboard"
+                :comp overview/overview-panel}
+   :statistics-panel {:title "Statistiken"
+                      :path "#/statistics"
+                      :icon "line graph"
+                      :comp statistics/statistics-panel}})
 
 (defn show-panel [panel-name]
-  [panels panel-name])
+  [(-> panels
+       (get panel-name {:comp :div})
+       :comp)])
+
+
+(defn app-wrapper [& children]
+  (let [window-size (re-frame/subscribe [:client/window])]
+    [:div#app-wrapper {:style @window-size}
+     (util/keyify children)]))
 
 (defn main-panel []
   (let [active-panel (re-frame/subscribe [:active-panel])]
     (fn []
-      [show-panel @active-panel])))
+      [app-wrapper
+       [sa/SidebarPushable
+        [app-menu panels @active-panel]
+        [sa/SidebarPusher
+         [:main#main-content-wrapper
+          [show-panel @active-panel]]]]])))
