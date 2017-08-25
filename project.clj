@@ -7,7 +7,10 @@
                  [secretary "1.2.3"]
                  [compojure "1.5.0"]
                  [yogthos/config "0.8"]
-                 [ring "1.4.0"]]
+                 [ring "1.4.0"]
+                 ;; semantic-ui-react
+                 [soda-ash "0.3.0"]
+                 [com.degel/sodium "0.1.0"]]
 
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-less "1.7.5"]]
