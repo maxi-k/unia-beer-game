@@ -16,7 +16,7 @@
                 :active active}])
 
 (defn app-menu-action [{:keys [icon title action]}]
-  [sa/MenuItem {:key title
+  [sa/MenuItem {:key (or title icon)
                 :icon icon
                 :content title
                 :name title
@@ -37,7 +37,7 @@
       :size "huge"
       :width "thin"}
      [:div.top-content
-      [sa/MenuItem {:header true} "Beer Game"]
+      [sa/MenuItem {:key "header" :header true} "Beer Game"]
       (map #(app-menu-link (% 1) (= active-item (% 0))) links)]
      [:div.bottom-content
       (map #(app-menu-action %) sidebar-actions)]]))
