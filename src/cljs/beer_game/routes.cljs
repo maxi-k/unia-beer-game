@@ -4,7 +4,7 @@
   (:require [secretary.core :as secretary]
             [goog.events :as events]
             [goog.history.EventType :as EventType]
-            [re-frame.core :as re-frame]))
+            [re-frame.core :as rf]))
 
 (defn hook-browser-navigation! []
   (doto (History.)
@@ -16,13 +16,12 @@
 
 (defn app-routes []
   (secretary/set-config! :prefix "#")
-  ;; --------------------
-  ;; define routes here
-  (defroute "/" []
-    (re-frame/dispatch [:set-active-panel :home-panel]))
-
-  (defroute "/statistics" []
-    (re-frame/dispatch [:set-active-panel :statistics-panel]))
-
-  ;; --------------------
-  (hook-browser-navigation!))
+  (letfn [(set-panel [name]
+            (rf-dispatch [:set-active-panel name]))]
+    ;; ---------- Routes -----------
+    ;; The default route
+    (defroute "/"           [] (set-panel :overview-panel))
+    (defroute "/overview"   [] (set-panel :overview-panel))
+    (defroute "/statistics" [] (set-panel :statistics-panel))
+    ;; -----------------------------
+    (hook-browser-navigation!)))

@@ -8,12 +8,12 @@
             [beer-game.views.statistics :as statistics]))
 
 (def panels
-  {:home-panel {:title "Übersicht"
-                :path "#/"
-                :icon "dashboard"
-                :comp overview/overview-panel}
+  {:overview-panel {:title "Übersicht"
+                    :path "#overview"
+                    :icon "dashboard"
+                    :comp overview/overview-panel}
    :statistics-panel {:title "Statistiken"
-                      :path "#/statistics"
+                      :path "#statistics"
                       :icon "line graph"
                       :comp statistics/statistics-panel}})
 
