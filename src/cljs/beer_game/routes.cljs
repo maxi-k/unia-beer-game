@@ -17,7 +17,7 @@
 (defn app-routes []
   (secretary/set-config! :prefix "#")
   (letfn [(set-panel [name]
-            (rf-dispatch [:set-active-panel name]))]
+            (rf/dispatch [:set-active-panel name]))]
     ;; ---------- Routes -----------
     ;; The default route
     (defroute "/"           [] (set-panel :overview-panel))
