@@ -2,5 +2,6 @@
   (:require [beer-game.config :as config]))
 
 (def default-db
-  {:name "re-frame"
-   :client {:theme (if config/debug? :dark :light)}})
+  {:name "Beer Game"
+   :client {:theme (if config/debug? :dark :light)}
+   :game {}})
