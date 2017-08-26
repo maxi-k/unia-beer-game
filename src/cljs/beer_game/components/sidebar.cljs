@@ -25,7 +25,8 @@
                 :position "right"}])
 
 (defn app-menu [links active-item]
-  (let [color (rf/subscribe [:client/theme])]
+  (let [color (rf/subscribe [:client/theme])
+        title (rf/subscribe [:name])]
     [sa/Sidebar
      {:as (.-name sa/Menu)
       :id "app-menu"
@@ -37,7 +38,7 @@
       :size "huge"
       :width "thin"}
      [:div.top-content
-      [sa/MenuItem {:key "header" :header true} "Beer Game"]
+      [sa/MenuItem {:key "header" :header true} @title]
       (map #(app-menu-link (% 1) (= active-item (% 0))) links)]
      [:div.bottom-content
       (map #(app-menu-action %) sidebar-actions)]]))
