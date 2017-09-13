@@ -24,3 +24,8 @@
  (fn [db [_ width height]]
    (assoc-in db [:client :window] {:width width
                                    :height height})))
+
+(rf/reg-event-db
+ :do-ajax-test
+ (fn [db [_ key response]]
+   (assoc-in db [:test :ajax key] response)))

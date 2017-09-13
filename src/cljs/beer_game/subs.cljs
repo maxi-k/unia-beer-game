@@ -34,3 +34,8 @@
  :<- [:client]
  (fn [client]
    (:sidebar client)))
+
+(rf/reg-sub
+ :test/ajax
+ (fn [db _]
+   (get-in db [:test :ajax])))

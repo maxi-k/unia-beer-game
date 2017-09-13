@@ -4,4 +4,5 @@
 (def default-db
   {:name "Beer Game"
    :client {:theme (if config/debug? :dark :light)}
+   :test {:ajax {}}
    :game {}})

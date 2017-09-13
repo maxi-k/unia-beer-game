@@ -8,6 +8,10 @@
                  [compojure "1.5.0"]
                  [yogthos/config "0.8"]
                  [ring "1.4.0"]
+                 ;; Ring middleware for extensible data notation
+                 [ring-middleware-format "0.7.2"]
+                 ;; Small ajax library for cljs
+                 [cljs-ajax "0.7.2"]
                  ;; semantic-ui-react
                  [soda-ash "0.3.0"]
                  [com.degel/sodium "0.1.0"]]
