@@ -12,6 +12,8 @@
                  [ring-middleware-format "0.7.2"]
                  ;; Small ajax library for cljs
                  [cljs-ajax "0.7.2"]
+                 ;; Websockets / Live Update Server & Client lib
+                 [com.taoensso/sente "1.11.0"]
                  ;; semantic-ui-react
                  [soda-ash "0.3.0"]
                  [com.degel/sodium "0.1.0"]]
@@ -21,7 +23,7 @@
 
   :min-lein-version "2.5.3"
 
-  :source-paths ["src/clj"]
+  :source-paths ["src/clj" "src/cljc"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
@@ -45,7 +47,7 @@
   :cljsbuild
   {:builds
    [{:id           "dev"
-     :source-paths ["src/cljs"]
+     :source-paths ["src/cljs" "src/cljc"]
      :figwheel     {:on-jsload "beer-game.core/mount-root"}
      :compiler     {:main                 beer-game.core
                     :output-to            "resources/public/js/compiled/app.js"
@@ -57,7 +59,7 @@
                     }}
 
     {:id           "min"
-     :source-paths ["src/cljs"]
+     :source-paths ["src/cljs" "src/cljc"]
      :jar true
      :compiler     {:main            beer-game.core
                     :output-to       "resources/public/js/compiled/app.js"
