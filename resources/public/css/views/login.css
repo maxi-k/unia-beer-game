@@ -1,4 +1,11 @@
 #login-card {
-  text-align: center;
   margin-top: 20%;
+}
+#login-card .header {
+  text-align: center;
+  padding-top: 2rem;
+  padding-bottom: 1.3rem;
+}
+#login-card .menu {
+  margin-bottom: 1.5rem;
 }

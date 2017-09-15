@@ -28,7 +28,7 @@
   (let [color (rf/subscribe [:client/theme])
         title (rf/subscribe [:name])]
     [sa/Sidebar
-     {:as (.-name sa/Menu)
+     {:as (util/semantic-to-react sa/Menu)
       :id "app-menu"
       :animation :push
       :visible true

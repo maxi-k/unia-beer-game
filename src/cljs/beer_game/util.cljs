@@ -26,9 +26,24 @@
   [target type]
   (events/dispatchEvent target (name type)))
 
+(defn semantic-to-react
+  "Turns a semantic-ui component provided by soda-ash
+  into something react-compatible
+  which can be passed to other react-components."
+  [semantic-component]
+  (.-name semantic-component))
+
 (defn native-render-fn
+  "Takes a reagent-style component and returns a react-style
+  render function that behaves like a normal js function."
   [component]
   (let [res (-> component
                 ra/reactify-component
                 ra/create-element)]
     (fn [] res)))
+
+(defn with-options
+  "Returns the given component with the given option map merged."
+  [options component]
+  (fn [own-options & children]
+    [component (merge own-options options) children]))
