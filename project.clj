@@ -20,7 +20,8 @@
                  [com.degel/sodium "0.1.0"]]
 
   :plugins [[lein-cljsbuild "1.1.5"]
-            [lein-less "1.7.5"]]
+            [lein-shell "0.5.0"]
+            [lein-auto "0.1.3"]]
 
   :min-lein-version "2.5.3"
 
@@ -31,8 +32,13 @@
   :figwheel {:css-dirs ["resources/public/css"]
              :ring-handler beer-game.handler/dev-handler}
 
-  :less {:source-paths ["less"]
-         :target-path  "resources/public/css"}
+  :auto {"less" {:paths ["less"]
+                 :file-pattern #"\.(less|config)$"}}
+
+  ;; Requires less and less-clean-css to be installed
+  :aliases {"less" ["shell" "lessc" "less/site.less" "resources/public/css/site.css"
+                    "--clean-css" "--s1 --advanced --compatibility=ie8"
+                    ]}
 
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
