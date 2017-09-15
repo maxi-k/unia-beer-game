@@ -7,11 +7,12 @@
             [beer-game.listeners :as listeners]
             [beer-game.routes :as routes]
             [beer-game.views :as views]
+            [beer-game.client :as client]
             [beer-game.config :as config]))
 
 
 (defn dev-setup []
-  (when config/debug?
+  (when config/development?
     (enable-console-print!)
     (enable-re-frisk!)
     (println "dev mode")))
@@ -25,5 +26,6 @@
   (routes/app-routes)
   (re-frame/dispatch-sync [:initialize-db])
   (dev-setup)
+  (client/init-websocket)
   (listeners/init-listeners)
   (mount-root))

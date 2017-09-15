@@ -36,6 +36,6 @@
    (:sidebar client)))
 
 (rf/reg-sub
- :test/ajax
+ :test
  (fn [db _]
-   (get-in db [:test :ajax])))
+   (get-in db [:test])))

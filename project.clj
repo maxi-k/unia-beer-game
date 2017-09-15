@@ -14,6 +14,7 @@
                  [cljs-ajax "0.7.2"]
                  ;; Websockets / Live Update Server & Client lib
                  [com.taoensso/sente "1.11.0"]
+                 [http-kit "2.2.0"]
                  ;; semantic-ui-react
                  [soda-ash "0.3.0"]
                  [com.degel/sodium "0.1.0"]]
@@ -36,13 +37,13 @@
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
   :profiles
-  {:dev
-   {:dependencies [[binaryage/devtools "0.9.4"]
-                   [figwheel-sidecar "0.5.13"]
-                   [com.cemerick/piggieback "0.2.2"]]
+  {:dev {:dependencies [[binaryage/devtools "0.9.4"]
+                        [figwheel-sidecar "0.5.13"]
+                        [com.cemerick/piggieback "0.2.2"]]
 
-    :plugins      [[lein-figwheel "0.5.13"]]
-    }}
+         :plugins      [[lein-figwheel "0.5.13"]]
+         :resource-paths ["config/dev"]}
+   :prod {:resource-paths ["config/prod"]}}
 
   :cljsbuild
   {:builds
