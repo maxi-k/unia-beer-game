@@ -16,7 +16,7 @@
                  [com.taoensso/sente "1.11.0"]
                  [http-kit "2.2.0"]
                  ;; semantic-ui-react
-                 [soda-ash "0.3.0"]
+                 [soda-ash "0.4.0"]
                  [com.degel/sodium "0.1.0"]]
 
   :plugins [[lein-cljsbuild "1.1.5"]
@@ -57,6 +57,7 @@
                     :source-map-timestamp true
                     :preloads             [devtools.preload]
                     :external-config      {:devtools/config {:features-to-install :all}}
+                    :closure-warnings {:extra-require :warning}
                     }}
 
     {:id           "min"
@@ -66,6 +67,7 @@
                     :output-to       "resources/public/js/compiled/app.js"
                     :optimizations   :advanced
                     :closure-defines {goog.DEBUG false}
+                    :closure-warnings {:extra-require :warning}
                     :pretty-print    false}}
 
 

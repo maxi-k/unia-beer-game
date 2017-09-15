@@ -8,6 +8,11 @@
    (:name db)))
 
 (rf/reg-sub
+ :user
+ (fn [db]
+   (:user db)))
+
+(rf/reg-sub
  :active-panel
  (fn [db _]
    (:active-panel db)))

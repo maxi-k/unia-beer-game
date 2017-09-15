@@ -1,7 +1,8 @@
 (ns beer-game.events
   (:require [re-frame.core :as rf]
             [beer-game.db :as db]
-            [beer-game.util :as util]))
+            [beer-game.util :as util]
+            [beer-game.client :as client]))
 
 (rf/reg-event-db
  :initialize-db
@@ -29,3 +30,8 @@
  :test
  (fn [db [_ key data]]
    (assoc-in db [:test key] data)))
+
+(rf/reg-fx
+ :server/echo-test
+ (fn [message]
+  (client/send! [:testing/echo {:payload message}])))

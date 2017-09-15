@@ -1,5 +1,6 @@
 (ns beer-game.util
-  (:require [goog.events :as events]))
+  (:require [goog.events :as events]
+            [reagent.core :as ra]))
 
 (defn keyify
   "Takes a seq of items and adds the 'key' metadata to it,
@@ -24,3 +25,10 @@
   "Trigger the event given by `type` on `target`"
   [target type]
   (events/dispatchEvent target (name type)))
+
+(defn native-render-fn
+  [component]
+  (let [res (-> component
+                ra/reactify-component
+                ra/create-element)]
+    (fn [] res)))
