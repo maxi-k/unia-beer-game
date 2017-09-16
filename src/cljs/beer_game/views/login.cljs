@@ -48,8 +48,7 @@
         [sa/Container {:text-align :center}
          [sa/Tab {:menu {:secondary true
                          :pointing true
-                         :compact true
-                         :centered true}
+                         :compact true}
                   :panes panes}]]]])))
 
 (defn login-view
