@@ -1,7 +1,8 @@
 (ns beer-game.views.login
   (:require [re-frame.core :as rf]
             [soda-ash.core :as sa]
-            [beer-game.util :as util]))
+            [beer-game.util :as util]
+            [reagent.core :as ra]))
 
 (defn login-button
   [on-click]
@@ -12,39 +13,70 @@
       util/native-render-fn))
 
 (defn login-user-pane []
-  [sa/Form
-   [sa/FormInput {:label "Benutzer ID"
-                  :placeholder "Benutzer ID"}]
-   [sa/FormField {:control (login-button (fn [] (.log js/console "user")))}]])
+  (let [pw (ra/atom "")]
+    (fn []
+      [sa/Form
+       [sa/FormInput {:label "Spieler ID"
+                      :placeholder "Spieler ID"
+                      :value @pw
+                      :on-change #(reset! pw (.. % -target -value))}]
+       [sa/FormField {:control (login-button (fn []
+                                               (rf/dispatch [:auth/login :player @pw])))}]])))
 
 (defn login-leader-pane []
-  [sa/Form
-   [sa/FormInput {:label "Passwort"
-                  :placeholder "Passwort des Betreuers"}]
-   [sa/FormField {:control (login-button (fn [] (.log js/console "leader")))}]])
+  (let [pw (ra/atom "")]
+    (fn []
+      [sa/Form
+       [sa/FormInput {:label "Passwort"
+                      :placeholder "Passwort des Betreuers"
+                      :type :password
+                      :value @pw
+                      :on-change #(reset! pw (.. % -target -value))}]
+       [sa/FormField {:control (login-button (fn []
+                                               (rf/dispatch [:auth/login :leader @pw])))}]])))
 
 (defn wrap-tab-pane [options child]
   (fn []
     [sa/TabPane options
-     (child)]))
+     [child]]))
 
 
-(defn login-card [name]
+(def invalid-credentials-msg
+  {:header "Schlüssel falsch"
+   :content "Der eingegebene Schlüssel war ungültig."
+   :icon "exclamation circle"})
+
+(def successful-logout-msg
+  {:header "Ausloggen erfolgreich"
+   :content "Sie wurden erfolgreich ausgeloggt."
+   :icon "check circle"})
+
+(defn auth-message [auth-data]
+  (if-let [options (cond
+                     (:auth-failure @auth-data) invalid-credentials-msg
+                     (:logout-success @auth-data) successful-logout-msg
+                     :default nil)]
+    [sa/Message (merge {:className "embedded"
+                        :attached true} options)]
+    [sa/Divider {:horizontal true} "Login"]))
+
+
+(defn login-card [name auth-data]
   (let [pane-opts {:as "div"}
         wrap-fn (comp util/native-render-fn
                       #(wrap-tab-pane pane-opts %))
-        panes [{:menuItem "Benutzer" :render (wrap-fn login-user-pane) }
+        panes [{:menuItem "Mitspieler" :render (wrap-fn login-user-pane) }
                {:menuItem "Spielleiter" :render (wrap-fn login-leader-pane)}]]
     (fn []
-      [sa/Card {:id "login-card"
+      [sa/Card {:class "login-card"
                 :centered true
                 :raised true}
+       [sa/CardHeader
+        [:h3 @name]
+        [sa/Icon {:name "beer" :color "yellow" :size :large}]
+        [sa/Icon {:name "play circle" :size :large}]]
+       [auth-message auth-data]
        [sa/CardContent
-        [sa/CardHeader
-         [:p @name]
-         [sa/Icon {:name "beer" :color "yellow" :size :large}]
-         [sa/Icon {:name "play circle" :size :large}]]
-        [sa/Divider {:horizontal true} "Login"]
         [sa/Container {:text-align :center}
          [sa/Tab {:menu {:secondary true
                          :pointing true
@@ -54,6 +86,8 @@
 (defn login-view
   "View for when the user is not logged in yet."
   []
-  (let [name (rf/subscribe [:name])]
+  (let [name (rf/subscribe [:name])
+        auth-data (rf/subscribe [:user])]
     (fn []
-      [login-card name])))
+      [:div.login-card-wrapper
+       [login-card name auth-data]])))

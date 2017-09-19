@@ -8,13 +8,15 @@
             [taoensso.sente :as ws] ;; Websockets
             ;; Server Adapter for websockets
             [taoensso.sente.server-adapters.http-kit :refer (get-sch-adapter)]
-            [beer-game.config :as config]))
+            [beer-game.config :as config]
+            [beer-game.auth :as auth]))
 
 (defn start-socket []
   (defonce channel-socket
     (ws/make-channel-socket! (get-sch-adapter)
                              {:protocol (if config/development? :http :https)
-                              :packer config/websocket-packer}))
+                              :packer config/websocket-packer
+                              :user-id-fn auth/user-id-fn}))
 
   (let [{:keys [ch-recv send-fn connected-uids
                 ajax-post-fn ajax-get-or-ws-handshake-fn]} channel-socket]
@@ -24,18 +26,30 @@
     (def send!                         send-fn) ;; ChannelSocket's send API fn
     (def connected-uids                connected-uids)) ;; Watchable, read-only atom
 
-
   (defmulti event :id)
 
   (defmethod event :default [{:keys [event]}]
     (println "Unhandled event: " event))
 
   (defmethod event :testing/echo [{:as ev-msg :keys [event ?data uid]}]
-    (send! uid [:testing/echo {:payload (:payload ?data)}]))
+    (send! uid [:testing/echo {:payload "lol"
+                               :users @auth/uuid-map
+                               :uuids @connected-uids}]))
+
+  (defmethod event :auth/login [{:as ev-msg :keys [uid client-id ?data]}]
+    (let [[name msg] (auth/authenticate! client-id ?data)]
+      (send! client-id [name msg])))
+
+  (defmethod event :auth/logout [{:as ev-msg :keys [uid]}]
+    (send! uid (auth/logout! uid)))
 
   (defmethod event :chsk/ws-ping [_])
 
-  (defonce router (ws/start-chsk-router! incoming event))
+  (defn event-handler
+    [msg]
+    (event msg))
+
+  (defonce router (ws/start-chsk-router! incoming event-handler))
 
   (defroutes routes
     ;; Websocket endpoints
@@ -55,4 +69,5 @@
   (def dev-handler (-> handler-core wrap-reload))
   (def handler handler-core)
   )
+(println "Starting Socket on Server")
 (start-socket)

@@ -27,7 +27,11 @@
 (def definitions
   "Returns the common config shared among all environments."
   {:websocket-endpoint "/ws"
-   :websocket-packer :edn})
+   :websocket-packer :edn
+   :auth
+   {:player-realm :player
+    :leader-realm :leader
+    :allowed-user-ids #{:brewery :big-market :small-market :customer}}})
 
 (def websocket-endpoint
   "The relative url of the websocket endpoint."
@@ -36,3 +40,10 @@
 (def websocket-packer
   "The packer used for websocket communication."
   (:websocket-packer definitions))
+
+(def auth-config
+  (:auth definitions))
+
+#?(:clj (def leader-password
+          "The password for the game leader."
+          "testpasswort"))

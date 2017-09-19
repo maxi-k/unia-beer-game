@@ -1,10 +1,14 @@
 (ns beer-game.components.sidebar
   (:require [re-frame.core :as rf]
-            [soda-ash.core :as sa]))
+            [soda-ash.core :as sa]
+            [beer-game.util :as util]))
 
 (def sidebar-actions
   [{:icon "theme"
-    :action #(rf/dispatch [:set-theme])}])
+    :action #(rf/dispatch [:set-theme])}
+   {:icon "log out"
+    :title "Logout"
+    :action #(rf/dispatch [:auth/logout true])}])
 
 (defn app-menu-link [{:keys [icon path title]} active]
   [sa/MenuItem {:key path

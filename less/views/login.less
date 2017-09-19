@@ -1,12 +1,25 @@
-#login-card {
-    margin-top: 20%;
-    .header {
+.login-card-wrapper {
+    padding-top: 20%;
+    padding-bottom: 20%;
+}
+
+.login-card {
+    &>.header {
         text-align: center;
         padding-top: 2rem;
         padding-bottom: 1.3rem;
     }
 
-    .menu {
-        margin-bottom: 1.5rem;
+    .message {
     }
+
+    &>.content {
+        border-top: 0 !important;
+        .form {
+            .field {
+                padding-top: 1rem;
+            }
+        }
+    }
+
 }

@@ -1,12 +1,19 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset='utf-8'>
-    <link href="css/site.css" rel="stylesheet" type="text/css">
-  </head>
-  <body>
-    <div id="app"></div>
-    <script src="js/compiled/app.js"></script>
-    <script>beer_game.core.init();</script>
-  </body>
+    <head>
+        <meta charset='utf-8'>
+        <link href="css/site.css" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <div id="app">
+            <noscript>
+                Diese Seite benötigt JavaScript.
+            </noscript>
+            <div class="ui active page dimmer initial-load">
+                <div class="ui huge text loader">Lade Beer Game</div>
+            </div>
+        </div>
+        <script src="js/compiled/app.js"></script>
+        <script>beer_game.core.init();</script>
+    </body>
 </html>
