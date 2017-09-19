@@ -1,4 +1,4 @@
-(ns beer-game.macros
+(ns beer-game.server-utils
   (:require [clojure.java.io :as io]))
 
 (defmacro read-resource

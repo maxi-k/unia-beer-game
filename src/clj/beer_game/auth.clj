@@ -32,15 +32,15 @@
     (do
       (dosync (alter uuid-map assoc uuid :customer))
       [:auth/login-success {:uid :customer :uuid uuid
-                            :realm (config/auth-config :leader-realm)}])
+                            :realm config/leader-realm}])
     [:auth/login-invalid {:key key}]))
 
 (defn auth-player [uuid key]
-  (if (contains? (config/auth-config :allowed-user-ids) key)
+  (if (contains? config/allowed-user-ids key)
     (do
       (dosync (alter uuid-map assoc uuid key))
       [:auth/login-success {:uid key :uuid uuid
-                            :realm (config/auth-config :player-realm)}])
+                            :realm config/player-realm}])
     [:auth/login-invalid {:key key}]))
 
 (defn authenticate!
@@ -48,8 +48,8 @@
   [uuid {:keys [realm key]}]
   {:pre (string? uuid)}
   (condp = realm
-    (config/auth-config :player-realm) (auth-player uuid (keyword key))
-    (config/auth-config :leader-realm) (auth-leader uuid key)
+    config/player-realm (auth-player uuid (keyword key))
+    config/leader-realm (auth-leader uuid key)
     [:auth/login-invalid {:realm realm}]))
 
 (defn logout!
