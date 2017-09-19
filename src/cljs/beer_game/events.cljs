@@ -88,4 +88,5 @@
 (rf/reg-event-db
  :auth/login-invalid
  (fn [db [_ data]]
-   (assoc-in db [:user :auth-failure] true)))
+   (update db :user merge {:auth-failure true
+                           :auth-failure-reason data})))

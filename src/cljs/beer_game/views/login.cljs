@@ -1,8 +1,9 @@
 (ns beer-game.views.login
   (:require [re-frame.core :as rf]
             [soda-ash.core :as sa]
+            [reagent.core :as ra]
             [beer-game.util :as util]
-            [reagent.core :as ra]))
+            [beer-game.config :as config]))
 
 (defn login-button
   [on-click]
@@ -12,14 +13,21 @@
                             :on-click on-click} %))
       util/native-render-fn))
 
+(def user-options
+  (map
+   (fn [[k v]]
+     {:key k :value k :text (:title v)})
+   config/user-ids))
+
 (defn login-user-pane []
   (let [pw (ra/atom "")]
     (fn []
       [sa/Form
-       [sa/FormInput {:label "Spieler ID"
-                      :placeholder "Spieler ID"
-                      :value @pw
-                      :on-change #(reset! pw (.. % -target -value))}]
+       [sa/FormSelect {:label "Rolle"
+                       :placeholder "Rolle"
+                       :value @pw
+                       :options user-options
+                       :on-change #(reset! pw (.-value %2))}]
        [sa/FormField {:control (login-button (fn []
                                                (rf/dispatch [:auth/login :player @pw])))}]])))
 
@@ -42,13 +50,13 @@
 
 
 (def invalid-credentials-msg
-  {:header "Schlüssel falsch"
-   :content "Der eingegebene Schlüssel war ungültig."
+  {:header "Schlüssel ungültig"
+   :content "Der eingegebene Schlüssel war nicht gültig."
    :icon "exclamation circle"})
 
 (def successful-logout-msg
   {:header "Ausloggen erfolgreich"
-   :content "Sie wurden erfolgreich ausgeloggt."
+   :content "Sie wurden erfolgreich abgemeldet."
    :icon "check circle"})
 
 (defn auth-message [auth-data]
