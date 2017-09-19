@@ -53,8 +53,8 @@
       [sa/MenuItem {:key "header" :header true} @title]
       [sa/MenuItem {:key "player-info"}
        [sa/Icon {:name "user"}]
-       [:p [:strong "Meine Rolle: "]
-        (role-string @user)]]
+       [:p "Meine Rolle:" [:br]
+        [:strong (role-string @user)]]]
       (map #(app-menu-link (% 1) (= active-item (% 0))) links)]
      [:div.bottom-content
       (map #(app-menu-action %) sidebar-actions)]]))
