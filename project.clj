@@ -87,5 +87,5 @@
 
   :uberjar-name "beer-game.jar"
 
-  :prep-tasks [["cljsbuild" "once" "min"]["less" "once"] "compile"]
+  :prep-tasks [["cljsbuild" "once" "min"]["less"] "compile"]
   )

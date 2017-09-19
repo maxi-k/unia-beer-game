@@ -1,7 +1,7 @@
 (ns beer-game.config
   #?(:cljs
      (:require-macros [beer-game.server-utils :refer [read-resource]]))
-  (:require #?(:clj [config.core :refer [env]])))
+  #?(:clj (:require [config.core :refer [env]])))
 
 
 ;; On the client, yogthos/config is not available.
