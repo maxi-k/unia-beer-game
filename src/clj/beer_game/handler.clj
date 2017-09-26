@@ -7,13 +7,17 @@
             [ring.middleware.params :refer [wrap-params]]
             [taoensso.sente :as ws] ;; Websockets
             ;; Server Adapter for websockets
-            [taoensso.sente.server-adapters.http-kit :refer (get-sch-adapter)]
+            [org.httpkit.server :as http-kit]
+            [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
             [beer-game.config :as config]
             [beer-game.auth :as auth]))
 
+(reset! ws/debug-mode?_ true)
+
 (defn start-socket []
+  (println "Starting Socket on Server")
   (defonce channel-socket
-    (ws/make-channel-socket! (get-sch-adapter)
+    (ws/make-channel-socket-server! (get-sch-adapter)
                              {:protocol (if config/development? :http :https)
                               :packer config/websocket-packer
                               :user-id-fn auth/user-id-fn}))
@@ -49,7 +53,7 @@
     [msg]
     (event msg))
 
-  (defonce router (ws/start-chsk-router! incoming event-handler))
+  (defonce router (ws/start-server-chsk-router! incoming event-handler))
 
   (defroutes routes
     ;; Websocket endpoints
@@ -69,5 +73,5 @@
   (def dev-handler (-> handler-core wrap-reload))
   (def handler handler-core)
   )
-(println "Starting Socket on Server")
-(start-socket)
+
+(when config/development? (start-socket))
