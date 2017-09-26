@@ -1,6 +1,5 @@
 (ns beer-game.views.overview
   (:require [re-frame.core :as rf]
-            [ajax.core :as ax :refer [GET POST]]
             [soda-ash.core :as sa]
             [beer-game.api :as api]))
 
