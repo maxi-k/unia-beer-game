@@ -7,17 +7,14 @@
                  [secretary "1.2.3"]
                  [compojure "1.5.0"]
                  [yogthos/config "0.8"]
-                 [ring "1.4.0"]
+                 [ring "1.5.0"]
                  ;; Ring middleware for extensible data notation
                  [ring-middleware-format "0.7.2"]
-                 ;; Small ajax library for cljs
-                 [cljs-ajax "0.7.2"]
                  ;; Websockets / Live Update Server & Client lib
                  [com.taoensso/sente "1.11.0"]
                  [http-kit "2.2.0"]
                  ;; semantic-ui-react
-                 [soda-ash "0.4.0"]
-                 [com.degel/sodium "0.1.0"]]
+                 [soda-ash "0.4.0"]]
 
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-shell "0.5.0"]
