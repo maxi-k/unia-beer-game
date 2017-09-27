@@ -58,6 +58,11 @@
 ;;
 
 (rf/reg-event-fx
+ :auth/unauthorized
+ (fn [w [_]]
+   {:dispatch [:auth/logout false]}))
+
+(rf/reg-event-fx
  :auth/logout
  (fn [w [_ server-side?]]
    (let [db-map {:db (assoc (:db w) :user {:auth false})}]

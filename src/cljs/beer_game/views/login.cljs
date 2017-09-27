@@ -56,7 +56,7 @@
 
 (def successful-logout-msg
   {:header "Ausloggen erfolgreich"
-   :content "Sie wurden erfolgreich abgemeldet."
+   :content "Du wurdest erfolgreich abgemeldet."
    :icon "check circle"})
 
 (defn auth-message [auth-data]

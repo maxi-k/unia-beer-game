@@ -9,6 +9,7 @@
     :auth/login-invalid  (rf/dispatch [:auth/login-invalid data])
     :auth/login-success  (rf/dispatch [:auth/login-success data])
     :auth/logout-success (rf/dispatch [:auth/logout-success])
+    :auth/unauthorized   (rf/dispatch [:auth/unauthorized])
     :system/connection   (rf/dispatch [:system/connection data])
     :testing/echo        (rf/dispatch [:test :ws-echo data])
     :chsk/ws-ping        (rf/dispatch [:server/ping])

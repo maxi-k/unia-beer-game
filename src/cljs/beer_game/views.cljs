@@ -37,16 +37,17 @@
 
 (defn connection-state [connected?]
   (if connected?
-    [sa/Popup {:header "Mit dem Server verbunden."
+    [sa/Popup {:content "Mit dem Server verbunden."
                :hoverable true
                :trigger (connection-widget :green "podcast" {})}]
-    [sa/Popup {:trigger (connection-widget :red "exclamation" {:class-name "attention"})
+    [sa/Popup {:trigger (connection-widget :red "exclamation"
+                                           {:class-name "attention"})
                :hoverable true}
      [sa/PopupHeader "Keine Verbindung zum Server."]
      [sa/PopupContent
       "Es kann im Moment keine Verbindung zum Beer-Game Server hergestellt werden."
       [:br]
-      [:strong "Am besten dem Spielleiter sagen!"]]]))
+      [:strong "Lass es am Besten den Spielleiter wissen!"]]]))
 
 (defn app-wrapper [& children]
   (let [window-size (re-frame/subscribe [:client/window])]

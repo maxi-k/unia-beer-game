@@ -17,10 +17,10 @@
     (def send!     send-fn) ; ChannelSocket's send API fn
     (def msg-state state))  ; Watchable, read-only atom
 
-  (if config/dev?
-    (add-watch msg-state :log-msg-state
-               (fn [_ _ _ new]
-                 (.log js/console new))))
+  #_(if config/dev?
+      (add-watch msg-state :log-msg-state
+                 (fn [_ _ _ new]
+                   (.log js/console new))))
 
   (add-watch msg-state :connection-update
              (fn [_ _ old new]
