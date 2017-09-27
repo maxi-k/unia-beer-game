@@ -1,5 +1,6 @@
 (ns beer-game.handler
-  (:require [compojure.core :refer [GET POST context defroutes]]
+  (:require [clojure.data :refer [diff]]
+            [compojure.core :refer [GET POST context defroutes]]
             [compojure.route :refer [resources]]
             [ring.util.response :refer [resource-response]]
             [ring.middleware.reload :refer [wrap-reload]]
@@ -10,19 +11,21 @@
             [org.httpkit.server :as http-kit]
             [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
             [beer-game.config :as config]
+            [beer-game.store :as store]
             [beer-game.util :as util]
             [beer-game.auth :as auth]
             [beer-game.game-handler :as gh]))
 
-(reset! ws/debug-mode?_ true)
+(when config/development?
+  (reset! ws/debug-mode?_ true))
 
 (defn start-socket []
   (println "Starting Socket on Server")
   (defonce channel-socket
-    (ws/make-channel-socket-server! (get-sch-adapter)
-                                    {:protocol (if config/development? :http :https)
-                                     :packer config/websocket-packer
-                                     :user-id-fn auth/user-id-fn}))
+    (ws/make-channel-socket! (get-sch-adapter)
+                             {:protocol (if config/development? :http :https)
+                              :packer config/websocket-packer
+                              :user-id-fn store/request->uid!}))
 
   (let [{:keys [ch-recv send-fn connected-uids
                 ajax-post-fn ajax-get-or-ws-handshake-fn]} channel-socket]
@@ -32,11 +35,31 @@
     (def send!                         send-fn) ;; ChannelSocket's send API fn
     (def connected-uids                connected-uids)) ;; Watchable, read-only atom
 
+  ;; Remove entries from the connected-uids that
+  #_(add-watch connected-uids :track-disconnects
+             (fn [_ _ old new]
+               ;; diff returns a vector [only-a only-b both]
+               (let [[only-old _ _] (diff (:any old) (:any new))]
+                 (when-not (empty? only-old)
+                   (store/remove-client-ids! only-old)))))
+
   (defn broadcast
     "Sends given `message` to all connected uids.
     If a second argument is given, broadcasts it only to those listed in `uids`."
-    ([message] (broadcast message @connected-uids))
+    ([message] (broadcast message (:any @connected-uids)))
     ([message uids] (doseq [uid uids] (send! uid message))))
+
+  (defn outbox!
+    "Takes the original (incoming) message and the outgoing message
+  of the format {:type #{reply broadcast noop} :message message-vector}
+  and sends it "
+    [{:keys [uid] :as ev-msg}
+     {:keys [type message] :as internal-msg}]
+    (condp = type
+      :reply (send! (or (:uid internal-msg) uid) message)
+      :broadcast (broadcast message (or (:uids internal-msg) (:any @connected-uids)))
+      :noop "Don't reply to anyone."
+      (println "Unhandled internal message: " internal-msg " from incoming message: " ev-msg)))
 
   (defmulti event
     "Dispatch on the id of the event message being sent to the socket,
@@ -50,27 +73,23 @@
 
   (defmethod event [:testing :echo]
     [{:as ev-msg :keys [event ?data uid]}]
-    (send! uid [:testing/echo {:payload ?data}]))
+    (send! uid [:testing/echo ?data]))
 
   (defmethod event [:auth :login]
-    [{:as ev-msg :keys [uid client-id ?data]}]
-    (let [[name msg] (auth/authenticate! client-id ?data)]
-      (send! client-id [name msg])))
+    [{:as ev-msg :keys [client-id ?data]}]
+    (outbox! ev-msg (auth/authenticate! client-id ?data)))
 
   (defmethod event [:auth :logout]
-    [{:as ev-msg :keys [uid]}]
-    (send! uid (auth/logout! uid)))
+    [{:keys [client-id] :as ev-msg}]
+    (outbox! ev-msg (auth/logout! client-id)))
 
   (defmethod event [:game ::default]
-    [{:as ev-msg :keys [uid]}]
-    (let [{:keys [type message] :as resp} (gh/handle-msg
-                                           (update ev-msg :id sutil/name-only))
-          uids (or (:uids resp) @connected-uids)]
-      (condp = type
-        :reply (send! uid message)
-        :broadcast (broadcast message uids)
-        :noop "Don't reply to anyone."
-        (println "Unhandled game event: " resp " from incoming message: " ev-msg))))
+    [{:keys [client-id] :as ev-msg}]
+    (if (auth/logged-in? client-id)
+      (outbox!
+       ev-msg
+       (gh/handle-msg (update ev-msg :id util/name-only)))
+      (send! client-id [:auth/unauthorized]) ))
 
   (defmethod event [:chsk :ws-ping] [_])
 
