@@ -1,7 +1,7 @@
 (ns beer-game.components.sidebar
   (:require [re-frame.core :as rf]
             [soda-ash.core :as sa]
-            [beer-game.util :as util]
+            [beer-game.client-util :as util]
             [beer-game.config :as config]))
 
 (def sidebar-actions

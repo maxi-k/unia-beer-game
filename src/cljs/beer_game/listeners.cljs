@@ -1,6 +1,6 @@
 (ns beer-game.listeners
   (:require [re-frame.core :as rf]
-            [beer-game.util :as util]))
+            [beer-game.client-util :as util]))
 
 
 (defn init-listeners

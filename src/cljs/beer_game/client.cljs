@@ -17,9 +17,16 @@
     (def send!     send-fn) ; ChannelSocket's send API fn
     (def msg-state state))  ; Watchable, read-only atom
 
-  (add-watch msg-state :logout-if-no-uid
-             (fn [_ _ _ new]
-               (.log js/console new)))
+  (if config/dev?
+    (add-watch msg-state :log-msg-state
+               (fn [_ _ _ new]
+                 (.log js/console new))))
+
+  (add-watch msg-state :connection-update
+             (fn [_ _ old new]
+               (if-not (= (:open? old) (:open? new))
+                 (api/dispatch-server-event {:id :system/connection
+                                             :data (:open? new)}))))
 
   (def ping-key :chsk/ws-ping)
 

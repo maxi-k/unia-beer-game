@@ -10,7 +10,9 @@
             [org.httpkit.server :as http-kit]
             [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
             [beer-game.config :as config]
-            [beer-game.auth :as auth]))
+            [beer-game.util :as util]
+            [beer-game.auth :as auth]
+            [beer-game.game-handler :as gh]))
 
 (reset! ws/debug-mode?_ true)
 
@@ -18,9 +20,9 @@
   (println "Starting Socket on Server")
   (defonce channel-socket
     (ws/make-channel-socket-server! (get-sch-adapter)
-                             {:protocol (if config/development? :http :https)
-                              :packer config/websocket-packer
-                              :user-id-fn auth/user-id-fn}))
+                                    {:protocol (if config/development? :http :https)
+                                     :packer config/websocket-packer
+                                     :user-id-fn auth/user-id-fn}))
 
   (let [{:keys [ch-recv send-fn connected-uids
                 ajax-post-fn ajax-get-or-ws-handshake-fn]} channel-socket]
@@ -30,24 +32,47 @@
     (def send!                         send-fn) ;; ChannelSocket's send API fn
     (def connected-uids                connected-uids)) ;; Watchable, read-only atom
 
-  (defmulti event :id)
+  (defn broadcast
+    "Sends given `message` to all connected uids.
+    If a second argument is given, broadcasts it only to those listed in `uids`."
+    ([message] (broadcast message @connected-uids))
+    ([message uids] (doseq [uid uids] (send! uid message))))
 
-  (defmethod event :default [{:keys [event]}]
+  (defmulti event
+    "Dispatch on the id of the event message being sent to the socket,
+    by splitting the namespaced id into a vector and dispatching on that."
+    (fn [msg]
+      (-> msg :id util/split-keyword)))
+
+  (defmethod event :default
+    [{:keys [event]}]
     (println "Unhandled event: " event))
 
-  (defmethod event :testing/echo [{:as ev-msg :keys [event ?data uid]}]
-    (send! uid [:testing/echo {:payload "lol"
-                               :users @auth/uuid-map
-                               :uuids @connected-uids}]))
+  (defmethod event [:testing :echo]
+    [{:as ev-msg :keys [event ?data uid]}]
+    (send! uid [:testing/echo {:payload ?data}]))
 
-  (defmethod event :auth/login [{:as ev-msg :keys [uid client-id ?data]}]
+  (defmethod event [:auth :login]
+    [{:as ev-msg :keys [uid client-id ?data]}]
     (let [[name msg] (auth/authenticate! client-id ?data)]
       (send! client-id [name msg])))
 
-  (defmethod event :auth/logout [{:as ev-msg :keys [uid]}]
+  (defmethod event [:auth :logout]
+    [{:as ev-msg :keys [uid]}]
     (send! uid (auth/logout! uid)))
 
-  (defmethod event :chsk/ws-ping [_])
+  (defmethod event [:game ::default]
+    [{:as ev-msg :keys [uid]}]
+    (let [{:keys [type message] :as resp} (gh/handle-msg
+                                           (update ev-msg :id sutil/name-only))
+          uids (or (:uids resp) @connected-uids)]
+      (condp = type
+        :reply (send! uid message)
+        :broadcast (broadcast message uids)
+        :noop "Don't reply to anyone."
+        (println "Unhandled game event: " resp " from incoming message: " ev-msg))))
+
+  (defmethod event [:chsk :ws-ping] [_])
 
   (defn event-handler
     [msg]

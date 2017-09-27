@@ -3,7 +3,8 @@
 
 (def default-db
   {:name "Beer Game"
-   :client {:theme (if config/development? :dark :light)}
+   :client {:theme (if config/development? :dark :light)
+            :connected false}
    :test {}
    :user {:auth false}
    :game {}})

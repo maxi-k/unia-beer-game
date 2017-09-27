@@ -41,6 +41,12 @@
    (:sidebar client)))
 
 (rf/reg-sub
+ :client/connected
+ :<- [:client]
+ (fn [client]
+   (:connected client)))
+
+(rf/reg-sub
  :test
  (fn [db _]
    (get-in db [:test])))

@@ -1,6 +1,7 @@
-(ns beer-game.util
+(ns beer-game.client-util
   (:require [goog.events :as events]
             [reagent.core :as ra]))
+
 
 (defn keyify
   "Takes a seq of items and adds the 'key' metadata to it,
@@ -10,10 +11,6 @@
    (map #(with-meta % (f %)) items))
   ([items]
    (map-indexed #(with-meta %2  {:key %1}) items)))
-
-(defn toggle-value
-  [value [op1 op2]]
-  (if (= value op1) op2 op1))
 
 (defn event-listen
   "Listen to events of type `type` on `target`,
@@ -33,13 +30,17 @@
   [semantic-component]
   (.-name semantic-component))
 
+(defn native-component
+  [component]
+  (-> component
+      ra/reactify-component
+      ra/create-element))
+
 (defn native-render-fn
   "Takes a reagent-style component and returns a react-style
   render function that behaves like a normal js function."
   [component]
-  (let [res (-> component
-                ra/reactify-component
-                ra/create-element)]
+  (let [res (native-component component)]
     (fn [] res)))
 
 (defn with-options

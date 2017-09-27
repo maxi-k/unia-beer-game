@@ -86,6 +86,11 @@
                            :realm realm})))
 
 (rf/reg-event-db
+ :system/connection
+ (fn [db [_ open?]]
+   (assoc-in db [:client :connected] open?)))
+
+(rf/reg-event-db
  :auth/login-invalid
  (fn [db [_ data]]
    (update db :user merge {:auth-failure true

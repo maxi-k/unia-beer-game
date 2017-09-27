@@ -2,7 +2,7 @@
   (:require [re-frame.core :as rf]
             [soda-ash.core :as sa]
             [reagent.core :as ra]
-            [beer-game.util :as util]
+            [beer-game.client-util :as util]
             [beer-game.config :as config]))
 
 (defn login-button
