@@ -9,3 +9,7 @@
   [{:as msg}]
   {:type :broadcast
    :message [:game/next-round]})
+
+(defmethod handle-msg :default
+  [msg]
+  (println "Unhandled game message: " msg))
