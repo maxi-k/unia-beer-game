@@ -4,4 +4,6 @@
   "Dispatches on all game events."
   :id)
 
-(defmethod handle-msg)
+(defmethod handle-msg :default
+  [msg]
+  (println "Unhandled game message: " msg))
