@@ -14,7 +14,8 @@
             [beer-game.store :as store]
             [beer-game.util :as util]
             [beer-game.auth :as auth]
-            [beer-game.game-handler :as gh]))
+            [beer-game.game-handler :as game-handler]
+            [beer-game.system-handler :as system-handler]))
 
 (when config/development?
   (reset! ws/debug-mode?_ true))
@@ -25,7 +26,7 @@
     (ws/make-channel-socket! (get-sch-adapter)
                              {:protocol (if config/development? :http :https)
                               :packer config/websocket-packer
-                              :user-id-fn store/request->uid!}))
+                              :user-id-fn store/request->user-id!}))
 
   (let [{:keys [ch-recv send-fn connected-uids
                 ajax-post-fn ajax-get-or-ws-handshake-fn]} channel-socket]
@@ -37,11 +38,11 @@
 
   ;; Remove entries from the connected-uids that
   #_(add-watch connected-uids :track-disconnects
-             (fn [_ _ old new]
-               ;; diff returns a vector [only-a only-b both]
-               (let [[only-old _ _] (diff (:any old) (:any new))]
-                 (when-not (empty? only-old)
-                   (store/remove-client-ids! only-old)))))
+               (fn [_ _ old new]
+                 ;; diff returns a vector [only-a only-b both]
+                 (let [[only-old _ _] (diff (:any old) (:any new))]
+                   (when-not (empty? only-old)
+                     (store/remove-client-ids! only-old)))))
 
   (defn broadcast
     "Sends given `message` to all connected uids.
@@ -53,13 +54,20 @@
     "Takes the original (incoming) message and the outgoing message
   of the format {:type #{reply broadcast noop} :message message-vector}
   and sends it "
-    [{:keys [uid] :as ev-msg}
+    [{:keys [uid ?reply-fn] :as ev-msg}
      {:keys [type message] :as internal-msg}]
     (condp = type
       :reply (send! (or (:uid internal-msg) uid) message)
+      :reply-fn ((?reply-fn ev-msg) message)
       :broadcast (broadcast message (or (:uids internal-msg) (:any @connected-uids)))
       :noop "Don't reply to anyone."
       (println "Unhandled internal message: " internal-msg " from incoming message: " ev-msg)))
+
+  (defn msg->inbox
+    "Converts an incoming channel message to an 'inbox-message',
+    which can then be dispatched to the internal handlers."
+    [ev-msg]
+    (merge ev-msg {:internal-id (-> ev-msg :id util/name-only)}))
 
   (defmulti event
     "Dispatch on the id of the event message being sent to the socket,
@@ -75,23 +83,32 @@
     [{:as ev-msg :keys [event ?data uid]}]
     (send! uid [:testing/echo ?data]))
 
-  (defmethod event [:auth :login]
-    [{:as ev-msg :keys [client-id ?data]}]
-    (outbox! ev-msg (auth/authenticate! client-id ?data)))
+  ;; Handles all authentication messages
+  (defmethod event [:auth ::default]
+    [ev-msg]
+    (outbox! ev-msg
+             (-> ev-msg
+                 msg->inbox
+                 auth/handle-msg)))
 
-  (defmethod event [:auth :logout]
-    [{:keys [client-id] :as ev-msg}]
-    (outbox! ev-msg (auth/logout! client-id)))
-
+  ;; Handles all game messages
+  ;; Secure channel (user has to be logged in)
   (defmethod event [:game ::default]
     [{:keys [client-id] :as ev-msg}]
     (if (auth/logged-in? client-id)
       (outbox!
        ev-msg
-       (gh/handle-msg (update ev-msg :id util/name-only)))
-      (send! client-id [:auth/unauthorized]) ))
+       (-> ev-msg
+           msg->inbox
+           game-handler/handle-msg))
+      (send! client-id [:auth/unauthorized])))
 
-  (defmethod event [:chsk :ws-ping] [_])
+  ;; Handles all system messages (chsk)
+  (defmethod event [:chsk ::default]
+    [ev-msg]
+    (outbox! ev-msg (-> ev-msg
+                        msg->inbox
+                        system-handler/handle-msg)))
 
   (defn event-handler
     [msg]

@@ -19,3 +19,12 @@
   [kw]
   {:pre (keyword? kw)}
   (keyword (name kw)))
+
+(defn keyword->string
+  "Turns a (qualified) keyword into a string,
+  which can be turned into an equal keyword again with `clojure.core/keyword`"
+  [kw]
+  {:pre (keyword? kw)}
+  (if (simple-keyword? kw)
+    (name kw)
+    (str (namespace kw) "/" (name kw))))

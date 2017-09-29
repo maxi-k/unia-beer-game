@@ -2,7 +2,7 @@
 
 (defmulti handle-msg
   "Dispatches on all game events."
-  :id)
+  :internal-id)
 
 (defmethod handle-msg
   :next-round
@@ -12,4 +12,4 @@
 
 (defmethod handle-msg :default
   [msg]
-  (println "Unhandled game message: " msg))
+  {:type :noop})

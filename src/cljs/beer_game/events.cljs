@@ -78,17 +78,14 @@
 (rf/reg-event-fx
  :auth/login
  (fn [_ [_ realm key]]
-   {:ws [:auth/login {:realm realm :key key}]}))
+   {:ws [:auth/login {:user/realm realm :auth/key key}]}))
 
 (rf/reg-event-db
  :auth/login-success
- (fn [db [_ {:keys [uid uuid realm]}]]
-   (update db :user merge {:auth true
-                           :auth-failure false
-                           :logout-success true
-                           :uid uid
-                           :uuid uuid
-                           :realm realm})))
+ (fn [db [_ data-map]]
+   (update db :user merge data-map {:auth true
+                                    :auth-failure false
+                                    :logout-success true})))
 
 (rf/reg-event-db
  :system/connection

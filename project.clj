@@ -29,7 +29,8 @@
   :figwheel {:css-dirs ["resources/public/css"]
              :ring-handler beer-game.handler/dev-handler
              :reload-clj-files {:clj true :cljc true}
-             :server-logfile false}
+             :server-logfile false
+             :nrepl-port 7888}
 
   :auto {"less" {:paths ["less"]
                  :file-pattern #"\.(less|config)$"}}

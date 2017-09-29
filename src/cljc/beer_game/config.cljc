@@ -28,12 +28,12 @@
   "Returns the common config shared among all environments."
   {:websocket-endpoint "/ws"
    :websocket-packer :edn
-   :realms {:player {:title "Mitspieler"}
-            :leader {:title "Spielleiter"}}
-   :user-ids {:brewery {:title "Brauerei"}
-              :big-market {:title "Großhandel"}
-              :small-market {:title "Kleinhandel"}
-              :customer {:title "Kunde"}}})
+   :realms {:realm/player {:title "Mitspieler"}
+            :realm/leader {:title "Spielleiter"}}
+   :user-roles {:role/brewery {:title "Brauerei"}
+                :role/big-market {:title "Großhandel"}
+                :role/small-market {:title "Kleinhandel"}
+                :role/customer {:title "Kunde"}}})
 
 (def websocket-endpoint
   "The relative url of the websocket endpoint."
@@ -44,13 +44,13 @@
   (:websocket-packer definitions))
 
 (def realms (definitions :realms))
-(def player-realm :player)
-(def leader-realm :leader)
+(def player-realm :realm/player)
+(def leader-realm :realm/leader)
 (def player-realm-data (-> player-realm :realms player-realm))
 (def leader-realm-data (-> leader-realm :realms leader-realm))
 
-(def user-ids (definitions :user-ids))
-(def allowed-user-ids (-> definitions :user-ids keys set))
+(def user-roles (definitions :user-roles))
+(def allowed-user-roles (-> definitions :user-roles keys set))
 
 #?(:clj
    ;; Server Side Configuration

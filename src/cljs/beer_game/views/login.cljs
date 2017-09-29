@@ -3,6 +3,7 @@
             [soda-ash.core :as sa]
             [reagent.core :as ra]
             [beer-game.client-util :as util]
+            [beer-game.util :refer [keyword->string]]
             [beer-game.config :as config]))
 
 (defn login-button
@@ -15,21 +16,22 @@
 
 (def user-options
   (map
-   (fn [[k v]]
-     {:key k :value k :text (:title v)})
-   config/user-ids))
+   (fn [[key value]]
+     (let [k (keyword->string key)]
+       {:key k :value k :text (:title value)}))
+   config/user-roles))
 
 (defn login-user-pane []
-  (let [pw (ra/atom "")]
+  (let [pw (ra/atom :empty)]
     (fn []
       [sa/Form
        [sa/FormSelect {:label "Rolle"
-                       :placeholder "Rolle"
+                       :placeholder "Rolle auswählen"
                        :value @pw
                        :options user-options
                        :on-change #(reset! pw (.-value %2))}]
        [sa/FormField {:control (login-button (fn []
-                                               (rf/dispatch [:auth/login :player @pw])))}]])))
+                                               (rf/dispatch [:auth/login :realm/player (keyword @pw)])))}]])))
 
 (defn login-leader-pane []
   (let [pw (ra/atom "")]
@@ -41,7 +43,7 @@
                       :value @pw
                       :on-change #(reset! pw (.. % -target -value))}]
        [sa/FormField {:control (login-button (fn []
-                                               (rf/dispatch [:auth/login :leader @pw])))}]])))
+                                               (rf/dispatch [:auth/login :realm/leader @pw])))}]])))
 
 (defn wrap-tab-pane [options child]
   (fn []
