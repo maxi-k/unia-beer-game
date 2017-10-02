@@ -1,6 +1,6 @@
 (ns beer-game.handler-test
   (:require [beer-game.handler :refer :all]
-            [beer-game.auth :as auth]
+            [beer-game.handlers.auth :as auth]
             [clojure.test :refer :all]))
 
 (deftest starting-socket

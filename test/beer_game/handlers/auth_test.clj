@@ -1,7 +1,8 @@
-(ns beer-game.auth-test
-  (:require [beer-game.auth :as auth]
-            [beer-game.config :as config]
-            [beer-game.store :as store]
+(ns beer-game.handlers.auth-test
+  (:require [beer-game
+             [handlers.auth :as auth]
+             [config :as config]
+             [store :as store]]
             [clojure.test :refer :all]
             [clojure.data :as data]))
 

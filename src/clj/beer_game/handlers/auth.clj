@@ -1,4 +1,4 @@
-(ns beer-game.auth
+(ns beer-game.handlers.auth
   (:require [beer-game.config :as config]
             [beer-game.store :as store]))
 
@@ -44,7 +44,7 @@
 (defn logout!
   "Logs out given client."
   [client-id]
-  (store/remove-clients! [client-id])
+  (store/remove-client! client-id)
   {:type :reply
    :message [:auth/logout-success {:client/id client-id}]})
 
@@ -54,4 +54,4 @@
   (condp = internal-id
     :login (authenticate! client-id ?data)
     :logout (logout! client-id)
-    {:type :noop}))
+    {:type ::unhandled}))

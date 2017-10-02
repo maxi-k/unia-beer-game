@@ -1,4 +1,4 @@
-(ns beer-game.game-handler)
+(ns beer-game.handlers.game)
 
 (defmulti handle-msg
   "Dispatches on all game events."
@@ -12,4 +12,4 @@
 
 (defmethod handle-msg :default
   [msg]
-  {:type :noop})
+  {:type ::unhandled})
