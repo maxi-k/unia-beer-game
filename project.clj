@@ -44,7 +44,8 @@
              :ring-handler :beer-game.components.handler/handler-fn}
 
   :profiles
-  {:dev {:dependencies [[binaryage/devtools "0.9.4"]
+  {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.12"]
+                        [binaryage/devtools "0.9.4"]
                         [figwheel-sidecar "0.5.13"]
                         [com.cemerick/piggieback "0.2.2"]]
          :plugins      [[lein-figwheel "0.5.13"]]
