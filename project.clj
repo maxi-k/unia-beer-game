@@ -32,8 +32,7 @@
   ;; Requires less and less-clean-css to be installed
   :aliases {"less" ["shell" "lessc" "src/less/site.less" "resources/public/css/site.css"
                     "--clean-css" "--s1 --advanced --compatibility=ie8"]
-            "dev-loop" ["run" "-m" "clojure.main" "--init" "script/figwheel.clj" "-r"]
-            }
+            "dev-repl" ["with-profile" "dev" "repl"]}
 
 
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]
