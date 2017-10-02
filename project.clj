@@ -37,8 +37,8 @@
 
   ;; Requires less and less-clean-css to be installed
   :aliases {"less" ["shell" "lessc" "less/site.less" "resources/public/css/site.css"
-                    "--clean-css" "--s1 --advanced --compatibility=ie8"
-                    ]}
+                    "--clean-css" "--s1 --advanced --compatibility=ie8"]}
+
 
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
@@ -63,8 +63,8 @@
                     :source-map-timestamp true
                     :preloads             [devtools.preload]
                     :external-config      {:devtools/config {:features-to-install :all}}
-                    :closure-warnings {:extra-require :warning}
-                    }}
+                    :closure-warnings {:extra-require :warning}}}
+
 
     {:id           "min"
      :source-paths ["src/cljs" "src/cljc"]
@@ -74,10 +74,10 @@
                     :optimizations   :advanced
                     :closure-defines {goog.DEBUG false}
                     :closure-warnings {:extra-require :warning}
-                    :pretty-print    false}}
+                    :pretty-print    false}}]}
 
 
-    ]}
+
 
   :main beer-game.server
 
@@ -85,5 +85,5 @@
 
   :uberjar-name "beer-game.jar"
 
-  :prep-tasks [["cljsbuild" "once" "min"]["less"] "compile"]
-  )
+  :prep-tasks [["cljsbuild" "once" "min"]["less"] "compile"])
+
