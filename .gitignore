@@ -6,3 +6,5 @@
 out
 /.lein-failures
 /.nrepl-port
+/beer-game.iml
+/.idea
