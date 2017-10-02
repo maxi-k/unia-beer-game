@@ -16,29 +16,30 @@
                    :user-id-fn :client-id})
           {:keys [ch-recv send-fn connected-uids
                   ajax-post-fn ajax-get-or-ws-handshake-fn]} socket
+          new-comp
+          (assoc component
+                 :socket                        socket
+                 :ring-ajax-post                ajax-post-fn
+                 :ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn
+                 :incoming                      ch-recv ;; ChannelSocket's receive channel
+                 :send!                         send-fn ;; ChannelSocket's send API fn
+                 :connected-uids                connected-uids)
+          msg-handler (message-handler new-comp)
           router (ws/start-server-chsk-router!
                   ch-recv
                   ;; Pass the component to the message-handler-creator
-                  (message-handler component))]
-
-      (-> component
-          (assoc :socket socket)
-          (assoc :router router)
-          (assoc :ring-ajax-post                ajax-post-fn)
-          (assoc :ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
-          (assoc :incoming                      ch-recv) ;; ChannelSocket's receive channel
-          (assoc :send!                         send-fn) ;; ChannelSocket's send API fn
-          (assoc :connected-uids                connected-uids))))
+                  msg-handler)]
+      (assoc new-comp :router router)))
 
   (stop [component]
-    (-> component
-        (dissoc :socket)
-        (dissoc :router)
-        (dissoc :ring-ajax-post)
-        (dissoc :ring-ajax-get-or-ws-handshake)
-        (dissoc :incoming) ;; ChannelSocket's receive channel
-        (dissoc :send!) ;; ChannelSocket's send API fn
-        (dissoc :connected-uids))))
+    (dissoc component
+            :socket
+            :router
+            :ring-ajax-post
+            :ring-ajax-get-or-ws-handshake
+            :incoming ;; ChannelSocket's receive channel
+            :send! ;; ChannelSocket's send API fn
+            :connected-uids)))
 
 (defn new-websocket
   "Creates a new websocket component instance."

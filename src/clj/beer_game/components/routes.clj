@@ -13,8 +13,8 @@
     :keys [ring-ajax-get-or-ws-handshake ring-ajax-post]}]
   (compojure.core/routes
    ;; Websocket endpoints
-   (GET config/websocket-endpoint req (ring-ajax-get-or-ws-handshake req))
-   (POST config/websocket-endpoint req (ring-ajax-post               req))
+   (GET  config/websocket-endpoint req (ring-ajax-get-or-ws-handshake req))
+   (POST config/websocket-endpoint req (ring-ajax-post                req))
    ;; Default index.html endpoint
    (GET "/" [] (resource-response "index.html" {:root config/public-root}))
    ;; Other resources (css, js, img)

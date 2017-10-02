@@ -30,7 +30,6 @@
 
   (start [component]
     (let [router-fn (if (fn? routes) routes (:routes routes))
-          lol (println router-fn)
           handler-fn (if development?
                        (dev-handler router-fn)
                        (prod-handler router-fn))]
