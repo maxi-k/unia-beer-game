@@ -26,7 +26,8 @@
 
 (def definitions
   "Returns the common config shared among all environments."
-  {:websocket-endpoint "/ws"
+  {:public-root "public"
+   :websocket-endpoint "/ws"
    :websocket-packer :edn
    :realms {:realm/player {:title "Mitspieler"}
             :realm/leader {:title "Spielleiter"}}
@@ -42,6 +43,9 @@
 (def websocket-packer
   "The packer used for websocket communication."
   (:websocket-packer definitions))
+
+(def public-root
+  (:public-root definitions))
 
 (def realms (definitions :realms))
 (def player-realm :realm/player)
