@@ -7,6 +7,6 @@
   (println internal-id)
   (condp = internal-id
     :ws-ping (do (println "Ping from client: " client-id) {:type :noop})
-    :uidport-open (do (store/add-client! client-id) {:type :noop})
-    :uidport-close (do (store/remove-client! client-id) {:type :noop})
+    :uidport-open {:type :noop}
+    :uidport-close {:type :noop}
     {:type ::unhandled}))
