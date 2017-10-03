@@ -45,16 +45,18 @@
  aot {:namespace #{'beer-game.server}}
  less {:source-map true})
 
-
-(deftask testing
-  []
-  (set-env! :source-paths #(conj % "test" "environments/dev"))
-  )
-
 (deftask dev-env
+  "Sets the environment variables and paths for the development environment."
   []
   (set-env! :resource-paths #(conj % "environments/dev"))
-  (set-env! :source-paths #(conj % "environments/dev"))
+  (set-env! :source-paths #(conj % "test" "environments/dev"))
+  identity)
+
+(deftask prod-env
+  "Sets the environment variables and paths for the produciton environment."
+  []
+  (set-env! :resource-paths #(conj % "environments/prod"))
+  (set-env! :source-paths #(conj % "environments/prod"))
   identity)
 
 (deftask dev
@@ -65,23 +67,22 @@
    (watch :verbose true)
    (system :sys #'server-system :auto true)
    (reload :on-jsload 'beer-game.core/mount-root)
+   (less)
    (cljs :source-map true
          :optimizations :none)
    (repl :server true)))
 
 (deftask package
   []
-  (let [cljs-options {:main            'beer-game.server
-                      :output-to       "resources/public/js/compiled/app.js"
-                      :optimizations   :advanced
-                      :pretty-print    false}]
-    (comp
-     (less :compression true)
-     (cljs :optimizations :advanced
-           :compiler-options cljs-options)
-     (aot)
-     (pom)
-     (uber)
-     (jar :file "beer-game.jar")
-     (sift :include #{#".*\.jar"})
-     (target))))
+  (comp
+   (prod-env)
+   (less :compression true)
+   (cljs :optimizations :advanced
+         :compiler-options {:pretty-print false
+                            :preloads nil})
+   (aot)
+   (pom)
+   (uber)
+   (jar :file "beer-game.jar")
+   (sift :include #{#".*\.jar"})
+   (target)))
