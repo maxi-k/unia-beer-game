@@ -2,8 +2,8 @@
   (:require [beer-game.config :as config]
             [beer-game.server-utils :as util]))
 
-(def #^{:private true} data-map
-  "User model:"
+(defn create-store
+  []
   (ref {
         ;; Clients that have not logged in yet,
         ;; represented by their client-id
@@ -18,6 +18,10 @@
         ;; where :client-data points to a map from {user-id -> user-data}
         :users/data {}
         }))
+
+(def #^{:private true} data-map
+    "User model:"
+  (create-store))
 
 (if config/development?
   (add-watch data-map :log
@@ -83,3 +87,6 @@
        (conj coll client-id)
        coll))
    #{} (:clients/authorized @data-map)))
+
+;; Return the data-map ref
+data-map

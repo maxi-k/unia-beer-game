@@ -1,0 +1,8 @@
+{:main beer-game.core
+ :require [beer-game.core]
+ :compiler-options {:output-to            "public/js/compiled/app.js"
+                    :output-dir           "public/js/compiled/out"
+                    :asset-path           "js/compiled/out"
+                    :preloads [devtools.preload]
+                    :external-config {:devtools/config {:features-to-install :all}}
+                    }}

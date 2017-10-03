@@ -25,6 +25,6 @@
   which can be turned into an equal keyword again with `clojure.core/keyword`"
   [kw]
   {:pre (keyword? kw)}
-  (if (simple-keyword? kw)
-    (name kw)
-    (str (namespace kw) "/" (name kw))))
+  (if (re-find #"/" (str kw))
+    (str (namespace kw) "/" (name kw))
+    (name kw)))

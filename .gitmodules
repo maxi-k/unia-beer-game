@@ -1,7 +1,7 @@
-[submodule "less/vendor/semantic-ui-less"]
-	path = less/vendor/semantic-ui-less
+[submodule "src/less/vendor/semantic-ui-less"]
+	path = src/less/vendor/semantic-ui-less
 	url = apps@git.maximilian-kuschewski.de:beer-game/beer-game-code-semantic-ui.git
 
-[submodule "less/vendor/prefixer"]
-	path = less/vendor/prefixer
+[submodule "src/less/vendor/prefixer"]
+	path = src/less/vendor/prefixer
 	url = https://github.com/JoelSutherland/LESS-Prefixer

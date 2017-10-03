@@ -8,3 +8,4 @@ out
 /.nrepl-port
 /beer-game.iml
 /.idea
+/.lein-repl-history

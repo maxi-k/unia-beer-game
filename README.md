@@ -1,74 +1,58 @@
-# beer-game
+# Beer Game
 
-A [re-frame](https://github.com/Day8/re-frame) application designed to ... well, that part is up to you.
+Implementation of the [Beer
+Game](https://en.wikipedia.org/wiki/Beer_distribution_game) as a
+webapp.
 
-## Development Mode
+## Technologies
 
-### Start Cider from Emacs:
+A List of notable technology used.
 
-Put this in your Emacs config file:
+- Server Side
+  - [Clojure](http://clojure.org)
+  - [HTTP Kit](http://www.http-kit.org/index.html)
+  - [Websockets](https://github.com/ptaoussanis/sente/)
+- Client Side
+  - [ClojureScript](https://clojurescript.org/)
+  - [React](https://reactjs.org/)
+  - [Re-Frame](https://github.com/Day8/re-frame)
+  - [Semantic UI](https://semantic-ui.com)
 
+For a complete list, please look at [build.boot](build.boot) under the
+keyword `:dependencies`.
+
+## Development & Building
+
+### Requirements
+
+[The Boot Build Tool](http://boot-clj.com/) has to be installed
+
+### Development Mode
+
+Run the following command in the project directory:
 ```
-(setq cider-cljs-lein-repl
-	"(do (require 'figwheel-sidecar.repl-api)
-         (figwheel-sidecar.repl-api/start-figwheel!)
-         (figwheel-sidecar.repl-api/cljs-repl))")
+boot dev
 ```
+This will start a development server with auto-reloading code, as well
+as a repl with project-context (which can be connected to using the
+printed port). The webapp can then be accessed on port `3000` by default.
 
-Navigate to a clojurescript file and start a figwheel REPL with `cider-jack-in-clojurescript` or (`C-c M-J`)
+### Production Build
 
-### Compile css:
-
-Compile css file once.
-
+Run the following command in the project directory:
 ```
-lein less once
+boot package
 ```
+This will create a `jar` file in the `target` directory with all
+dependencies included.
 
-Automatically recompile css file on change.
-
+## Running
+Download or build `beer-game.jar` and run it using:
 ```
-lein less auto
+java -jar beer-game.jar
 ```
-
-### Run application:
-
-```
-lein clean
-lein figwheel dev
-```
-
-Figwheel will automatically push cljs changes to the browser.
-
-Wait a bit, then browse to [http://localhost:3449](http://localhost:3449).
-
-## Production Build
-
-```
-lein clean
-lein uberjar
-```
-
-That should compile the clojurescript code first, and then create the standalone jar.
-
-When you run the jar you can set the port the ring server will use by setting the environment variable PORT.
-If it's not set, it will run on port 3000 by default.
-
-To deploy to heroku, first create your app:
-
-```
-heroku create
-```
-
-Then deploy the application:
-
-```
-git push heroku master
-```
-
-To compile clojurescript to javascript:
-
-```
-lein clean
-lein cljsbuild once min
-```
+Note that there has to be a file called `server-config.edn` in the
+directory from which the jar is run from. This file contains some
+private configuration details, like the password for the game leader.
+See [server-config.edn](server-config.edn) for an example of the file
+structure and the included options.
