@@ -36,18 +36,18 @@
 
 
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]
-                 :timeout 120000}
+                 :timeout 240000}
 
   :figwheel {:css-dirs ["resources/public/css"]
              :reload-clj-files {:clj true :cljc true}
-             :server-logfile false
-             :ring-handler :beer-game.components.handler/handler-fn}
+             :server-logfile false}
 
   :profiles
-  {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.12"]
+  {:dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]
+                        [org.clojure/tools.nrepl "0.2.12"]
                         [binaryage/devtools "0.9.4"]
                         [figwheel-sidecar "0.5.13"]
-                        [com.cemerick/piggieback "0.2.2"]]
+                        [reloaded.repl "0.2.3"]]
          :plugins      [[lein-figwheel "0.5.13"]]
          :resource-paths ["environments/dev"]}
    :prod {:resource-paths ["environments/prod"]}}

@@ -14,6 +14,7 @@
       (assoc component :server server)))
 
   (stop [component]
+    ((:server component) :timeout 100)
     (dissoc component :server)))
 
 (defn new-webserver

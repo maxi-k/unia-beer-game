@@ -25,7 +25,7 @@
   [routes]
   (handler-core routes))
 
-(defrecord HandlerComponent [development? def-handler? routes]
+(defrecord HandlerComponent [development? routes]
   component/Lifecycle
 
   (start [component]
@@ -33,17 +33,12 @@
           handler-fn (if development?
                        (dev-handler router-fn)
                        (prod-handler router-fn))]
-      (if def-handler? (def handler-fn handler-fn))
-      (assoc component :handler handler-fn)
-      (assoc component :handler-fn `handler-fn)))
+      (assoc component :handler handler-fn)))
 
   (stop [component]
-    (dissoc component :handler)
-    (dissoc component :handler-fn)))
+    (dissoc component :handler)))
 
 (defn new-handler
   "Creates a new handler component instance."
-  ([] (new-handler false))
-  ([def-handler]
-   (map->HandlerComponent {:development? config/development?
-                           :def-handler? def-handler})))
+  []
+  (map->HandlerComponent {:development? config/development?}))
