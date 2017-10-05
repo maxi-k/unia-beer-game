@@ -91,6 +91,13 @@
       (and (= event-id (:event/id data))
            (= role (:user/role data)))))))
 
+(defn leader-clients
+  "Returns all client-ids which are associated with leader-users."
+  []
+  (user-data->client-id
+   (fn [[user-id {:keys [:user/realm]}]]
+     (= realm config/leader-realm))))
+
 (defn remove-client!
   "Removes the given client-id."
   [client-id]
@@ -139,7 +146,7 @@
     event-id :event/id
     client-id :client/id}]
   (let [;; Use given user-id or try to find it using user-data
-        user-id (or (:user/id data) (user-data->user-id data))
+        [user-id _] (or (:user/id data) (user-data->user-id data))
         ;; Add given or new user-id to authorized ids
         user-id (auth-client! client-id user-id)]
     (user-data! user-id {:user/realm    realm

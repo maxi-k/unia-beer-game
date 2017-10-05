@@ -1,22 +1,13 @@
 (ns beer-game.handlers.auth
   (:require [beer-game.config :as config]
-            [beer-game.store :as store]))
+            [beer-game.store :as store]
+            [beer-game.messages :as msgs]))
 
 
 (def logged-in?
   "Returns nil if given client-id is not logged in."
   store/client-id->user-id)
 
-(defn enrich-user
-  "Enrich the user model with more information to be given back to the client."
-  [user-id data]
-  (let [{event-id :event/id :as store-data} (store/user-id->user-data user-id)
-        event-data (if (store/single-event? event-id)
-                     (store/events event-id)
-                     nil)]
-    (-> data
-        (merge store-data)
-        (assoc :event/data event-data))))
 
 (defn auth-leader
   "Tries to authenticate the given client-id with given password in the leader realm."
@@ -27,7 +18,7 @@
                 :event/id :event/all
                 :client/id client-id}
           user-id (store/auth-user! data)]
-      [:auth/login-success (enrich-user user-id data)])
+      [:auth/login-success (msgs/enrich-user user-id data)])
     [:auth/login-invalid {:auth/key key}]))
 
 (defn auth-player
@@ -40,7 +31,7 @@
                     :event/id event-id
                     :client/id client-id}
               user-id (store/auth-user! data)]
-          [:auth/login-success (enrich-user user-id data)])
+          [:auth/login-success (msgs/enrich-user user-id data)])
       [:auth/login-invalid {:event/id event-id}])
     [:auth/login-invalid {:auth/key key}]))
 
@@ -48,12 +39,16 @@
   "Authenticate with given realm and key."
   [client-id {:keys [:user/realm :auth/key] event-id :event/id}]
   {:pre (string? client-id)}
-  {:type :reply
-   :message
-   (condp = realm
-     config/player-realm (auth-player client-id event-id (keyword key))
-     config/leader-realm (auth-leader client-id key)
-     [:auth/login-invalid {:user/realm realm}])})
+  [{:type :reply
+    :message
+    (condp = realm
+      config/player-realm (auth-player client-id event-id (keyword key))
+      config/leader-realm (auth-leader client-id key)
+      [:auth/login-invalid {:user/realm realm}])}
+
+   {:type :broadcast
+    :uids (store/leader-clients)
+    :message (msgs/event-list :event/all)}])
 
 (defn logout!
   "Logs out given client."

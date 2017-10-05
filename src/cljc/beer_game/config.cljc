@@ -56,6 +56,11 @@
 (def user-roles (definitions :user-roles))
 (def allowed-user-roles (-> definitions :user-roles keys set))
 
+(defn user-role->title
+  "Returns the title of given user Role."
+  [user-role]
+  (get-in user-roles [user-role :title]))
+
 #?(:clj
    ;; Server Side Configuration
    (do

@@ -2,7 +2,8 @@
   (:require [re-frame.core :as rf]
             [reagent.core :as ra]
             [soda-ash.core :as sa]
-            [beer-game.client-util :as cutil]))
+            [beer-game.client-util :as cutil]
+            [beer-game.config :as config]))
 
 (defn- create-event-form
   [modal-close-fn]
@@ -74,12 +75,23 @@
        [sa/TableHeader
         [sa/TableRow
          [sa/TableHeaderCell "Event Name"]
-         [sa/TableHeaderCell "Event ID"]]]
+         [sa/TableHeaderCell "Event ID"]
+         [sa/TableHeaderCell "Spieler"]]]
        [sa/TableBody
-        (for [[_ {:keys [:event/id :event/name]}] @events]
+        (for [[_ {:keys [:event/id :event/name]
+                  user-list :user/list}] @events]
           [sa/TableRow {:key id}
            [sa/TableCell name]
-           [sa/TableCell id]])]])))
+           [sa/TableCell id]
+           [sa/Popup {:hoverable true
+                      :trigger (ra/as-element [sa/TableCell (count user-list)])}
+            [sa/PopupHeader "Belegte Rollen"]
+            [sa/PopupContent
+             [sa/ListSA {:bulleted true}
+              (for [user user-list
+                    :let [title (-> user :user/role config/user-role->title)]]
+                [sa/ListItem {:key (:user/id user)} title])]
+             ]]])]])))
 
 (defn events-panel
   "Renders the panel for the events view."

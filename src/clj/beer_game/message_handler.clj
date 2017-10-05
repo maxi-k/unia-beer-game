@@ -39,18 +39,21 @@
   of the format {:type #{reply broadcast noop} :message message-vector}
   and sends it "
     [{:keys [uid ?reply-fn] :as ev-msg}
-     {:keys [type message internal-id] :as internal-msg}]
-    (condp = type
-      :reply (if (:?reply-fn ev-msg)
-               ((?reply-fn ev-msg) message)
-               (send! (or (:uid internal-msg) uid) message))
-      :user (broadcast message (store/user-id->client-id (or (:uid internal-msg)
-                                                             internal-id)))
-      :broadcast (broadcast message (or (:uids internal-msg)
-                                        (:any @connected-uids)))
-      :noop "Don't reply to anyone."
-      (println "Unhandled internal message: " internal-id
-               " from incoming message: " (:id ev-msg))))
+     internal-msg]
+    (if (vector? internal-msg)
+      (doseq [msg internal-msg] (outbox! ev-msg msg))
+      (let [{:keys [type message internal-id]} internal-msg]
+        (condp = type
+          :reply (if (:?reply-fn ev-msg)
+                   ((?reply-fn ev-msg) message)
+                   (send! (or (:uid internal-msg) uid) message))
+          :user (broadcast message (store/user-id->client-id (or (:uid internal-msg)
+                                                                 internal-id)))
+          :broadcast (broadcast message (or (:uids internal-msg)
+                                            (:any @connected-uids)))
+          :noop "Don't reply to anyone."
+          (println "Unhandled internal message: " internal-id
+                   " from incoming message: " (:id ev-msg))))))
 
   (defn with-auth
     "Only executes send-fn with the message as argument if

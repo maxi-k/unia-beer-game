@@ -150,6 +150,11 @@
  (fn [{:keys [db]} [_ data]]
    {:ws-auth [(:user db) [:event/fetch data]]}))
 
+(rf/reg-event-db
+ :event/list
+ (fn [db [_ data]]
+   (assoc db :events data)))
+
 (rf/reg-event-fx
  :event/create
  (fn [{:keys [db]} [_ data]]
@@ -162,7 +167,7 @@
      (update db :events assoc (:event/id data) data)
      db)))
 
-(rf/reg-event-db
- :event/list
- (fn [db [_ data]]
-   (assoc db :events data)))
+(rf/reg-event-fx
+ :event/destroy
+ (fn [{:keys [db]} [_ {:keys [:event/id]}]]
+   {:ws-auth [(:user db) [:event/destroy {:event/id id}]]}))
