@@ -42,7 +42,6 @@
      config/leader-realm (auth-leader client-id key)
      [:auth/login-invalid {:user/realm realm}])})
 
-
 (defn logout!
   "Logs out given client."
   [client-id]

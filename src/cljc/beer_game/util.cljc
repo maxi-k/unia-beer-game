@@ -28,3 +28,13 @@
   (if (re-find #"/" (str kw))
     (str (namespace kw) "/" (name kw))
     (name kw)))
+
+(defn users-by-event
+  "Takes a map from user-id to user-data and reorders it to
+  a map from event-id -> { user-id -> user-data }."
+  [user-map]
+  (reduce
+   (fn [coll [user-id {:as user-data
+                      event-id :event-id}]]
+     (update coll event-id assoc user-id user-data))
+   {} user-map))

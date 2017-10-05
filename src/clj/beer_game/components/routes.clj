@@ -17,7 +17,7 @@
    (POST config/websocket-endpoint req (ring-ajax-post                req))
    ;; Default index.html endpoint
    (GET "/" [] (resource-response "index.html" {:root config/public-root}))
-   ;; Other resources (css, js, img)
+   (resources "/public")  ;; Other resources (css, js, img)
    (resources "/")))
 
 (defrecord RoutesComponent [websocket]

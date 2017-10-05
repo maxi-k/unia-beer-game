@@ -10,6 +10,8 @@
     :auth/login-success  (rf/dispatch [:auth/login-success data])
     :auth/logout-success (rf/dispatch [:auth/logout-success])
     :auth/unauthorized   (rf/dispatch [:auth/unauthorized])
+    :event/created       (rf/dispatch [:event/created data])
+    :event/list          (rf/dispatch [:event/list data])
     :system/connection   (rf/dispatch [:system/connection data])
     :testing/echo        (rf/dispatch [:test :ws-echo data])
     :chsk/ws-ping        (rf/dispatch [:server/ping])

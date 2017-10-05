@@ -48,5 +48,10 @@
 
 (rf/reg-sub
  :test
- (fn [db _]
+ (fn [db]
    (get-in db [:test])))
+
+(rf/reg-sub
+ :events
+ (fn [db]
+   (get-in db [:events])))

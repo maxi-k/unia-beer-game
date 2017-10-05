@@ -1,15 +1,15 @@
 (ns beer-game.handlers.game)
 
-(defmulti handle-msg
+(defmulti handle-game-msg
   "Dispatches on all game events."
   :internal-id)
 
-(defmethod handle-msg
+(defmethod handle-game-msg
   :next-round
   [{:as msg}]
   {:type :broadcast
    :message [:game/next-round]})
 
-(defmethod handle-msg :default
+(defmethod handle-game-msg :default
   [msg]
   {:type ::unhandled})

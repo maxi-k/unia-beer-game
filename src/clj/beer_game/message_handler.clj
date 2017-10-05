@@ -6,6 +6,7 @@
              [store :as store]
              [util :as util]]
             [beer-game.handlers
+             [events :as events-handler]
              [auth :as auth]
              [game :as game-handler]
              [system :as system-handler]]))
@@ -27,7 +28,7 @@
     "Sends given `message` to all connected uids.
     If a second argument is given, broadcasts it only to those listed in `uids`."
     ([message] (broadcast message (:any @connected-uids)))
-    ([message uids] (doseq [uid uids] (send! uid message))))
+    ([message uids] (doseq [uid uids] (println uid) (send! uid message))))
 
   (defn msg->inbox
     "Converts an incoming channel message to an 'inbox-message',
@@ -42,8 +43,9 @@
     [{:keys [uid ?reply-fn] :as ev-msg}
      {:keys [type message internal-id] :as internal-msg}]
     (condp = type
-      :reply (send! (or (:uid internal-msg) uid) message)
-      :reply-fn ((?reply-fn ev-msg) message)
+      :reply (if (:?reply-fn ev-msg)
+               ((?reply-fn ev-msg) message)
+               (send! (or (:uid internal-msg) uid) message))
       :user (broadcast message (store/user-id->client-id (or (:uid internal-msg)
                                                              internal-id)))
       :broadcast (broadcast message (or (:uids internal-msg)
@@ -51,6 +53,14 @@
       :noop "Don't reply to anyone."
       (println "Unhandled internal message: " internal-id
                " from incoming message: " (:id ev-msg))))
+
+  (defn with-auth
+    "Only executes send-fn with the message as argument if
+  user is logged in. Sends an unauthorized message otherwide."
+    [msg send-fn]
+    (if (auth/logged-in? (:client-id msg))
+      (send-fn msg)
+      (send! (:client-id msg) [:auth/unauthorized])))
 
 
   ;;; MESSAGE HANDLING
@@ -72,14 +82,25 @@
   ;; Handles all game messages
   ;; Secure channel (user has to be logged in)
   (defmethod event :game
-    [{:keys [client-id] :as ev-msg}]
-    (if (auth/logged-in? client-id)
-      (outbox!
-       ev-msg
-       (-> ev-msg
-           msg->inbox
-           game-handler/handle-msg))
-      (send! client-id [:auth/unauthorized])))
+    [ev-msg]
+    (with-auth
+      ev-msg
+      (fn [msg]
+        (outbox!
+         msg
+         (-> msg
+             msg->inbox
+             game-handler/handle-game-msg)))))
+
+  (defmethod event :event
+    [ev-msg]
+    (with-auth
+      ev-msg
+      (fn [msg]
+        (outbox! msg
+                 (-> msg
+                     msg->inbox
+                     events-handler/handle-event-msg)))))
 
   ;; Handles all system messages (chsk)
   (defmethod event :chsk

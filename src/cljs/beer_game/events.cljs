@@ -12,6 +12,16 @@
  (fn [val]
    (client/send! val)))
 
+;; fx-handler for an authorized websocket message
+(rf/reg-fx
+ :ws-auth
+ (fn [[user-data [msg-type msg-data]]]
+   (let [msg-data+auth (merge
+                        (select-keys user-data [:user/id :user/realm :user/role
+                                                :event/id])
+                        msg-data)]
+     (client/send! [msg-type msg-data+auth]))))
+
 (rf/reg-event-db
  :initialize-db
  (fn  [_ _]
@@ -97,3 +107,24 @@
  (fn [db [_ data]]
    (update db :user merge {:auth-failure true
                            :auth-failure-reason data})))
+
+
+(rf/reg-event-fx
+ :event/fetch
+ (fn [{:keys [db]} [_ data]]
+   {:ws-auth [(:user db) [:event/fetch data]]}))
+
+(rf/reg-event-fx
+ :event/create
+ (fn [{:keys [db]} [_ data]]
+   {:ws-auth [(:user db) [:event/create data]]}))
+
+(rf/reg-event-db
+ :event/created
+ (fn [db [_ data]]
+   (update db :events assoc (:event/id data) data)))
+
+(rf/reg-event-db
+ :event/list
+ (fn [db [_ data]]
+   (assoc db :events data)))
