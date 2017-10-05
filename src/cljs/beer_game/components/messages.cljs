@@ -3,11 +3,20 @@
             [soda-ash.core :as sa]
             [beer-game.util :as util]))
 
+(defn no-login-system-msg
+  [cause]
+  {:message/icon "exclamation triangle"
+   :message/title "Du wurdest abgemeldet."
+   :message/content [:p "Grund dafür kann ein Neustart des Servers oder Datenverlust des Clients sein."
+                     [:br] "Technische Informationen:"
+                     [:br] cause]})
+
 (defn no-permission-system-msg
   [content]
   {:message/icon "exclamation triangle"
    :message/title "Keine Berechtigung."
    :message/content [:p "Aktion konnte aufgrund mangelnder Berechtigungen nicht ausgeführt werden."
+                     [:br]
                      content]
    :message/time 5000})
 

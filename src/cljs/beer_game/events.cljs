@@ -24,6 +24,12 @@
      (client/send! [msg-type msg-data+auth]))))
 
 (rf/reg-fx
+ :dispatch-multiple
+ (fn [events]
+   (doseq [event events]
+     (rf/dispatch event))))
+
+(rf/reg-fx
  :timed-dispatch
  (fn [[time msg]]
    (.setTimeout js/window
@@ -95,7 +101,10 @@
 (rf/reg-event-fx
  :auth/unauthorized
  (fn [w [_ data]]
-   {:dispatch [:message/add (messages/no-permission-system-msg (str data))]}))
+   (if (contains? data :auth/no-login)
+     {:dispatch-multiple [[:message/add (messages/no-login-system-msg (str data))]
+                          [:auth/logout false]]}
+     {:dispatch [:message/add (messages/no-permission-system-msg (str data))]})))
 
 (rf/reg-event-fx
  :auth/logout
@@ -112,8 +121,10 @@
 
 (rf/reg-event-fx
  :auth/login
- (fn [_ [_ realm key]]
-   {:ws [:auth/login {:user/realm realm :auth/key key}]}))
+ (fn [_ [_ realm {:keys [:auth/key :event/id]}]]
+   {:ws [:auth/login {:user/realm realm
+                      :auth/key key
+                      :event/id id}]}))
 
 (rf/reg-event-db
  :auth/login-success

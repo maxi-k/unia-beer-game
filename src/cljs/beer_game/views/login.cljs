@@ -22,16 +22,20 @@
    config/user-roles))
 
 (defn login-user-pane []
-  (let [pw (ra/atom :empty)]
+  (let [data (ra/atom {:event/id ""
+                       :auth/key ""})]
     (fn []
       [sa/Form
+       [sa/FormInput {:label "Event ID"
+                      :placeholder "Die Event ID wird vom Spielleiter bekannt gegeben"
+                      :value (:event/id @data)
+                      :on-change #(swap! data assoc :event/id (.-value %2))}]
        [sa/FormSelect {:label "Rolle"
                        :placeholder "Rolle auswählen"
-                       :value @pw
+                       :value (:auth/key @data)
                        :options user-options
-                       :on-change #(reset! pw (.-value %2))}]
-       [sa/FormField {:control (login-button (fn []
-                                               (rf/dispatch [:auth/login :realm/player (keyword @pw)])))}]])))
+                       :on-change #(swap! data assoc :auth/key (.-value %2))}]
+       [sa/FormField {:control (login-button #(rf/dispatch [:auth/login :realm/player @data]))}]])))
 
 (defn login-leader-pane []
   (let [pw (ra/atom "")]
@@ -42,8 +46,7 @@
                       :type :password
                       :value @pw
                       :on-change #(reset! pw (.. % -target -value))}]
-       [sa/FormField {:control (login-button (fn []
-                                               (rf/dispatch [:auth/login :realm/leader @pw])))}]])))
+       [sa/FormField {:control (login-button #(rf/dispatch [:auth/login :realm/leader {:auth/key @pw}]))}]])))
 
 (defn wrap-tab-pane [options child]
   (fn []
