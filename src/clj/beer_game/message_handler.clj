@@ -1,7 +1,5 @@
 (ns beer-game.message-handler
-  (:require [clojure.data :refer [diff]]
-            ;; Server Adapter for websockets
-            [beer-game
+  (:require [beer-game
              [config :as config]
              [store :as store]
              [util :as util]]
