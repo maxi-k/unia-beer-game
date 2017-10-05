@@ -9,8 +9,9 @@
                  [org.clojure/tools.nrepl     "0.2.12" :scope "test"]
                  [adzerk/boot-cljs            "2.1.4"  :scope "test"]
                  [adzerk/boot-reload          "0.5.2"  :scope "test"]
-                 [deraen/boot-less            "0.6.2"  :scope "test"]
+                 [adzerk/boot-cljs-repl       "0.3.3"  :scope "test"]
                  [com.cemerick/piggieback     "0.2.2"  :scope "test"]
+                 [weasel                      "0.7.0"  :scope "test"]
                  [reloaded.repl               "0.2.3"  :scope "test"]
                  [binaryage/devtools          "0.9.4"  :scope "test"]
                  ;; Other development dependencies
@@ -31,19 +32,19 @@
                  [soda-ash "0.4.0"]])
 
 (require
- '[adzerk.boot-cljs   :refer [cljs]]
- '[adzerk.boot-reload :refer [reload]]
- '[deraen.boot-less   :refer [less]]
- '[system.boot        :refer [system run]]
- '[beer-game.server   :refer [server-system]])
+ '[clojure.java.io       :as io]
+ '[adzerk.boot-cljs      :refer [cljs]]
+ '[adzerk.boot-cljs-repl :refer [cljs-repl start-repl repl-env]]
+ '[adzerk.boot-reload    :refer [reload]]
+ '[system.boot           :refer [system run]]
+ '[beer-game.server      :refer [server-system]])
 
 (task-options!
  pom {:project 'beer-game
       :version "0.1.0"}
  jar {:manifest {"author" "Maximilian Kuschewski"}
       :main 'beer-game.server}
- aot {:namespace #{'beer-game.server}}
- less {:source-map true})
+ aot {:namespace #{'beer-game.server}})
 
 (deftask dev-env
   "Sets the environment variables and paths for the development environment."
@@ -59,24 +60,47 @@
   (set-env! :source-paths #(conj % "environments/prod"))
   identity)
 
+(deftask less-js
+  "Compiles the less files using lessc,
+  because boot-less / less4j can't seem to handle compiling Semantic-UI.
+  (GC Overflow error)."
+  [i  input   str "The input file path"
+   o  output  str "The output file path"]
+  (let [todir (tmp-dir!)]
+    (with-pre-wrap fileset
+      (println "Compiling Less...")
+      (empty-dir! todir)
+      (let [candidates (input-files fileset)
+            in-file (first (by-path [input] candidates))
+            tmp-in (tmp-file in-file)
+            tmp-out (io/file todir output)]
+        (dosh "lessc" (.getPath tmp-in) (.getPath tmp-out)
+              "--clean-css" "--s1 --advanced --compatibility=ie8")
+        (-> fileset
+            (add-resource todir)
+            commit!)))))
+
 (deftask dev
   "Start a repl for development with auto-watching etc..."
   []
   (comp
    (dev-env)
    (watch :verbose true)
+   (less-js :input "site.less"
+            :output "public/css/site.css")
    (system :sys #'server-system :auto true)
    (reload :on-jsload 'beer-game.core/mount-root)
-   (less)
+   (repl :server true)
    (cljs :source-map true
          :optimizations :none)
-   (repl :server true)))
+   (speak)))
 
 (deftask package
   []
   (comp
    (prod-env)
-   (less :compression true)
+   (less-js :input "site.less"
+            :output "public/css/site.css")
    (cljs :optimizations :advanced
          :compiler-options {:pretty-print false
                             :preloads nil})
@@ -85,4 +109,5 @@
    (uber)
    (jar :file "beer-game.jar")
    (sift :include #{#".*\.jar"})
-   (target)))
+   (target)
+   (speak)))
