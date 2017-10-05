@@ -66,16 +66,22 @@
   (GC Overflow error)."
   [i  input   str "The input file path"
    o  output  str "The output file path"]
-  (let [todir (tmp-dir!)]
+  (let [todir (tmp-dir!)
+        prev (atom nil)]
     (with-pre-wrap fileset
-      (println "Compiling Less...")
-      (empty-dir! todir)
-      (let [candidates (input-files fileset)
+      (let [candidates (->> fileset
+                           input-files
+                           (by-ext [".less" ".config" ".overrides"]))
+            changed-files (fileset-diff @prev candidates)
             in-file (first (by-path [input] candidates))
             tmp-in (tmp-file in-file)
             tmp-out (io/file todir output)]
-        (dosh "lessc" (.getPath tmp-in) (.getPath tmp-out)
-              "--clean-css" "--s1 --advanced --compatibility=ie8")
+        (when (seq changed-files)
+          (empty-dir! todir)
+          (println "Compiling Less...")
+          (dosh "lessc" (.getPath tmp-in) (.getPath tmp-out)
+                "--clean-css" "--s1 --advanced --compatibility=ie8"))
+        (reset! prev candidates)
         (-> fileset
             (add-resource todir)
             commit!)))))
@@ -86,28 +92,30 @@
   (comp
    (dev-env)
    (watch :verbose true)
-   (less-js :input "site.less"
-            :output "public/css/site.css")
    (system :sys #'server-system :auto true)
    (reload :on-jsload 'beer-game.core/mount-root)
    (repl :server true)
    (cljs :source-map true
          :optimizations :none)
-   (speak)))
+   (less-js :input "site.less"
+            :output "public/css/site.css")
+   (notify :visible true
+           :audible false)))
 
 (deftask package
   []
   (comp
    (prod-env)
-   (less-js :input "site.less"
-            :output "public/css/site.css")
    (cljs :optimizations :advanced
          :compiler-options {:pretty-print false
                             :preloads nil})
+   (less-js :input "site.less"
+            :output "public/css/site.css")
    (aot)
    (pom)
    (uber)
    (jar :file "beer-game.jar")
    (sift :include #{#".*\.jar"})
    (target)
-   (speak)))
+   (notify :audible true
+           :visible true)))
