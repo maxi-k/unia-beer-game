@@ -49,7 +49,8 @@
   []
   (let [theme (rf/subscribe [:client/theme])]
     (fn []
-      [sa/Menu {:inverted (= :dark @theme)
+      [sa/Menu {:class-name "themeable"
+                :inverted (= :dark @theme)
                 :size :huge}
        [sa/MenuItem {:header true
                      :icon "users"
@@ -66,7 +67,8 @@
   (let [events (rf/subscribe [:events])
         theme (rf/subscribe [:client/theme])]
     (fn []
-      [sa/Table {:inverted (= :dark @theme)
+      [sa/Table {:class-name "themeable"
+                 :inverted (= :dark @theme)
                  :selectable true
                  :size "large"}
        [sa/TableHeader
