@@ -29,11 +29,11 @@
                 :on-click action
                 :position "right"}])
 
-(defn role-string [{:keys [realm uid]}]
-  (let [uid-title (get-in config/user-ids [(keyword uid) :title] "Keine Rolle")]
+(defn role-string [{:keys [:user/realm :user/role]}]
+  (let [role-title (get-in config/user-roles [(keyword role) :title] "Keine Rolle")]
     (if (= config/leader-realm (keyword realm))
-      (str uid-title " (" (str (get-in config/realms [realm :title]) ")"))
-      uid-title)))
+      (str role-title " (" (str (get-in config/realms [realm :title]) ")"))
+      role-title)))
 
 (defn app-menu [links active-item]
   (let [color (rf/subscribe [:client/theme])
@@ -50,7 +50,11 @@
       :size "huge"
       :width "thin"}
      [:div.top-content
-      [sa/MenuItem {:key "header" :header true} @title]
+      [sa/MenuItem {:key "header" :header true}
+       [:p @title
+        [:br]
+        (if-let [event-name (get-in @user [:event/data :event/name])]
+          [:span "(" event-name ")"])]]
       [sa/MenuItem {:key "player-info"}
        [sa/Icon {:name "user"}]
        [:p "Meine Rolle:" [:br]

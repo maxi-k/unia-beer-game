@@ -6,7 +6,7 @@
             [beer-game.subs]   ;; Initialize re-frame subs
             [beer-game.listeners :as listeners]
             [beer-game.routes :as routes]
-            [beer-game.views :as views]
+            [beer-game.view :as view]
             [beer-game.client :as client]
             [beer-game.config :as config]))
 
@@ -19,7 +19,7 @@
 
 (defn mount-root []
   (re-frame/clear-subscription-cache!)
-  (reagent/render [views/main-panel]
+  (reagent/render [view/main-panel]
                   (.getElementById js/document "app")))
 
 (defn ^:export init []

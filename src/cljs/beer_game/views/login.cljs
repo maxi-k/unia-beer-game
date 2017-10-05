@@ -3,6 +3,7 @@
             [soda-ash.core :as sa]
             [reagent.core :as ra]
             [beer-game.client-util :as util]
+            [beer-game.util :refer [keyword->string]]
             [beer-game.config :as config]))
 
 (defn login-button
@@ -15,21 +16,26 @@
 
 (def user-options
   (map
-   (fn [[k v]]
-     {:key k :value k :text (:title v)})
-   config/user-ids))
+   (fn [[key value]]
+     (let [k (keyword->string key)]
+       {:key k :value k :text (:title value)}))
+   config/user-roles))
 
 (defn login-user-pane []
-  (let [pw (ra/atom "")]
+  (let [data (ra/atom {:event/id ""
+                       :auth/key ""})]
     (fn []
       [sa/Form
+       [sa/FormInput {:label "Event ID"
+                      :placeholder "Die Event ID wird vom Spielleiter bekannt gegeben"
+                      :value (:event/id @data)
+                      :on-change #(swap! data assoc :event/id (.-value %2))}]
        [sa/FormSelect {:label "Rolle"
-                       :placeholder "Rolle"
-                       :value @pw
+                       :placeholder "Rolle auswählen"
+                       :value (:auth/key @data)
                        :options user-options
-                       :on-change #(reset! pw (.-value %2))}]
-       [sa/FormField {:control (login-button (fn []
-                                               (rf/dispatch [:auth/login :player @pw])))}]])))
+                       :on-change #(swap! data assoc :auth/key (.-value %2))}]
+       [sa/FormField {:control (login-button #(rf/dispatch [:auth/login :realm/player @data]))}]])))
 
 (defn login-leader-pane []
   (let [pw (ra/atom "")]
@@ -40,8 +46,7 @@
                       :type :password
                       :value @pw
                       :on-change #(reset! pw (.. % -target -value))}]
-       [sa/FormField {:control (login-button (fn []
-                                               (rf/dispatch [:auth/login :leader @pw])))}]])))
+       [sa/FormField {:control (login-button #(rf/dispatch [:auth/login :realm/leader {:auth/key @pw}]))}]])))
 
 (defn wrap-tab-pane [options child]
   (fn []

@@ -43,8 +43,22 @@
   (let [res (native-component component)]
     (fn [] res)))
 
+
+
+(defn with-options-raw
+  "Returns the given component with option-map merged,
+  without wrapping it in a function."
+  [options [name own-options children]]
+  [name (merge own-options options) children])
+
+
 (defn with-options
   "Returns the given component with the given option map merged."
   [options component]
   (fn [own-options & children]
     [component (merge own-options options) children]))
+
+(defn gen-event-id
+  "Generates a random event id."
+  []
+  (subs (str (random-uuid)) 0 4))

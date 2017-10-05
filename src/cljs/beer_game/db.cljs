@@ -7,4 +7,6 @@
             :connected false}
    :test {}
    :user {:auth false}
+   :messages {}
+   :events {}
    :game {}})

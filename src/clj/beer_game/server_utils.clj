@@ -9,3 +9,5 @@
       io/resource
       slurp
       read-string))
+
+(defn uuid [] (str (java.util.UUID/randomUUID)))

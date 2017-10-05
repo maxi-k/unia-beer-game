@@ -23,5 +23,6 @@
     (defroute "/"           [] (set-panel :overview-panel))
     (defroute "/overview"   [] (set-panel :overview-panel))
     (defroute "/statistics" [] (set-panel :statistics-panel))
+    (defroute "/events"     [] (set-panel :events-panel))
     ;; -----------------------------
     (hook-browser-navigation!)))

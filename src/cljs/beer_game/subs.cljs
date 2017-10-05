@@ -47,6 +47,16 @@
    (:connected client)))
 
 (rf/reg-sub
+ :messages
+ (fn [db]
+   (:messages db)))
+
+(rf/reg-sub
  :test
- (fn [db _]
+ (fn [db]
    (get-in db [:test])))
+
+(rf/reg-sub
+ :events
+ (fn [db]
+   (get-in db [:events])))
