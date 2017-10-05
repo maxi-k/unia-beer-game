@@ -28,6 +28,7 @@
                  [reagent "0.7.0"]
                  [re-frame "0.10.1"]
                  [re-frisk "0.4.5"]
+                 [reanimated "0.5.3"]
                  [secretary "1.2.3"]
                  [soda-ash "0.4.0"]])
 

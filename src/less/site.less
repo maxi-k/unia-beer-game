@@ -37,6 +37,17 @@
     border-radius: 0px !important;
 }
 
+.transition-item-enter { opacity: 0.01; }
+.transition-item-enter.transition-item-enter-active {
+    opacity: 1;
+    .transition(opacity 500ms ease-in);
+}
+.transition-item-leave { opacity: 1; }
+.transition-item-leave.transition-item-leave-active {
+    opacity: 0.01;
+    .transition(opacity 300ms ease-in);
+}
+
 .system-message-tray {
     position: absolute !important;
     bottom: 1rem;
@@ -46,7 +57,14 @@
         .shadowed !important;
         z-index: 1000;
     }
+
+    &>.messages {
+        padding-bottom: 1rem;
+    }
 }
+
+.right-floated { float: right; }
+.left-floated { float: left; }
 
 #app-wrapper {
     height: 100%;
