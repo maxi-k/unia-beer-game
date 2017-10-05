@@ -5,12 +5,14 @@
             [soda-ash.core :as sa]
             [beer-game.components.sidebar :refer [app-menu sidebar-width]]
             [beer-game.components.messages :as msgs]
+            [beer-game.components.animation :as anim]
             [beer-game.config :as config]
             [beer-game.views.overview :as overview]
             [beer-game.views.statistics :as statistics]
             [beer-game.views.events :as events-view]
             [beer-game.views.login :as login]
-            ))
+            [re-frame.core :as rf]
+            [reagent.core :as ra]))
 
 (defn user->panels
   [{:as user-data :keys [:user/realm]}]
@@ -54,19 +56,39 @@
                                 :size :large} options) %))
    util/native-component))
 
-(defn connection-state [connected?]
-  (if connected?
-    [sa/Popup {:content "Mit dem Server verbunden."
-               :hoverable true
-               :trigger (connection-widget :green "podcast" {})}]
-    [sa/Popup {:trigger (connection-widget :red "exclamation"
-                                           {:class-name "attention"})
-               :hoverable true}
-     [sa/PopupHeader "Keine Verbindung zum Server."]
-     [sa/PopupContent
-      "Es kann im Moment keine Verbindung zum Beer-Game Server hergestellt werden."
-      [:br]
-      [:strong "Lass es am Besten den Spielleiter wissen!"]]]))
+(defn connection-state []
+  (let [connected? (re-frame/subscribe [:client/connected])]
+    (fn []
+      (if @connected?
+        [sa/Popup {:content "Mit dem Server verbunden."
+                   :hoverable true
+                   :trigger (connection-widget :green "podcast" {})}]
+        [sa/Popup {:trigger (connection-widget :red "exclamation"
+                                               {:class-name "attention"})
+                   :hoverable true}
+         [sa/PopupHeader "Keine Verbindung zum Server."]
+         [sa/PopupContent
+          "Es kann im Moment keine Verbindung zum Beer-Game Server hergestellt werden."
+          [:br]
+          [:strong "Lass es am Besten den Spielleiter wissen!"]]]))))
+
+(defn messages
+  []
+  (let [msgs (re-frame/subscribe [:messages])]
+    (fn []
+      (anim/transition-group
+       {:class "messages"}
+       (for [[msg-id msg] @msgs
+             :let [{:keys [:message/title
+                           :message/content
+                           :message/icon]} msg]]
+         [sa/Message {:key msg-id
+                      :header title
+                      :content (if (vector? content)
+                                 (ra/as-element content)
+                                 (str content))
+                      :icon icon
+                      :onDismiss #(rf/dispatch [:message/remove msg-id])}])))))
 
 (defn app-wrapper [& children]
   (let [window-size (re-frame/subscribe [:client/window])]
@@ -76,7 +98,6 @@
 (defn main-panel []
   (let [active-panel (re-frame/subscribe [:active-panel])
         window-size (re-frame/subscribe [:client/window])
-        connection (re-frame/subscribe [:client/connected])
         user-data (re-frame/subscribe [:user])]
     (fn []
       (let [panels (user->panels @user-data)]
@@ -91,4 +112,6 @@
               [show-panel panels @active-panel @user-data]]]]
            [login/login-view])
          [:div.system-message-tray
-          [connection-state @connection]]]))))
+          [messages]
+          [:div.right-floated
+           [connection-state]]]]))))

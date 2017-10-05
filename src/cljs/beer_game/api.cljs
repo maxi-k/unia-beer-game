@@ -9,7 +9,7 @@
     :auth/login-invalid  (rf/dispatch [:auth/login-invalid data])
     :auth/login-success  (rf/dispatch [:auth/login-success data])
     :auth/logout-success (rf/dispatch [:auth/logout-success])
-    :auth/unauthorized   (rf/dispatch [:auth/unauthorized])
+    :auth/unauthorized   (rf/dispatch [:auth/unauthorized data])
     :event/created       (rf/dispatch [:event/created data])
     :event/list          (rf/dispatch [:event/list data])
     :system/connection   (rf/dispatch [:system/connection data])

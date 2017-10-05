@@ -3,16 +3,12 @@
             [reagent.core :as ra]))
 
 (defn transition-group
-  [{:keys [name enter-time leave-time component class]
-    :or [name "transition-item"
-         enter-time 500
-         leave-time 500
-         component "div"
-         class ""]}
+  [{:keys [name enter-time leave-time component class]}
    children]
   [anim/css-transition-group
-   {:transition-name name
-    :transition-enter-timeout enter-time
-    :transition-leave-timeout leave-time
-    :component (str class " transition-group-wrapper")}
+   {:transition-name (or name "transition-item")
+    :transition-enter-timeout (or enter-time 500)
+    :transition-leave-timeout (or leave-time 500)
+    :component (or component "div")
+    :class (str class " transition-group-wrapper")}
    children])

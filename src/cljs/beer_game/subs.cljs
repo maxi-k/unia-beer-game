@@ -47,6 +47,11 @@
    (:connected client)))
 
 (rf/reg-sub
+ :messages
+ (fn [db]
+   (:messages db)))
+
+(rf/reg-sub
  :test
  (fn [db]
    (get-in db [:test])))

@@ -2,7 +2,8 @@
   (:require [re-frame.core :as rf]
             [beer-game.db :as db]
             [beer-game.util :as util]
-            [beer-game.client :as client]))
+            [beer-game.client :as client]
+            [beer-game.components.messages :as messages]))
 
 
 ;; Register a fx-handler for sending websocket stuff
@@ -21,6 +22,13 @@
                                                 :event/id])
                         msg-data)]
      (client/send! [msg-type msg-data+auth]))))
+
+(rf/reg-fx
+ :timed-dispatch
+ (fn [[time msg]]
+   (.setTimeout js/window
+                (fn [] (rf/dispatch msg))
+                time)))
 
 (rf/reg-event-db
  :initialize-db
@@ -49,6 +57,23 @@
  (fn [db [_ key data]]
    (assoc-in db [:test key] data)))
 
+(rf/reg-event-fx
+ :message/add
+ (fn [{:keys [db]} [_ message]]
+   (let [msg-id (str (random-uuid))
+         other-params
+         (if-let [timeout (:message/time message)]
+           {:timed-dispatch [timeout [:message/remove msg-id]]}
+           {})]
+     (merge
+      {:db (assoc-in db [:messages msg-id] message)}
+      other-params))))
+
+(rf/reg-event-db
+ :message/remove
+ (fn [db [_ id]]
+   (update db :messages dissoc id)))
+
 ;;
 ;; Server Events
 ;;
@@ -69,8 +94,8 @@
 
 (rf/reg-event-fx
  :auth/unauthorized
- (fn [w [_]]
-   {:dispatch [:auth/logout false]}))
+ (fn [w [_ data]]
+   {:dispatch [:message/add (messages/no-permission-system-msg (str data))]}))
 
 (rf/reg-event-fx
  :auth/logout
@@ -122,7 +147,9 @@
 (rf/reg-event-db
  :event/created
  (fn [db [_ data]]
-   (update db :events assoc (:event/id data) data)))
+   (if (:created data)
+     (update db :events assoc (:event/id data) data)
+     db)))
 
 (rf/reg-event-db
  :event/list

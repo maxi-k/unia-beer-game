@@ -20,14 +20,39 @@
   {:pre (keyword? kw)}
   (keyword (name kw)))
 
+
+#?(:clj
+   (defn qualified-keyword?
+     "Returns true if given keyword is a qualified keyword (with namespace)."
+     [kw]
+     (if (re-find #"/" (str kw)) true false)))
+
+#?(:clj
+   (def simple-keyword?
+     "Returns true if given keyword is a simple keyword (without namespace)."
+     (comp not qualified-keyword?)))
+
 (defn keyword->string
   "Turns a (qualified) keyword into a string,
   which can be turned into an equal keyword again with `clojure.core/keyword`"
   [kw]
   {:pre (keyword? kw)}
-  (if (re-find #"/" (str kw))
+  (if (qualified-keyword? kw)
     (str (namespace kw) "/" (name kw))
     (name kw)))
+
+(defn map->nsmap
+  "Takes a map `m` and a namespace `n` and
+  prefixes every simple keyword key in that map
+  with given namespace."
+  [m n]
+  (reduce-kv (fn [acc k v]
+               (let [new-kw (if (and (keyword? k)
+                                     (not (qualified-keyword? k)))
+                              (keyword (str n) (name k))
+                              k) ]
+                 (assoc acc new-kw v)))
+             {} m))
 
 (defn users-by-event
   "Takes a map from user-id to user-data and reorders it to
