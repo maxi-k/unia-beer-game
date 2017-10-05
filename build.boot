@@ -64,8 +64,8 @@
   "Compiles the less files using lessc,
   because boot-less / less4j can't seem to handle compiling Semantic-UI.
   (GC Overflow error)."
-  [i  input   str "The input file path"
-   o  output  str "The output file path"]
+  [i  input   INPUT_FILE  str "The input file path"
+   o  output  OUTPUT_FILE str "The output file path"]
   (let [todir (tmp-dir!)
         prev (atom nil)]
     (with-pre-wrap fileset
@@ -99,7 +99,7 @@
          :optimizations :none)
    (less-js :input "site.less"
             :output "public/css/site.css")
-   (notify :visible true
+   (notify :visual true
            :audible false)))
 
 (deftask package
@@ -118,4 +118,4 @@
    (sift :include #{#".*\.jar"})
    (target)
    (notify :audible true
-           :visible true)))
+           :visual true)))
