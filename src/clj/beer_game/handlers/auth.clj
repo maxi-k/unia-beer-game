@@ -7,6 +7,17 @@
   "Returns nil if given client-id is not logged in."
   store/client-id->user-id)
 
+(defn enrich-user
+  "Enrich the user model with more information to be given back to the client."
+  [user-id data]
+  (let [{event-id :event/id :as store-data} (store/user-id->user-data user-id)
+        event-data (if (store/single-event? event-id)
+                     (store/events event-id)
+                     nil)]
+    (-> data
+        (merge store-data)
+        (assoc :event/data event-data))))
+
 (defn auth-leader
   "Tries to authenticate the given client-id with given password in the leader realm."
   [client-id key]
@@ -16,19 +27,21 @@
                 :event/id :event/all
                 :client/id client-id}
           user-id (store/auth-user! data)]
-      [:auth/login-success (assoc data :user/id user-id)])
+      [:auth/login-success (enrich-user user-id data)])
     [:auth/login-invalid {:auth/key key}]))
 
 (defn auth-player
   "Tries to authenticate the given client-id in the player realm."
   [client-id event-id key]
   (if (contains? config/allowed-user-roles key)
-    (let [data {:user/role key
-                :user/realm config/player-realm
-                :event/id event-id
-                :client/id client-id}
-          user-id (store/auth-user! data)]
-      [:auth/login-success (assoc data :user/id user-id)])
+    (if (store/events event-id)
+        (let [data {:user/role key
+                    :user/realm config/player-realm
+                    :event/id event-id
+                    :client/id client-id}
+              user-id (store/auth-user! data)]
+          [:auth/login-success (enrich-user user-id data)])
+      [:auth/login-invalid {:event/id event-id}])
     [:auth/login-invalid {:auth/key key}]))
 
 (defn authenticate!

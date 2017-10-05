@@ -2,6 +2,13 @@
   (:require [beer-game.store :as store]
             [beer-game.config :as config]))
 
+(defn- enrich-event
+  "Enrich given event-data for the client."
+  [data]
+  (let [users (-> data :event/id store/event->users vals)]
+    (-> data
+        (assoc :user/list users))))
+
 (defn- with-auth
   [msg reply-fn]
   (let [{:as user-data :keys [:user/realm]} (store/message->user-data msg)]
@@ -24,9 +31,11 @@
     ev-msg
     (fn [msg]
       (let [events (get-in msg [:?data :event/id] :all)]
-        (println events)
         {:type :reply
-         :message [:event/list (store/events events)]}))))
+         :message [:event/list (reduce (fn [coll [id data]]
+                                         (assoc coll id (enrich-event data)))
+                                       {}
+                                       (store/events events))]}))))
 
 (defmethod handle-event-msg
   :create
@@ -41,4 +50,4 @@
          :uids (store/user-data->client-id
                 (fn [[user-id {:keys [:user/realm]}]]
                   (= realm config/leader-realm)))
-         :message [:event/created result-data]}))))
+         :message [:event/created (enrich-event result-data)]}))))

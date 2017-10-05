@@ -50,7 +50,11 @@
       :size "huge"
       :width "thin"}
      [:div.top-content
-      [sa/MenuItem {:key "header" :header true} @title]
+      [sa/MenuItem {:key "header" :header true}
+       [:p @title
+        [:br]
+        (if-let [event-name (get-in @user [:event/data :event/name])]
+          [:span "(" event-name ")"])]]
       [sa/MenuItem {:key "player-info"}
        [sa/Icon {:name "user"}]
        [:p "Meine Rolle:" [:br]

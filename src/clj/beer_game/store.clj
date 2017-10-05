@@ -15,6 +15,9 @@
         ;; where :user/data points to a map from {user-id -> user-data}
         :user/data {}
         ;; A map from {event-id -> event-data}
+        ;; where event-data must contains
+        ;; :event/id        :: id of the event (same as map key)
+        ;; :event/name      :: human readable event name
         :event/data {}
         ;; A map from {event-id -> game-data}
         :game/data {}
@@ -72,9 +75,9 @@
   "Given a filter-function on user data, returns all matching client-ids."
   [f]
   (->> f
-      filter-user-data
-      keys
-      (mapcat user-id->client-id)))
+       filter-user-data
+       keys
+       (mapcat user-id->client-id)))
 
 (defn user-data->user-id
   "Takes some user-data-or-fn with at least :event/id and :user/role
@@ -133,7 +136,7 @@
   Returns the associated user-id."
   [{:as data
     :keys [:user/realm :user/role]
-    event-id :event-id
+    event-id :event/id
     client-id :client/id}]
   (let [;; Use given user-id or try to find it using user-data
         user-id (or (:user/id data) (user-data->user-id data))
@@ -144,15 +147,27 @@
                          :event/id event-id})
     user-id))
 
+(defn single-event?
+  "Returns true if given event-id refers to a single event."
+  [id]
+  (not (or (nil? id)
+           (= :event/all id)
+           (= :all id))))
+
 (defn events
   "Returns a list of events stored."
   ([] (get @data-map :event/data))
   ([id]
-   (if (or (nil? id)
-           (= :event/all id)
-           (= :all id))
-     (events)
-     (get-in @data-map [:event/data id]))))
+   (if (single-event? id)
+     (get-in @data-map [:event/data id])
+     (events))))
+
+(defn event->users
+  "Returns a map from user-id -> user-data where the user is part of given event-id"
+  [event-id]
+  (filter-user-data
+   (fn [[user-id user-data]]
+     (= (:event/id user-data) event-id))))
 
 (defn create-event!
   "Creates a new event with given id and given data."
