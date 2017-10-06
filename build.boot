@@ -7,6 +7,7 @@
                  ;; Build dependencies
                  [org.clojure/tools.namespace "0.3.0-alpha4" :scope "test"]
                  [org.clojure/tools.nrepl     "0.2.12" :scope "test"]
+                 [adzerk/boot-test            "1.2.0"  :scope "test"]
                  [adzerk/boot-cljs            "2.1.4"  :scope "test"]
                  [adzerk/boot-reload          "0.5.2"  :scope "test"]
                  [adzerk/boot-cljs-repl       "0.3.3"  :scope "test"]
@@ -35,6 +36,7 @@
 
 (require
  '[clojure.java.io       :as io]
+ '[adzerk.boot-test      :refer [test]]
  '[adzerk.boot-cljs      :refer [cljs]]
  '[adzerk.boot-cljs-repl :refer [cljs-repl start-repl repl-env]]
  '[adzerk.boot-reload    :refer [reload]]
@@ -62,6 +64,8 @@
   (set-env! :source-paths #(conj % "environments/prod"))
   identity)
 
+;; REQUIRES less-js and less-plugin-clean-css
+;; npm install -g less less-plugin-clean-css
 (deftask less-js
   "Compiles the less files using lessc,
   because boot-less / less4j can't seem to handle compiling Semantic-UI.
@@ -87,6 +91,14 @@
         (-> fileset
             (add-resource todir)
             commit!)))))
+
+(deftask auto-test
+  "Run the tests and watch files."
+  []
+  (comp
+   (dev-env)
+   (watch)
+   (test)))
 
 (deftask dev
   "Start a repl for development with auto-watching etc..."
