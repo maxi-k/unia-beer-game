@@ -3,7 +3,8 @@
             [reagent.core :as ra]
             [soda-ash.core :as sa]
             [beer-game.client-util :as cutil]
-            [beer-game.config :as config]))
+            [beer-game.config :as config]
+            [beer-game.components.modals :as modals]))
 
 (defn- create-event-form
   [modal-close-fn]
@@ -30,21 +31,11 @@
 
 (defn- create-event-modal
   [trigger]
-  (let [modal-state (ra/atom false)
-        trigger-el (->> trigger
-                        (cutil/with-options-raw
-                          {:onClick #(reset! modal-state true)})
-                        ra/as-element)]
-    (fn []
-      [sa/Modal {:trigger trigger-el
-                 :dimmer :blurring
-                 :open @modal-state}
-       [sa/Icon {:name "close"
-                 :onClick #(reset! modal-state false)}]
-       [sa/ModalHeader
-        "Neues Event erstellen"]
-       [sa/ModalContent
-        [create-event-form #(reset! modal-state false)]]])))
+  [modals/generic-modal trigger
+                        "Neues Event erstellen"
+                        (fn [modal-state]
+                          [create-event-form #(reset! modal-state false)])
+                        {}])
 
 (defn- event-menu
   []
@@ -63,6 +54,13 @@
                      :on-click #(rf/dispatch [:event/fetch])
                      :icon "refresh"}]])))
 
+(defn- event-actions
+  "Actions buttons for a single event (RUD)."
+  [event]
+  [sa/ButtonGroup {:floated :right}
+   [sa/Button  "Bearbeiten"]
+   [sa/Button {:negative true} "Löschen"]])
+
 (defn- event-list
   []
   (let [events (rf/subscribe [:events])
@@ -76,10 +74,12 @@
         [sa/TableRow
          [sa/TableHeaderCell "Event Name"]
          [sa/TableHeaderCell "Event ID"]
-         [sa/TableHeaderCell "Spieler"]]]
+         [sa/TableHeaderCell "Spieler"]
+         [sa/TableHeaderCell "Aktionen"]]]
        [sa/TableBody
         (for [[_ {:keys [:event/id :event/name]
-                  user-list :user/list}] @events]
+                  user-list :user/list
+                  :as event}] @events]
           [sa/TableRow {:key id}
            [sa/TableCell name]
            [sa/TableCell id]
@@ -90,8 +90,8 @@
              [sa/ListSA {:bulleted true}
               (for [user user-list
                     :let [title (-> user :user/role config/user-role->title)]]
-                [sa/ListItem {:key (:user/role user)} title])]
-             ]]])]])))
+                [sa/ListItem {:key (:user/role user)} title])]]]
+           [sa/TableCell [event-actions event]]])]])))
 
 (defn events-panel
   "Renders the panel for the events view."
