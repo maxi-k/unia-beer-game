@@ -25,12 +25,13 @@
                  [ring "1.5.0"]
                  [ring-middleware-format "0.7.2"]
                  [http-kit "2.2.0"]
-                 [reagent "0.7.0"]
+                 [cljsjs/react-with-addons "15.5.4-0"]
+                 [reagent "0.7.0" :exclusions [cljsjs/react]]
                  [re-frame "0.10.1"]
                  [re-frisk "0.4.5"]
-                 [reanimated "0.5.3"]
+                 [reanimated "0.5.3" :exclusions [cljsjs/react-with-addons]]
                  [secretary "1.2.3"]
-                 [soda-ash "0.4.0"]])
+                 [soda-ash "0.4.0" :exclusions [cljsjs/react]]])
 
 (require
  '[clojure.java.io       :as io]

@@ -90,7 +90,7 @@
              [sa/ListSA {:bulleted true}
               (for [user user-list
                     :let [title (-> user :user/role config/user-role->title)]]
-                [sa/ListItem {:key (:user/id user)} title])]
+                [sa/ListItem {:key (:user/role user)} title])]
              ]]])]])))
 
 (defn events-panel
