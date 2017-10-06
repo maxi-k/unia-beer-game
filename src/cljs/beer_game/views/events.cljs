@@ -57,9 +57,19 @@
 (defn- event-actions
   "Actions buttons for a single event (RUD)."
   [event]
-  [sa/ButtonGroup {:floated :right}
-   [sa/Button  "Bearbeiten"]
-   [sa/Button {:negative true} "Löschen"]])
+  (let [delete-state (ra/atom false)]
+    (fn []
+      [sa/ButtonGroup {:floated :right}
+       [sa/Button  "Bearbeiten"]
+       [sa/Button {:negative true
+                   :on-click #(reset! delete-state true)} "Löschen"]
+       [sa/Confirm {:open @delete-state
+                    :cancel-button "Abbrechen"
+                    :header "Event löschen"
+                    :content "Sicher? Alle Spieler-Sessions in diesem Event werden beendet."
+                    :on-confirm #(do (rf/dispatch [:event/destroy (:event/id event)])
+                                     (reset! delete-state false))
+                    :on-cancel #(reset! delete-state false)}]])))
 
 (defn- event-list
   []
