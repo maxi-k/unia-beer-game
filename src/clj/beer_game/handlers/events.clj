@@ -42,3 +42,24 @@
         {:type :broadcast
          :uids (store/leader-clients)
          :message [:event/created (msgs/enrich-event result-data)]}))))
+
+(defmethod handle-event-msg
+  :destroy
+  [ev-msg]
+  (with-auth
+    ev-msg
+    (fn [{:as msg :keys [?data]}]
+      (if-let [event-id (:event/id ?data)]
+        (let [user-ids (keys (store/event->users))]
+          ;; TODO: Delete event here
+          [{:type :broadcast
+            :uids (store/leader-clients)
+            :message [:event/destroyed {:destroyed true
+                                        :event/id event-id}]}
+           ;; LOG OUT USERS HERE
+           {:type :broadcast
+            :uids user-ids}])
+        {:type :reply
+         :message [:event/destroyed {:destroyed false
+                                     :reason :no-event-id}]}
+        ))))
