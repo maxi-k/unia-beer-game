@@ -45,7 +45,6 @@
       config/player-realm (auth-player client-id event-id (keyword key))
       config/leader-realm (auth-leader client-id key)
       [:auth/login-invalid {:user/realm realm}])}
-
    {:type :broadcast
     :uids (store/leader-clients)
     :message (msgs/event-list :event/all)}])
@@ -53,9 +52,9 @@
 (defn logout!
   "Logs out given client."
   [client-id]
-  (store/remove-client! client-id)
+  (store/logout-client! client-id)
   {:type :reply
-   :message [:auth/logout-success {:client/id client-id}]})
+   :message (msgs/logout-success client-id)})
 
 (defn handle-msg
   "Dispatch method for handling authentication requests."

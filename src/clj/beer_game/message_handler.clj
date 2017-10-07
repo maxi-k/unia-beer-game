@@ -26,7 +26,10 @@
     "Sends given `message` to all connected uids.
     If a second argument is given, broadcasts it only to those listed in `uids`."
     ([message] (broadcast message (:any @connected-uids)))
-    ([message uids] (doseq [uid uids] (send! uid message))))
+    ([message uids]
+     (if (fn? message)
+       (doseq [uid uids] (send! uid (message uid)))
+       (doseq [uid uids] (send! uid message)))))
 
   (defn msg->inbox
     "Converts an incoming channel message to an 'inbox-message',
@@ -62,7 +65,6 @@
     (if (auth/logged-in? (:client-id msg))
       (send-fn msg)
       (send! (:client-id msg) [:auth/unauthorized {:auth/no-login :client-id}])))
-
 
   ;;; MESSAGE HANDLING
 

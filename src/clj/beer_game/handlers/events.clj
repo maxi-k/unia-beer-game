@@ -3,8 +3,6 @@
             [beer-game.config :as config]
             [beer-game.messages :as msgs]))
 
-
-
 (defn- with-auth
   [msg reply-fn]
   (let [{:as user-data :keys [:user/realm]} (store/message->user-data msg)]
@@ -49,17 +47,13 @@
   (with-auth
     ev-msg
     (fn [{:as msg :keys [?data]}]
-      (if-let [event-id (:event/id ?data)]
-        (let [user-ids (keys (store/event->users))]
-          ;; TODO: Delete event here
+      (let [{:keys [clients message]} (store/destroy-event! (:event/id ?data))]
+        (if (:destroyed message)
           [{:type :broadcast
             :uids (store/leader-clients)
-            :message [:event/destroyed {:destroyed true
-                                        :event/id event-id}]}
-           ;; LOG OUT USERS HERE
+            :message [:event/destroyed message]}
            {:type :broadcast
-            :uids user-ids}])
-        {:type :reply
-         :message [:event/destroyed {:destroyed false
-                                     :reason :no-event-id}]}
-        ))))
+            :uids clients
+            :message #(msgs/logout-success %)}]
+          {:type :reply
+           :message [:event/destroyed message]})))))

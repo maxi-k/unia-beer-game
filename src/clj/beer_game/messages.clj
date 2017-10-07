@@ -19,6 +19,10 @@
         (merge store-data)
         (assoc :event/data event-data))))
 
+(defn logout-success
+  [client-id]
+  [:auth/logout-success {:client/id client-id}])
+
 (defn event-list
   [events]
   [:event/list (reduce (fn [coll [id data]]

@@ -101,6 +101,7 @@
    (watch)
    (test)))
 
+
 (deftask dev
   "Start a repl for development with auto-watching etc..."
   []
@@ -115,7 +116,8 @@
    (less-js :input "site.less"
             :output "public/css/site.css")
    (notify :visual true
-           :audible false)))
+           :audible false)
+   (test)))
 
 (deftask package
   []

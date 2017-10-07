@@ -23,13 +23,13 @@
         :game/data {}
         }))
 
-(def #^{:private true} data-map
+(def data-map
   "User model:"
   (create-store))
 
-(if config/development?
-  (add-watch data-map :log
-             (fn [_ _ _ new] (println new))))
+#_(if config/development?
+    (add-watch data-map :log
+               (fn [_ _ _ new] (println new))))
 
 (defn client-id->user-id
   "Converts given client-id to a user-id"
@@ -71,30 +71,43 @@
   (transduce (filter f) conj
              {} (:user/data @data-map)))
 
-(defn user-data->client-id
+(defn event-id-user-role-filter
+  [event-id user-role]
+  (fn [[user-id data]]
+    (and (= event-id  (:event/id  data))
+         (= user-role (:user/role data)))))
+
+(defn user-data-fn->client-id
   "Given a filter-function on user data, returns all matching client-ids."
-  [f]
-  (->> f
+  [filter-fn]
+  (->> filter-fn
        filter-user-data
        keys
-       (mapcat user-id->client-id)))
+       (mapcat user-id->client-id)
+       set))
+
+(defn user-data->client-id
+  "Takes some user-data with at least :event/id and :user/role
+  and tries to find all associated client ids. Returns a set."
+  [user-data]
+  (user-data-fn->client-id
+   (event-id-user-role-filter (:event/id user-data)
+                              (:user/role user-data))))
 
 (defn user-data->user-id
-  "Takes some user-data-or-fn with at least :event/id and :user/role
+  "Takes some user-data with at least :event/id and :user/role
   and tries to find the associated user id.
   Returns a vector [user-id user-data]."
   [{:keys [:user/role]
     event-id :event/id}]
   (first
    (filter-user-data
-    (fn [[user-id data]]
-      (and (= event-id (:event/id data))
-           (= role (:user/role data)))))))
+    (event-id-user-role-filter event-id role))))
 
 (defn leader-clients
   "Returns all client-ids which are associated with leader-users."
   []
-  (user-data->client-id
+  (user-data-fn->client-id
    (fn [[user-id {:keys [:user/realm]}]]
      (= realm config/leader-realm))))
 
@@ -130,11 +143,18 @@
      (alter data-map update-in [:user/data user-id] user-data)
      (alter data-map assoc-in [:user/data user-id] user-data))))
 
-(defn logout-client!
+(def logout-client!
   "Logs out given client."
-  [client-id]
-  (dosync
-   (alter data-map update :clients/authorized dissoc client-id)))
+  remove-client!)
+
+(defn logout-user!
+  "Logs out all clients that are associated with given `user-id`.
+  Returns the list of clients logged out."
+  [user-id]
+  (let [clients (user-id->client-id user-id)]
+    (doseq [client clients]
+      (logout-client! client))
+    clients))
 
 (defn auth-user!
   "Authorizes given user by adding the client-id<->user-id
@@ -157,8 +177,7 @@
 (defn single-event?
   "Returns true if given event-id refers to a single event."
   [id]
-  (not (or (nil? id)
-           (= :event/all id)
+  (not (or (= :event/all id)
            (= :all id))))
 
 (defn events
@@ -179,10 +198,29 @@
 (defn create-event!
   "Creates a new event with given id and given data."
   [{:as event-data :keys [:event/id]}]
-  (if (contains? (events) id)
+  (if (or (nil? id)
+          (contains? (events) id))
     {:created false
-     :reason :event/id}
+     :reason :event/id
+     :data id}
     (do
       (dosync
        (alter data-map assoc-in [:event/data id] event-data))
       (assoc event-data :created true))))
+
+(defn destroy-event!
+  "Destroys given event and logs out all the users associated with it.
+  Returns a map with the key :clients for the list of clients that were logged out,
+  and the key :message with relevant data concerning the deletion."
+  [event-id]
+  (if (nil? event-id)
+    {:clients #{}
+     :message {:destroyed false
+               :reason :event/id
+               :data event-id}}
+    (let [users (event->users event-id)]
+      (dosync
+       (alter data-map update :event/data dissoc event-id)
+       {:clients (mapcat logout-user! users)
+        :message {:destroyed true
+                  :data event-id}}))))
