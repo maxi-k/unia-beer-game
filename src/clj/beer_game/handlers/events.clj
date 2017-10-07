@@ -47,6 +47,7 @@
   (with-auth
     ev-msg
     (fn [{:as msg :keys [?data]}]
+      (println ?data)
       (let [{:keys [clients message]} (store/destroy-event! (:event/id ?data))]
         (if (:destroyed message)
           [{:type :broadcast

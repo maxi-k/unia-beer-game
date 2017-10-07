@@ -67,7 +67,7 @@
                     :cancel-button "Abbrechen"
                     :header "Event löschen"
                     :content "Sicher? Alle Spieler-Sessions in diesem Event werden beendet."
-                    :on-confirm #(do (rf/dispatch [:event/destroy (:event/id event)])
+                    :on-confirm #(do (rf/dispatch [:event/destroy event])
                                      (reset! delete-state false))
                     :on-cancel #(reset! delete-state false)}]])))
 

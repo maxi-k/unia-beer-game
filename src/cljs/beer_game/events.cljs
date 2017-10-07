@@ -169,5 +169,13 @@
 
 (rf/reg-event-fx
  :event/destroy
- (fn [{:keys [db]} [_ {:keys [:event/id]}]]
+ (fn [{:keys [db]} [_ {:keys [:event/id] :as data}]]
+   (println data)
    {:ws-auth [(:user db) [:event/destroy {:event/id id}]]}))
+
+(rf/reg-event-fx
+ :event/destroyed
+ (fn [w [_ {:keys [:event/id :destroyed] :as data}]]
+   (if destroyed
+     {:db (update (:db w) :events dissoc id)}
+     {:dispatch [:message/add (messages/event-not-destroyed-msg (str data))]})))

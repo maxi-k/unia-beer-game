@@ -29,3 +29,12 @@
                        :content reason
                        :warning true}
                       options)]))
+
+(defn event-not-destroyed-msg
+  "A message for 'event could not be deleted' response from server."
+  [reason]
+  {:message/icon "exclamation triangle"
+   :message/title "Event konnte nicht gelöscht werden."
+   :message/content [:p "Das gewählte Event konnte nicht gelöscht werden. Technische Informationen:"
+                     [:br]
+                     reason]})

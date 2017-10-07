@@ -217,10 +217,10 @@
     {:clients #{}
      :message {:destroyed false
                :reason :event/id
-               :data event-id}}
+               :event/id event-id}}
     (let [users (event->users event-id)]
       (dosync
        (alter data-map update :event/data dissoc event-id)
        {:clients (mapcat logout-user! users)
         :message {:destroyed true
-                  :data event-id}}))))
+                  :event/id event-id}}))))
