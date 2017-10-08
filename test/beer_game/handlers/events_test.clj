@@ -42,12 +42,10 @@
              (is (= event-id (:event/id (store/client-id->user-data client-id)))))
            ;; We are now logged in with a player into given event
            (let [{:keys [clients message] :as res} (store/destroy-event! event-id)]
-             (println res)
              (testing "Event was destroyed."
                (is (:destroyed message))
                (is (not (contains? (store/events) event-id))))
              (testing "Players in given event are logged out."
                (is (not (contains? (store/authorized-clients) client-id))))
              (testing "Log-out function returns a list of logged out clients."
-               (println clients)
                (is (contains? clients client-id))))))))))

@@ -1,7 +1,16 @@
 (ns beer-game.components.messages
   (:require [reagent.core :as ra]
             [soda-ash.core :as sa]
+            [beer-game.config :as config]
             [beer-game.util :as util]))
+
+(defn debug-msg
+  "A message for debugging purposes only."
+  [& message]
+  {:message/icon "code"
+   :message/title "Debugging"
+   :message/content [:p (for [msg message] [:p {:key (str msg)} msg
+                                            [:br]])]})
 
 (defn no-login-system-msg
   [cause]
@@ -29,6 +38,14 @@
                        :content reason
                        :warning true}
                       options)]))
+
+(defn logout-forced-msg
+  [data]
+  {:message/icon "question circle"
+   :message/title "Du wurdest vom Server ausgeloggt."
+   :message/content [:p "Grund dafür ist wahrscheinlich, dass der Spielleiter das Event beendet hat." [:br]
+                     (if config/development? data)]
+   :message/time 10000})
 
 (defn event-not-destroyed-msg
   "A message for 'event could not be deleted' response from server."

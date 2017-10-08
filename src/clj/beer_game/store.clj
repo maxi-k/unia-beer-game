@@ -31,6 +31,11 @@
     (add-watch data-map :log
                (fn [_ _ _ new] (println new))))
 
+(defn authorized-clients
+  "Returns the current authorized-clients-map from the store."
+  []
+  (:clients/authorized @data-map))
+
 (defn client-id->user-id
   "Converts given client-id to a user-id"
   [client-id]
@@ -53,9 +58,16 @@
    user-id->user-data
    message->user-id))
 
+(def client-id->user-data
+  (comp
+   user-id->user-data
+   client-id->user-id))
+
 (defn user-id->client-id
   "Converts given user-id to a set of client-ids."
   [user-id]
+  {:pre (string? user-id)
+   :post (set? %)}
   (reduce
    (fn [coll [client-id server-uuid]]
      (if (= server-uuid user-id)
@@ -151,10 +163,12 @@
   "Logs out all clients that are associated with given `user-id`.
   Returns the list of clients logged out."
   [user-id]
-  (let [clients (user-id->client-id user-id)]
-    (doseq [client clients]
-      (logout-client! client))
-    clients))
+  {:pre (string? user-id)
+   :post (set? %)}
+  (dosync
+   (let [clients (user-id->client-id user-id)]
+     (doseq [client clients] (logout-client! client))
+     clients)))
 
 (defn auth-user!
   "Authorizes given user by adding the client-id<->user-id
@@ -202,7 +216,7 @@
           (contains? (events) id))
     {:created false
      :reason :event/id
-     :data id}
+     :event/id id}
     (do
       (dosync
        (alter data-map assoc-in [:event/data id] event-data))
@@ -218,9 +232,11 @@
      :message {:destroyed false
                :reason :event/id
                :event/id event-id}}
-    (let [users (event->users event-id)]
+    (let [users (keys (event->users event-id))
+          clients (ref nil)]
       (dosync
        (alter data-map update :event/data dissoc event-id)
-       {:clients (mapcat logout-user! users)
-        :message {:destroyed true
-                  :event/id event-id}}))))
+       (ref-set clients (set (mapcat logout-user! users))))
+      {:clients @clients
+       :message {:destroyed true
+                 :event/id event-id}})))

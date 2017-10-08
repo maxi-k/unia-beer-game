@@ -120,6 +120,12 @@
    (assoc-in db [:user :logout-success] true)))
 
 (rf/reg-event-fx
+ :auth/logout-forced
+ (fn [w [_ data]]
+   {:dispatch-multiple [[:auth/logout false]
+                        [:message/add (messages/logout-forced-msg data)]]}))
+
+(rf/reg-event-fx
  :auth/login
  (fn [_ [_ realm {:keys [:auth/key :event/id]}]]
    {:ws [:auth/login {:user/realm realm
@@ -170,7 +176,6 @@
 (rf/reg-event-fx
  :event/destroy
  (fn [{:keys [db]} [_ {:keys [:event/id] :as data}]]
-   (println data)
    {:ws-auth [(:user db) [:event/destroy {:event/id id}]]}))
 
 (rf/reg-event-fx

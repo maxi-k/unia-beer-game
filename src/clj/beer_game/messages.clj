@@ -19,6 +19,10 @@
         (merge store-data)
         (assoc :event/data event-data))))
 
+(defn logout-forced
+  [client-id]
+  [:auth/logout-forced {:client/id client-id}])
+
 (defn logout-success
   [client-id]
   [:auth/logout-success {:client/id client-id}])
