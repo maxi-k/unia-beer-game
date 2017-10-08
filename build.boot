@@ -74,9 +74,9 @@
 
 (deftask print-msg
   "Prints given message when run."
-  [msg]
+  [m message MESSAGE str "The message to be printed."]
   (with-pre-wrap fileset
-    (println msg)
+    (println message)
     fileset))
 
 ;; REQUIRES less-js and less-plugin-clean-css
@@ -113,7 +113,7 @@
   (comp
    (test-env)
    (watch)
-   (print-msg "Testing...")
+   (print-msg :message "Testing...")
    (test)))
 
 (deftask dev
