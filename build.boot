@@ -56,6 +56,12 @@
   "Sets the environment variables and paths for the development environment."
   []
   (set-env! :resource-paths #(conj % "environments/dev"))
+  (set-env! :source-paths #(conj % "environments/dev"))
+  identity)
+
+(deftask test-env
+  []
+  (set-env! :resource-paths #(conj % "environments/dev"))
   (set-env! :source-paths #(conj % "test" "environments/dev"))
   identity)
 
@@ -65,6 +71,13 @@
   (set-env! :resource-paths #(conj % "environments/prod"))
   (set-env! :source-paths #(conj % "environments/prod"))
   identity)
+
+(deftask print-msg
+  "Prints given message when run."
+  [msg]
+  (with-pre-wrap fileset
+    (println msg)
+    fileset))
 
 ;; REQUIRES less-js and less-plugin-clean-css
 ;; npm install -g less less-plugin-clean-css
@@ -98,10 +111,10 @@
   "Run the tests and watch files."
   []
   (comp
-   (dev-env)
+   (test-env)
    (watch)
+   (print-msg "Testing...")
    (test)))
-
 
 (deftask dev
   "Start a repl for development with auto-watching etc..."
@@ -117,8 +130,7 @@
    (less-js :input "site.less"
             :output "public/css/site.css")
    (notify :visual true
-           :audible false)
-   (test)))
+           :audible false)))
 
 (deftask package
   []
