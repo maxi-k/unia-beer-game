@@ -54,3 +54,19 @@
        (testing "Store knows of user-id after authentication"
          (is (contains? (store/user-data->client-id data)
                         (:client/id data))))))))
+
+(deftest logout-clients
+  (testing "Can log out single client"
+    (test-util/test-all-roles!
+     (fn [[msg {client-id :client/id}] _]
+       (is (contains? (store/authorized-clients) client-id))
+       (store/logout-client! client-id)
+       (is (not (contains? (store/authorized-clients) client-id))))))
+  (testing "Can log out user-id"
+    (test-util/test-all-roles!
+     (fn [[msg {client-id :client/id}] _]
+       (let [user-id (store/client-id->user-id client-id)
+             logged-out (store/logout-user! user-id)]
+         (is (contains? logged-out client-id))
+         (is (not (contains? (store/authorized-clients) client-id)))
+         (is (not (contains? (set (vals (store/authorized-clients))) user-id))))))))

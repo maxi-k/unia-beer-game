@@ -39,19 +39,26 @@
                                                 client-data))]
     (function [msg data] message)))
 
-(def test-event-data
-  {:event/id "TEST-EVENT"
-   :event/name "Test event for automated testing."})
-
 (defn with-test-event!
   ([event-data function]
    (let [event (store/create-event! event-data)]
      (function event)
      (store/destroy-event! (:event/id event-data))))
   ([function]
-   (with-test-event! test-event-data function)))
+   (with-test-event! {:event/id (str "TEST-EVENT-" (sutil/uuid))
+                      :event/name "Test event for automated testing."}
+     function)))
 
-;; Test Utility functions defined here
+(defn test-all-roles!
+  [testing-fn]
+   (as-leader! testing-fn)
+   (with-test-event!
+      (fn [{event-id :event/id}]
+        (as-player!
+         {:event/id event-id :auth/key :role/brewery}
+         testing-fn))))
+
+;; Test Utility functions themselves shall be tested
 (deftest test-utility-functions
   (let [event-id (str (sutil/uuid))]
     (testing "Can test stuff within an event with with-test-event"
