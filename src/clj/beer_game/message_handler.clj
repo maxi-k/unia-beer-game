@@ -1,5 +1,6 @@
 (ns beer-game.message-handler
-  (:require [beer-game
+  (:require [clojure.core.async :as async]
+            [beer-game
              [config :as config]
              [store :as store]
              [util :as util]]
@@ -19,6 +20,30 @@
            incoming
            send!
            connected-uids]}]
+
+  ;; ASYNC INTERNAL MESSAGES
+  (declare handle-internally-dispatched)
+  (def msg-chan (async/chan 20))
+  (defn receive-internal
+    "Handles internal messages my listening to msg-chan
+    and passing on the messages to `handle-internally-dispatched`"
+    []
+    (async/go-loop []
+      (handle-internally-dispatched (async/<! msg-chan))
+      (recur)))
+  (receive-internal)
+
+  (defn dispatch-internal
+    "Dispatches an internal message asynchronously by putting
+    it on `msg-chan`.  "
+    [orig-msg [msg data :as internal-msg]]
+    ;; Piggypack the internal message with the other data
+    ;; of the original (incoming) message
+    (let [final-message (assoc orig-msg
+                               :id msg
+                               :?data data)]
+      (println final-message)
+      (async/put! msg-chan final-message)))
 
   ;;; UTILITY FUNCTIONS
 
@@ -47,6 +72,7 @@
       (doseq [msg internal-msg] (outbox! ev-msg msg))
       (let [{:keys [type message internal-id]} internal-msg]
         (condp = type
+          :internal (dispatch-internal ev-msg internal-msg)
           :reply (if (:?reply-fn ev-msg)
                    ((?reply-fn ev-msg) message)
                    (send! (or (:uid internal-msg) uid) message))
@@ -119,6 +145,11 @@
   (defmethod event :default
     [{:keys [event]}]
     (println "Defaulted event: " event))
+
+  (defn handle-internally-dispatched
+    "Handles an internally dispatched message."
+    [msg]
+    (event msg))
 
   ;; Return a function that handles an incoming message
   ;; using the multimethod & functions defined above

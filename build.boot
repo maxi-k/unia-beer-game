@@ -3,6 +3,7 @@
  :resource-paths #{"resources"}
  :dependencies '[[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.908"]
+                 [org.clojure/core.async "0.3.443"]
 
                  ;; Build dependencies
                  [org.clojure/tools.namespace "0.3.0-alpha4" :scope "test"]
