@@ -2,7 +2,7 @@
  :source-paths #{"src/clj" "src/cljc" "src/cljs" "src/less"}
  :resource-paths #{"resources"}
  :dependencies '[[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.908"]
+                 [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async "0.3.443"]
 
                  ;; Build dependencies
