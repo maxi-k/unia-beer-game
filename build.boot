@@ -34,7 +34,8 @@
                  [reanimated "0.5.3" :exclusions [cljsjs/react-with-addons]]
                  [secretary "1.2.3"]
                  [soda-ash "0.4.0" :exclusions [cljsjs/react]]
-                 [org.webjars.npm/react-vis "0.7.1"]])
+                 [cljsjs/plotly "1.30.0-0"]])
+
 
 (require
  '[clojure.java.io       :as io]
