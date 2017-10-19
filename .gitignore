@@ -9,3 +9,4 @@ out
 /beer-game.iml
 /.idea
 /.lein-repl-history
+scripts/deploy.sh
