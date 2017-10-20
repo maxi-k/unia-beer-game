@@ -44,7 +44,8 @@
  '[adzerk.boot-cljs-repl :refer [cljs-repl start-repl repl-env]]
  '[adzerk.boot-reload    :refer [reload]]
  '[system.boot           :refer [system run]]
- '[beer-game.server      :refer [server-system]])
+ '[beer-game.server      :refer [server-system]]
+ '[boot.pod              :as pod])
 
 (task-options!
  pom {:project 'beer-game
@@ -89,6 +90,7 @@
   [i  input   INPUT_FILE  str "The input file path"
    o  output  OUTPUT_FILE str "The output file path"]
   (let [todir (tmp-dir!)
+        less-pod (future (pod/make-pod))
         prev (atom nil)]
     (with-pre-wrap fileset
       (let [candidates (->> fileset
@@ -101,8 +103,9 @@
         (when (seq changed-files)
           (empty-dir! todir)
           (println "Compiling Less...")
-          (dosh "lessc" (.getPath tmp-in) (.getPath tmp-out)
-                "--clean-css" "--s1 --advanced --compatibility=ie8"))
+          (pod/with-call-in @less-pod
+            (boot.util/dosh "lessc" ~(.getPath tmp-in) ~(.getPath tmp-out)
+                  "--clean-css" "--s1 --advanced --compatibility=ie8")))
         (reset! prev candidates)
         (-> fileset
             (add-resource todir)
