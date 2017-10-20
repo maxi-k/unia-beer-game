@@ -18,9 +18,8 @@
         ;; where event-data must contains
         ;; :event/id        :: id of the event (same as map key)
         ;; :event/name      :: human readable event name
+        ;; :game/data       :: the data associated with the game
         :event/data {}
-        ;; A map from {event-id -> game-data}
-        :game/data {}
         }))
 
 (def data-map
@@ -32,8 +31,7 @@
                (fn [_ _ _ new] (println new))))
 
 ;;;
-;;; USERS & AUTH
-;;; 
+;;; General functions
 ;;;
 
 (defn authorized-clients
@@ -120,6 +118,28 @@
   (first
    (filter-user-data
     (event-id-user-role-filter event-id role))))
+
+(defn user-id->event-id
+  "Takes a user-id and returns the event the user
+  belongs to."
+  [user-id]
+  (get-in @data-map [:user/data user-id :event/id]))
+
+(def client-id->event-id
+  (comp
+   user-id->event-id
+   client-id->user-id))
+
+(def message->event-id
+  "Takes a message and returns the event id it belongs to."
+  (comp
+   client-id->event-id
+   :client-id))
+
+;;;
+;;; USERS & AUTH
+;;; 
+;;;
 
 (defn leader-clients
   "Returns all client-ids which are associated with leader-users."
@@ -219,6 +239,11 @@
    (fn [[user-id user-data]]
      (= (:event/id user-data) event-id))))
 
+(defn event-data
+  "Returns the data stored for given event-id."
+  [event-id]
+  (get-in @data-map [:event/data event-id]))
+
 (defn create-event!
   "Creates a new event with given id and given data."
   [{:as event-data :keys [:event/id]}]
@@ -250,7 +275,6 @@
       {:clients @clients
        :message {:destroyed true
                  :event/id event-id}})))
-
 
 ;;;
 ;;; GAME

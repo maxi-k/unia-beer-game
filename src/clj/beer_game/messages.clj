@@ -1,6 +1,12 @@
 (ns beer-game.messages
   (:require [beer-game.store :as store]))
 
+(def public-event-keys
+  "The keys in an event map that everyone should
+  be able to see."
+  [:event/id
+   :event/name])
+
 (defn enrich-event
   "Enrich given event-data for the client."
   [data]
@@ -12,7 +18,8 @@
   [user-id data]
   (let [{event-id :event/id :as store-data} (store/user-id->user-data user-id)
         event-data (if (store/single-event? event-id)
-                     (store/events event-id)
+                     (select-keys (store/events event-id)
+                                  public-event-keys)
                      nil)]
     (-> data
         (merge store-data)
