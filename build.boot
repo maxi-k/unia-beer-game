@@ -16,6 +16,7 @@
                  [weasel                      "0.7.0"  :scope "test"]
                  [reloaded.repl               "0.2.3"  :scope "test"]
                  [binaryage/devtools          "0.9.4"  :scope "test"]
+                 [tolitius/boot-check         "0.1.6"  :scope "test"]
                  ;; Other development dependencies
                  [org.danielsz/system "0.4.0"]
 
@@ -38,14 +39,16 @@
 
 
 (require
+ '[boot.pod              :as pod]
  '[clojure.java.io       :as io]
  '[adzerk.boot-test      :refer [test]]
  '[adzerk.boot-cljs      :refer [cljs]]
  '[adzerk.boot-cljs-repl :refer [cljs-repl start-repl repl-env]]
  '[adzerk.boot-reload    :refer [reload]]
+ '[tolitius.boot-check   :as    check]
  '[system.boot           :refer [system run]]
- '[beer-game.server      :refer [server-system]]
- '[boot.pod              :as pod])
+ '[beer-game.server      :refer [server-system]])
+
 
 (task-options!
  pom {:project 'beer-game
@@ -111,14 +114,28 @@
             (add-resource todir)
             commit!)))))
 
-(deftask auto-test
-  "Run the tests and watch files."
+(deftask check-code
+  "Check the code using boot-check"
   []
   (comp
-   (test-env)
-   (watch)
-   (print-msg :message "Testing...")
-   (test)))
+    (check/with-eastwood)
+    (check/with-kibit) ;; Problematic code
+    (check/with-bikeshed)))
+
+(deftask auto-test
+  "Run the tests and watch files."
+  [c check bool "Whether to check the code"]
+  (let [test-fn
+        (comp
+         (test-env)
+         (watch)
+         (print-msg :message "Testing...")
+         (test))]
+    (if check
+      (comp (test-fn)
+            (print-msg :message "Checking Code...")
+            (check-code))
+      test-fn)))
 
 (deftask dev
   "Start a repl for development with auto-watching etc..."

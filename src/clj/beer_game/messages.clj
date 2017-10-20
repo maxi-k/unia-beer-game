@@ -5,8 +5,7 @@
   "Enrich given event-data for the client."
   [data]
   (let [users (-> data :event/id store/event->users vals)]
-    (-> data
-        (assoc :user/list users))))
+    (assoc data :user/list users)))
 
 (defn enrich-user
   "Enrich the user model with more information to be given back to the client."

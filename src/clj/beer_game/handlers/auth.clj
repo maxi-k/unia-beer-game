@@ -11,34 +11,34 @@
 
 (defn auth-leader
   "Tries to authenticate the given client-id with given password in the leader realm."
-  [client-id key]
-  (if (= key config/leader-password)
+  [client-id client-key]
+  (if (= client-key config/leader-password)
     (let [data {:user/role :role/customer
                 :user/realm config/leader-realm
                 :event/id :event/all
                 :client/id client-id}
           user-id (store/auth-user! data)]
       [:auth/login-success (msgs/enrich-user user-id data)])
-    [:auth/login-invalid {:auth/key key}]))
+    [:auth/login-invalid {:auth/key client-key}]))
 
 (defn auth-player
   "Tries to authenticate the given client-id in the player realm."
-  [client-id event-id key]
-  (if (contains? config/allowed-user-roles key)
+  [client-id event-id client-key]
+  (if (contains? config/allowed-user-roles client-key)
     (if (store/events event-id)
-        (let [data {:user/role key
+        (let [data {:user/role client-key
                     :user/realm config/player-realm
                     :event/id event-id
                     :client/id client-id}
               user-id (store/auth-user! data)]
           [:auth/login-success (msgs/enrich-user user-id data)])
       [:auth/login-invalid {:event/id event-id}])
-    [:auth/login-invalid {:auth/key key}]))
+    [:auth/login-invalid {:auth/key client-key}]))
 
 (defn authenticate!
   "Authenticate with given realm and key."
   [client-id {:keys [:user/realm :auth/key] event-id :event/id}]
-  {:pre (string? client-id)}
+  {:pre [(string? client-id)]}
   [{:type :reply
     :message
     (condp = realm

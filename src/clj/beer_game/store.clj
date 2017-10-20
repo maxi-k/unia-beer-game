@@ -31,6 +31,11 @@
     (add-watch data-map :log
                (fn [_ _ _ new] (println new))))
 
+;;;
+;;; USERS & AUTH
+;;; 
+;;;
+
 (defn authorized-clients
   "Returns the current authorized-clients-map from the store."
   []
@@ -66,8 +71,8 @@
 (defn user-id->client-id
   "Converts given user-id to a set of client-ids."
   [user-id]
-  {:pre (string? user-id)
-   :post (set? %)}
+  {:pre [(string? user-id)]
+   :post [(set? %)]}
   (reduce
    (fn [coll [client-id server-uuid]]
      (if (= server-uuid user-id)
@@ -163,8 +168,8 @@
   "Logs out all clients that are associated with given `user-id`.
   Returns the list of clients logged out."
   [user-id]
-  {:pre (string? user-id)
-   :post (set? %)}
+  {:pre [(string? user-id)]
+   :post [(set? %)]}
   (dosync
    (let [clients (user-id->client-id user-id)]
      (doseq [client clients] (logout-client! client))
@@ -187,6 +192,11 @@
                          :user/role     role
                          :event/id event-id})
     user-id))
+
+;;;
+;;; EVENTS
+;;; 
+;;;
 
 (defn single-event?
   "Returns true if given event-id refers to a single event."
@@ -240,3 +250,8 @@
       {:clients @clients
        :message {:destroyed true
                  :event/id event-id}})))
+
+
+;;;
+;;; GAME
+;;;

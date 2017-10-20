@@ -10,7 +10,6 @@
              [game :as game-handler]
              [system :as system-handler]]))
 
-
 (defn message-handler
   "Wraps the websocket message handlers in a closure
   that takes the websocket component."
@@ -151,9 +150,11 @@
     [msg]
     (event msg))
 
-  ;; Return a function that handles an incoming message
-  ;; using the multimethod & functions defined above
-  (fn [msg]
+  (defn event-handler
+    [msg]
+    {:pre [(contains? msg :id)]}
     (event msg))
 
-  )
+  ;; Return a function that handles an incoming message
+  ;; using the multimethod & functions defined above
+  event-handler)

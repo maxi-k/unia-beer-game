@@ -10,14 +10,14 @@
   into a vector of the form [namespace name], with both entries being keywords.
   If the keyword is not qualified, `namespace` will be nil."
   [kw]
-  {:pre (keyword? kw)}
+  {:pre [(keyword? kw)]}
   (map keyword [(namespace kw) (name kw)]))
 
 (defn name-only
   "Returns a keyword that contains only the name-part of given keyword,
   omitting the namespace."
   [kw]
-  {:pre (keyword? kw)}
+  {:pre [(keyword? kw)]}
   (keyword (name kw)))
 
 
@@ -36,7 +36,7 @@
   "Turns a (qualified) keyword into a string,
   which can be turned into an equal keyword again with `clojure.core/keyword`"
   [kw]
-  {:pre (keyword? kw)}
+  {:pre [(keyword? kw)]}
   (if (qualified-keyword? kw)
     (str (namespace kw) "/" (name kw))
     (name kw)))

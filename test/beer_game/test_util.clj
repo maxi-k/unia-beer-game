@@ -10,7 +10,7 @@
 (defn filter-msgs
   [result filter-fn]
   (if (vector? result)
-    (filter #(filter-fn %) result)
+    (filter filter-fn result)
     (and (filter-fn result) result)))
 
 (defn authentication-msg
@@ -65,7 +65,7 @@
       (with-test-event!
         {:event/id event-id :event/name "Test event for automated testing."}
         (fn [event]
-          (is (= true (:created event)))
+          (is (true? (:created event)))
           (is (= event-id (:event/id event))))))
     (testing "Event used for testing with with-test-event is destroyed afterwards"
       (is (not (contains? (store/events) event-id)))))
