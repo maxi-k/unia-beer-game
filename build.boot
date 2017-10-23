@@ -149,6 +149,7 @@
    (repl :server true)
    (cljs :source-map true
          :optimizations :none)
+   (reload :on-jsload 'beer-game.core/mount-root)
    (less-js :input "site.less"
             :output "public/css/site.css")
    (notify :visual true

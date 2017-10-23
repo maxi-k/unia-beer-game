@@ -19,8 +19,7 @@
         ;; :event/id        :: id of the event (same as map key)
         ;; :event/name      :: human readable event name
         ;; :game/data       :: the data associated with the game
-        :event/data {}
-        }))
+        :event/data {}}))
 
 (def data-map
   "User model:"
