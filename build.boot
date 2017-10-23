@@ -17,6 +17,7 @@
                  [reloaded.repl               "0.2.3"  :scope "test"]
                  [binaryage/devtools          "0.9.4"  :scope "test"]
                  [tolitius/boot-check         "0.1.6"  :scope "test"]
+                 [org.clojure/test.check      "0.9.0"  :scope "test"]
                  ;; Other development dependencies
                  [org.danielsz/system "0.4.0"]
 

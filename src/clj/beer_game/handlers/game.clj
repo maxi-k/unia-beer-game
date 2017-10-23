@@ -28,6 +28,7 @@
   (with-auth
     (fn [_ user-data]
       (->> (:?data msg)
+           #((assoc % :user/role (:user/role user-data)))
            (game-logic/handle-commit (store/game-data (:event/id user-data)))
            (apply-update user-data)))))
 
