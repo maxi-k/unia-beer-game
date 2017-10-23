@@ -47,7 +47,8 @@
  '[adzerk.boot-reload    :refer [reload]]
  '[tolitius.boot-check   :as    check]
  '[system.boot           :refer [system run]]
- '[beer-game.server      :refer [server-system]])
+ '[beer-game.server      :refer [server-system]]
+ '[boot.pod              :as pod])
 
 
 (task-options!
