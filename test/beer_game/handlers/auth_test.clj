@@ -6,8 +6,6 @@
             [clojure.test :refer :all]
             [clojure.data :as data]))
 
-
-
 (deftest general-authentication
   (let [client-id "aldkfh-asdf-asdf--adf--adf"
         realm :realm/player]

@@ -244,6 +244,10 @@
   [event-id]
   (get-in @data-map [:event/data event-id]))
 
+(def game-data
+  "Returns the game data stored for given event-id."
+  (comp :game/data event-data))
+
 (defn create-event!
   "Creates a new event with given id and given data."
   [{:as event-data :keys [:event/id]}]

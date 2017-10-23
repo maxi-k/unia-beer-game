@@ -24,7 +24,9 @@
 (defn auth-player
   "Tries to authenticate the given client-id in the player realm."
   [client-id event-id client-key]
-  (if (contains? config/allowed-user-roles client-key)
+  (if (and (contains? config/allowed-user-roles client-key)
+           (not (contains? (get-in config/allowed-user-roles [client-key :except])
+                           config/player-realm)))
     (if (store/events event-id)
         (let [data {:user/role client-key
                     :user/realm config/player-realm

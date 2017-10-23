@@ -28,7 +28,7 @@
   (with-auth
     (fn [_ user-data]
       (->> (:?data msg)
-           (game-logic/handle-commit (store/event-data (:event/id user-data)))
+           (game-logic/handle-commit (store/game-data (:event/id user-data)))
            (apply-update user-data)))))
 
 (defmethod handle-game-msg :default

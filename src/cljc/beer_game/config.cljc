@@ -29,12 +29,15 @@
   {:public-root "public"
    :websocket-endpoint "/ws"
    :websocket-packer :edn
-   :realms {:realm/player {:title "Mitspieler"}
-            :realm/leader {:title "Spielleiter"}}
-   :user-roles {:role/brewery {:title "Brauerei"}
-                :role/big-market {:title "Großhandel"}
-                :role/small-market {:title "Kleinhandel"}
-                :role/customer {:title "Kunde"}}})
+   :realms #:realm{:player {:title "Mitspieler"}
+                   :leader {:title "Spielleiter"}}
+   :user-roles #:role{:brewery {:title "Brauerei"}
+                      :distributor {:title "Distributor"}
+                      :big-market {:title "Großhandel"}
+                      :small-market {:title "Kleinhandel"}
+                      :customer {:title "Kunde"
+                                 :except #{:realm/player}}}})
+
 
 (def websocket-endpoint
   "The relative url of the websocket endpoint."

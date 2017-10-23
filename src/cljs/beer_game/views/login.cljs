@@ -15,10 +15,13 @@
       util/native-render-fn))
 
 (def user-options
-  (map
-   (fn [[key value]]
+  (reduce
+   (fn [coll [key value]]
      (let [k (keyword->string key)]
-       {:key k :value k :text (:title value)}))
+       (if (not (contains? (:except value) config/player-realm))
+         (conj coll {:key k :value k :text (:title value)})
+         coll)))
+   #{}
    config/user-roles))
 
 (defn login-user-pane []

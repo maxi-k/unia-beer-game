@@ -22,15 +22,17 @@
 
 
 #?(:clj
-   (defn qualified-keyword?
-     "Returns true if given keyword is a qualified keyword (with namespace)."
-     [kw]
-     (if (re-find #"/" (str kw)) true false)))
+   (when-not (resolve 'qualified-keyword?)
+     (defn qualified-keyword?
+       "Returns true if given keyword is a qualified keyword (with namespace)."
+       [kw]
+       (if (re-find #"/" (str kw)) true false))))
 
 #?(:clj
-   (def simple-keyword?
-     "Returns true if given keyword is a simple keyword (without namespace)."
-     (comp not qualified-keyword?)))
+   (when-not (resolve 'simple-keyword?)
+     (def simple-keyword?
+       "Returns true if given keyword is a simple keyword (without namespace)."
+       (comp not qualified-keyword?))))
 
 (defn keyword->string
   "Turns a (qualified) keyword into a string,
