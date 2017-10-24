@@ -5,7 +5,8 @@
 (defn handle-commit
   "Handles the game-round commit requested by a client."
   [cur-game-data commit]
-  {})
+  cur-game-data)
+
 
 (spec/fdef handle-commit
            :args (spec/cat :cur-game-data :game/data-map
