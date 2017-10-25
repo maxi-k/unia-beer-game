@@ -11,6 +11,7 @@
             [beer-game.views.statistics :as statistics]
             [beer-game.views.events :as events-view]
             [beer-game.views.login :as login]
+            [beer-game.views.imprint :as imprint]
             [re-frame.core :as rf]
             [reagent.core :as ra]))
 
@@ -24,7 +25,11 @@
          :statistics-panel {:title "Statistiken"
                             :path "#statistics"
                             :icon "line graph"
-                            :comp statistics/statistics-panel}}
+                            :comp statistics/statistics-panel}
+         :imprint-panel {:title "Impressum"
+                         :path "#imprint"
+                         :icon "law"
+                         :comp imprint/imprint-panel}}
         leader-panels
         {:events-panel {:title "Events"
                         :path "#events"

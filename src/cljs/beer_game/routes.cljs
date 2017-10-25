@@ -24,5 +24,6 @@
     (defroute "/overview"   [] (set-panel :overview-panel))
     (defroute "/statistics" [] (set-panel :statistics-panel))
     (defroute "/events"     [] (set-panel :events-panel))
+    (defroute "/imprint"    [] (set-panel :imprint-panel))
     ;; -----------------------------
     (hook-browser-navigation!)))

@@ -31,13 +31,18 @@
    :websocket-packer :edn
    :realms #:realm{:player {:title "Mitspieler"}
                    :leader {:title "Spielleiter"}}
-   :user-roles #:role{:brewery {:title "Brauerei"}
-                      :distributor {:title "Distributor"}
-                      :big-market {:title "Großhandel"}
-                      :small-market {:title "Kleinhandel"}
+   :user-roles #:role{:brewery {:title "Brauerei"
+                                :icon "brewery"}
+                      :distributor {:title "Distributor"
+                                    :icon "distribution"}
+                      :big-market {:title "Großhandel"
+                                   :icon "big-market"}
+                      :small-market {:title "Kleinhandel"
+                                     :icon "small-market"}
                       :customer {:title "Kunde"
-                                 :except #{:realm/player}}}})
-
+                                 :icon ["customer-male" "customer-female"]
+                                 :except #{:realm/player}}}
+   :user-role-image-path "img/roles"})
 
 (def websocket-endpoint
   "The relative url of the websocket endpoint."
@@ -58,6 +63,18 @@
 
 (def user-roles (definitions :user-roles))
 (def allowed-user-roles (-> definitions :user-roles keys set))
+
+(def user-role-image-path
+  (:user-role-image-path definitions))
+
+(defn user-role->image
+  "Takes the name of a user role and returns a path
+  to an image that represents it."
+  [role-key]
+  (if-let [img (get-in user-roles [role-key :icon])]
+    (let [path (if (vector? img) (rand-nth img) img)]
+         (str public-root "/" user-role-image-path "/" path ".svg"))
+    ""))
 
 (defn user-role->title
   "Returns the title of given user Role."
