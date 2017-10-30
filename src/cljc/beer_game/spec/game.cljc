@@ -1,4 +1,4 @@
-(ns beer-game.logic.spec
+(ns beer-game.spec.game
   (:require [clojure.spec.alpha :as s]
             [beer-game.config :as config]))
 
@@ -20,7 +20,7 @@
 
 (s/def :game/rounds (s/coll-of :game/round))
 (s/def :game/current-round nat-int?)
-(s/def :game/data-map
+(s/def :game/data
   (s/keys :req [:game/settings :game/rounds :game/current-round]
           :opt []))
 

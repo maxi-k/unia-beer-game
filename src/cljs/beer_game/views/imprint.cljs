@@ -14,7 +14,7 @@
   [:div
    [sa/ListSA {:divided true :relaxed true}
     (for [{:as img :keys [source creator license]} images]
-      [sa/ListItem
+      [sa/ListItem {:key source}
        [:p "Von: " [:a {:href (:link creator)}
                        (:name creator)]]
        [:p "Quelle: " [:a {:href (:link source)}

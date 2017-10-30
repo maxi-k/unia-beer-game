@@ -80,6 +80,11 @@
  (fn [db [_ id]]
    (update db :messages dissoc id)))
 
+(rf/reg-event-fx
+ :submission/invalid
+ (fn [w [_]]
+   {:dispatch [:message/add (messages/invalid-submission-msg)]}))
+
 ;;
 ;; Server Events
 ;;

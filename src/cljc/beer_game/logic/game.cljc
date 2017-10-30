@@ -1,6 +1,6 @@
 (ns beer-game.logic.game
   (:require [clojure.spec.alpha :as spec]
-            [beer-game.logic.spec :as game-spec]))
+            [beer-game.spec.game :as game-spec]))
 
 (defn handle-commit
   "Handles the game-round commit requested by a client."
@@ -9,6 +9,6 @@
 
 
 (spec/fdef handle-commit
-           :args (spec/cat :cur-game-data :game/data-map
+           :args (spec/cat :cur-game-data :game/data
                            :commit :game/round-commit)
            :ret :game/data-update)

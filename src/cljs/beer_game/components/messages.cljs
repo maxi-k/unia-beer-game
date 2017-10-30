@@ -55,3 +55,10 @@
    :message/content [:p "Das gewählte Event konnte nicht gelöscht werden. Technische Informationen:"
                      [:br]
                      reason]})
+
+(defn invalid-submission-msg
+  "A message for invalid form submissions."
+  []
+  #:message {:icon "exclamation triangle"
+             :title "Bitte eine vollständige und gültige Eingabe tätigen."
+             :time 3000})

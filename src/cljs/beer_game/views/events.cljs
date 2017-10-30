@@ -4,38 +4,66 @@
             [soda-ash.core :as sa]
             [beer-game.client-util :as cutil]
             [beer-game.config :as config]
-            [beer-game.components.modals :as modals]))
+            [beer-game.components.modals :as modals]
+            [beer-game.components.inputs :as inputs]
+            [beer-game.spec.event]
+            [beer-game.spec.game]))
 
 (defn- create-event-form
   [modal-close-fn]
   (let [form-values (ra/atom {:event/id (cutil/gen-event-id)
-                              :event/name ""})
-        update-form (fn [k v] (swap! form-values assoc k (.-value v)))
-        submit-form (fn [e]
-                      (rf/dispatch [:event/create @form-values])
-                      (modal-close-fn))]
+                              :event/name ""
+                              :game/data {:game/settings {:round-amount 20}}})
+        update-form (fn [k v]
+                      (if (vector? k)
+                        (swap! form-values assoc-in k (.-value v))
+                        (swap! form-values assoc k (.-value v))))
+        submit-form (ra/atom (fn [e]
+                               (rf/dispatch [:event/create @form-values])
+                               (modal-close-fn)))
+        input-options [{:key :event-id
+                        :label "Event ID"
+                        :placeholder "Event-ID"
+                        :spec :event/id
+                        :invalid-msg "Bitte eine Event-ID ohne Leerzeichen eingeben."
+                        :value-fn #(:event/id @form-values)
+                        :on-change #(update-form :event/id %2)}
+                       {:key :event-name
+                        :label "Event Name"
+                        :placeholder "Ausgeschriebener Name des Events"
+                        :spec :event/name
+                        :invalid-msg "Bitte einen beliebigen, nicht-leeren Namen für das Event eingeben."
+                        :value-fn #(:event/name @form-values)
+                        :on-change #(update-form :event/name %2)}
+                       {:key :round-amount
+                        :label "Rundenzahl"
+                        :transform js/parseInt
+                        :spec :beer-game.spec.game/round-amount
+                        :invalid-msg "Bitte eine positive, ganze Zahl eingeben."
+                        :value-fn #(get-in @form-values [:game/data :game/settings :round-amount])
+                        :on-change #(update-form [:game/data :game/settings :round-amount] %2)}]
+        input-elements (doall (map inputs/make-validated-input input-options))]
     (fn []
-      [sa/Form
-       [sa/FormInput {:label "Event ID"
-                      :value (:event/id @form-values)
-                      :on-change #(update-form :event/id %2)}]
-       [sa/FormInput {:label "Event Name"
-                      :value (:event/name @form-values)
-                      :placeholder "Ausgeschriebener Name des Events"
-                      :on-change #(update-form :event/name %2)}]
-       [sa/FormButton {:primary true
+      [inputs/validated-form
+       {:validated-inputs input-elements
+        :submit-atom submit-form}
+       (for [elem input-elements]
+         ^{:key (:key elem)}
+         [inputs/validated-input elem])
+       [sa/FormButton {:key :btn
+                       :primary true
                        :class-name :clearfloat
                        :floated :right
                        :content "Erstellen"
-                       :onClick submit-form}]])))
+                       :onClick #(@submit-form)}]])))
 
 (defn- create-event-modal
   [trigger]
   [modals/generic-modal trigger
-                        "Neues Event erstellen"
-                        (fn [modal-state]
-                          [create-event-form #(reset! modal-state false)])
-                        {}])
+   "Neues Event erstellen"
+   (fn [modal-state]
+     [create-event-form #(reset! modal-state false)])
+   {}])
 
 (defn- event-menu
   []

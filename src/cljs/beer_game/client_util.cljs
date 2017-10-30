@@ -2,7 +2,6 @@
   (:require [goog.events :as events]
             [reagent.core :as ra]))
 
-
 (defn keyify
   "Takes a seq of items and adds the 'key' metadata to it,
   using the element sindex in the array or given function.
@@ -42,8 +41,6 @@
   [component]
   (let [res (native-component component)]
     (fn [] res)))
-
-
 
 (defn with-options-raw
   "Returns the given component with option-map merged,

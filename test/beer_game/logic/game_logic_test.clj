@@ -12,7 +12,7 @@
 (deftest commit-handler-test
   (testing "Conforms to spec."
     (stest/check `handle-commit))
-  (let [game-data (gen/generate (spec/gen :game/data-map))
+  (let [game-data (gen/generate (spec/gen :game/data))
         commit-data (gen/generate (spec/gen :game/round-commit))
         res (handle-commit game-data commit-data)
         _ (println game-data)]
