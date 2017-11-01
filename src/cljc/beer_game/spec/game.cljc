@@ -10,7 +10,7 @@
 (s/def :game/roles
   (s/map-of :user/role ::role-data))
 
-(s/def ::round-amount nat-int?)
+(s/def ::round-amount pos-int?)
 (s/def :game/settings
   (s/keys :req-un [::round-amount]
           :opt []))
