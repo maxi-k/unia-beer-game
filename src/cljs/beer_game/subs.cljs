@@ -60,3 +60,8 @@
  :events
  (fn [db]
    (get-in db [:events])))
+
+(rf/reg-sub
+ :game
+ (fn [db]
+   (get-in db [:game])))
