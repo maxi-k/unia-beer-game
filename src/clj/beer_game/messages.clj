@@ -1,5 +1,6 @@
 (ns beer-game.messages
-  (:require [beer-game.store :as store]))
+  (:require [beer-game.store :as store]
+            [beer-game.util :as util]))
 
 (def public-event-keys
   "The keys in an event map that everyone should
@@ -39,3 +40,17 @@
                          (assoc coll id (enrich-event data)))
                        {}
                        (store/events events))])
+
+(defn game-data
+  "A message for sending the relevant game data to the given user."
+  [event-id user-id]
+  (let [event (store/events event-id)
+        event-users (store/event->users event-id)
+        user-data (get event-users user-id)]
+    (if (nil? user-data)
+      nil
+      (let [role (:user/role user-data)
+            game-data (:game/date event)
+            relevant-data
+            (update game-data :game/rounds #(util/filter-round-data % role))]
+        [:game/data relevant-data]))))

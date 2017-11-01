@@ -196,3 +196,8 @@
    (if destroyed
      {:db (update (:db w) :events dissoc id)}
      {:dispatch [:message/add (messages/event-not-destroyed-msg (str data))]})))
+
+(rf/reg-event-db
+ :game/data
+ (fn [db [_ data]]
+   (assoc db :game data)))

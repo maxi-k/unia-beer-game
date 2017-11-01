@@ -65,3 +65,14 @@
                       event-id :event-id}]]
      (update coll event-id assoc user-id user-data))
    {} user-map))
+
+(defn filter-round-data
+  "Takes a vector of round-data and returns a vector of round-data
+  where the data for reach round only contains the information
+  for the given user-role."
+  [rounds user-role]
+  (map
+   (fn [round]
+     (update round :game/roles
+             select-keys [user-role]))
+   rounds))

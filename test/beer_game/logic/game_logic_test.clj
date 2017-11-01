@@ -8,7 +8,6 @@
             [clojure.spec.gen.alpha :as gen]
             [clojure.spec.test.alpha :as stest]))
 
-
 (deftest commit-handler-test
   (testing "Conforms to spec."
     (stest/check `handle-commit))

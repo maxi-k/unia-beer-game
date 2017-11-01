@@ -47,9 +47,12 @@
       config/player-realm (auth-player client-id event-id (keyword key))
       config/leader-realm (auth-leader client-id key)
       [:auth/login-invalid {:user/realm realm}])}
-   {:type :broadcast
-    :uids (store/leader-clients)
-    :message (msgs/event-list :event/all)}])
+   [{:type :broadcast
+     :uids (store/leader-clients)
+     :message (msgs/event-list :event/all)}
+    {:type :broadcast
+     :uids (store/event->clients event-id)
+     :message (msgs/game-data event-id (store/client-id->user-id client-id))}]])
 
 (defn logout!
   "Logs out given client."

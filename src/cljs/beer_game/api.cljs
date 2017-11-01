@@ -16,6 +16,7 @@
     :event/created       (rf/dispatch [:event/created data])
     :event/destroyed     (rf/dispatch [:event/destroyed data])
     :event/list          (rf/dispatch [:event/list data])
+    :game/data           (rf/dispatch [:game/data data])
     :system/connection   (rf/dispatch [:system/connection data])
     :testing/echo        (rf/dispatch [:test :ws-echo data])
     :chsk/ws-ping        (rf/dispatch [:server/ping])

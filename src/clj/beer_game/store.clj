@@ -250,6 +250,14 @@
    (fn [[user-id user-data]]
      (= (:event/id user-data) event-id))))
 
+(defn event->clients
+  "Returns a list of client ids participating in given event(-id)."
+  [event-id]
+  (->> event-id
+       event->users
+       keys
+       (mapcat user-id->client-id)))
+
 (defn event-data
   "Returns the data stored for given event-id."
   [event-id]
