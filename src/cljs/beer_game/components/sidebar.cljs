@@ -59,7 +59,12 @@
        [sa/Icon {:name "user"}]
        [:p "Meine Rolle:" [:br]
         [:strong (role-string @user)]]]
-      (map #(app-menu-link (% 1) (= active-item (% 0))) links)]
+      (for [[key link-item]  links
+            :when (map? link-item)]
+        ^{:key key}
+        [app-menu-link link-item (or (= active-item key)
+                                     (and (= :default-panel active-item)
+                                          (= (:default-panel links) key)))])]
      [:div.bottom-content
       (map #(app-menu-action %) sidebar-actions)]]))
 

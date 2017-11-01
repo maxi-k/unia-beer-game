@@ -1,5 +1,6 @@
 (ns beer-game.events
   (:require [re-frame.core :as rf]
+            [secretary.core :as secretary]
             [beer-game.db :as db]
             [beer-game.util :as util]
             [beer-game.client :as client]
@@ -35,6 +36,11 @@
    (.setTimeout js/window
                 (fn [] (rf/dispatch msg))
                 time)))
+
+(rf/reg-fx
+ :goto
+ (fn [url]
+   (secretary/dispatch! url)))
 
 (rf/reg-event-db
  :initialize-db
@@ -114,7 +120,8 @@
 (rf/reg-event-fx
  :auth/logout
  (fn [w [_ server-side?]]
-   (let [db-map {:db (assoc (:db w) :user {:auth false})}]
+   (let [db-map {:db (assoc (:db w) :user {:auth false})
+                 :goto "/"}]
      (if server-side?
        (merge db-map {:ws [:auth/logout]})
        db-map))))

@@ -18,11 +18,7 @@
 (defn user->panels
   [{:as user-data :keys [:user/realm]}]
   (let [default-panels
-        {:overview-panel {:title "Übersicht"
-                          :path "#overview"
-                          :icon "dashboard"
-                          :comp overview/overview-panel}
-         :statistics-panel {:title "Statistiken"
+        {:statistics-panel {:title "Statistiken"
                             :path "#statistics"
                             :icon "line graph"
                             :comp statistics/statistics-panel}
@@ -30,19 +26,29 @@
                          :path "#imprint"
                          :icon "law"
                          :comp imprint/imprint-panel}}
+        player-panels
+        {:overview-panel {:title "Übersicht"
+                          :path "#overview"
+                          :icon "dashboard"
+                          :comp overview/overview-panel}
+         :default-panel :overview-panel}
         leader-panels
         {:events-panel {:title "Events"
                         :path "#events"
                         :icon "users"
                         :comp events-view/events-panel
                         :auth-fn #(= (:user/realm %)
-                                     config/leader-realm)}}]
+                                     config/leader-realm)}
+         :default-panel :events-panel}]
     (if (= realm config/leader-realm)
-      (merge default-panels leader-panels)
-      default-panels)))
+      (merge leader-panels default-panels)
+      (merge player-panels default-panels))))
 
 (defn show-panel [panels panel-name user-data]
-  (let [active-panel (get panels panel-name {:comp :div})
+  (let [active-panel (get panels panel-name :default-panel)
+        active-panel (if (keyword? active-panel)
+                       (get panels active-panel {:comp :div})
+                       active-panel)
         auth-fn (get active-panel :auth-fn (constantly true))]
     (if (auth-fn user-data)
       [(:comp active-panel)]

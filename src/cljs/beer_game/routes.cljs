@@ -20,10 +20,10 @@
             (rf/dispatch [:set-active-panel name]))]
     ;; ---------- Routes -----------
     ;; The default route
-    (defroute "/"           [] (set-panel :overview-panel))
+    (defroute "/"           [] (set-panel :default-panel))
     (defroute "/overview"   [] (set-panel :overview-panel))
-    (defroute "/statistics" [] (set-panel :statistics-panel))
     (defroute "/events"     [] (set-panel :events-panel))
+    (defroute "/statistics" [] (set-panel :statistics-panel))
     (defroute "/imprint"    [] (set-panel :imprint-panel))
     ;; -----------------------------
     (hook-browser-navigation!)))
