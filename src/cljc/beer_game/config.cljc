@@ -44,6 +44,12 @@
                                  :except #{:realm/player}}}
    :user-role-image-path "img/roles"})
 
+(def supply-chain
+  "Define the order in which the roles form a supply chain."
+  [:role/brewery :role/distributor
+   :role/big-market :role/small-market
+   :role/customer])
+
 (def websocket-endpoint
   "The relative url of the websocket endpoint."
   (:websocket-endpoint definitions))
