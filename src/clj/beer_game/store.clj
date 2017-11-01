@@ -186,7 +186,8 @@
    (alter data-map update :user/data dissoc user-id)))
 
 (defn logout-client!
-  "Logs out given client."
+  "Logs out given client. If it was the last client associated
+  with a user-id, also destroys that user-data."
   [client-id]
   (let [user-id (client-id->user-id client-id)]
     (remove-client! client-id)
