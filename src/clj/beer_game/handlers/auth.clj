@@ -55,8 +55,11 @@
   "Logs out given client."
   [client-id]
   (store/logout-client! client-id)
-  {:type :reply
-   :message (msgs/logout-success client-id)})
+  [{:type :reply
+    :message (msgs/logout-success client-id)}
+   {:type :broadcast
+    :uids (store/leader-clients)
+    :message (msgs/event-list :event/all)}])
 
 (defn handle-msg
   "Dispatch method for handling authentication requests."

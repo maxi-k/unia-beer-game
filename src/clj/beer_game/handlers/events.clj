@@ -35,7 +35,7 @@
     ev-msg
     (fn [{:as msg :keys [?data]}]
       ;; TODO: Create new event here
-      (let [safe-data (select-keys ?data [:event/id :event/name])
+      (let [safe-data (select-keys ?data [:event/id :event/name :game/data])
             result-data (store/create-event! safe-data)]
         {:type :broadcast
          :uids (store/leader-clients)

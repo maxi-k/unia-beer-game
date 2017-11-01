@@ -179,9 +179,21 @@
      (alter data-map update-in [:user/data user-id] user-data)
      (alter data-map assoc-in [:user/data user-id] user-data))))
 
-(def logout-client!
+(defn remove-user-data!
+  "Removes the user-data stored for given user-id"
+  [user-id]
+  (dosync
+   (alter data-map update :user/data dissoc user-id)))
+
+(defn logout-client!
   "Logs out given client."
-  remove-client!)
+  [client-id]
+  (let [user-id (client-id->user-id client-id)]
+    (println client-id user-id)
+    (remove-client! client-id)
+    (let [other-clients (user-id->client-id user-id)]
+      (if (empty? other-clients)
+        (remove-user-data! user-id)))))
 
 (defn logout-user!
   "Logs out all clients that are associated with given `user-id`.
