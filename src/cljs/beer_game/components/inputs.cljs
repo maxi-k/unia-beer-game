@@ -29,7 +29,7 @@
                       (apply-spec! svalue)
                       (swap! field-state assoc :value svalue)))
         opts (dissoc options :spec :as :invalid-msg :label)
-        field-options (dissoc opts :on-change :value :placeholder)
+        field-options (dissoc opts :on-change :value :value-fn :placeholder)
         input-options (-> opts
                           (select-keys [:placeholder :value-fn])
                           (assoc :on-change change-fn))]

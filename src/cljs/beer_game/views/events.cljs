@@ -6,8 +6,17 @@
             [beer-game.config :as config]
             [beer-game.components.modals :as modals]
             [beer-game.components.inputs :as inputs]
+            [beer-game.components.tables :as tables]
             [beer-game.spec.event]
             [beer-game.spec.game]))
+
+(defn- event-role-list
+  ([user-list] (event-role-list {} user-list))
+  ([options user-list]
+   [sa/ListSA (merge {:bulleted true} options)
+    (for [user user-list
+          :let [title (-> user :user/role config/user-role->title)]]
+      [sa/ListItem {:key (:user/role user)} title])]))
 
 (defn- create-event-form
   [modal-close-fn]
@@ -65,6 +74,23 @@
      [create-event-form #(reset! modal-state false)])
    {}])
 
+(defn- show-event-modal
+  [trigger event-data]
+  [modals/generic-modal trigger
+   (:event/name event-data)
+   (fn [modal-state]
+     [:div
+      [tables/definition-table
+       {"Event ID" (:event/id event-data)
+        "Event Name" (:event/name event-data)
+        "Rundenzahl" (get-in event-data [:game/data :game/settings :round-amount])
+        "Spieler" [event-role-list {:bulleted false} (:user/list event-data)]}]
+      [sa/Button {:on-click #(reset! modal-state false)
+                  :floated :right}
+       "Schließen"]
+      [:div.clearfloat]])
+   {}])
+
 (defn- event-menu
   []
   (let [theme (rf/subscribe [:client/theme])]
@@ -85,20 +111,23 @@
 (defn- event-actions
   "Actions buttons for a single event (RUD)."
   [event]
-  (let [delete-state (ra/atom false)]
-    (fn []
+  (let [modal-state (ra/atom {:delete false})]
+    (fn [event]
       [:div.clearfloat
        [sa/ButtonGroup {:floated :right}
-        [sa/Button  "Bearbeiten"]
+        [show-event-modal
+         [sa/Button {} "Anzeigen"]
+         event]
         [sa/Button {:negative true
-                    :on-click #(reset! delete-state true)} "Löschen"]
-        [sa/Confirm {:open @delete-state
+                    :on-click #(swap! modal-state assoc :delete true)}
+         "Löschen"]
+        [sa/Confirm {:open (:delete @modal-state)
                      :cancel-button "Abbrechen"
                      :header "Event löschen"
                      :content "Sicher? Alle Spieler-Sessions in diesem Event werden beendet."
                      :on-confirm #(do (rf/dispatch [:event/destroy event])
-                                      (reset! delete-state false))
-                     :on-cancel #(reset! delete-state false)}]]])))
+                                      (swap! modal-state assoc :delete false))
+                     :on-cancel #(swap! modal-state :delete false)}]]])))
 
 (defn- event-list
   []
@@ -116,9 +145,9 @@
          [sa/TableHeaderCell "Spieler"]
          [sa/TableHeaderCell "Aktionen"]]]
        [sa/TableBody
-        (for [[_ {:keys [:event/id :event/name]
-                  user-list :user/list
-                  :as event}] @events]
+        (for [[_ event] @events
+              :let [{:keys [:event/id :event/name]
+                     user-list :user/list} event]]
           [sa/TableRow {:key id}
            [sa/TableCell name]
            [sa/TableCell id]
@@ -126,10 +155,7 @@
                       :trigger (ra/as-element [sa/TableCell (count user-list)])}
             [sa/PopupHeader "Belegte Rollen"]
             [sa/PopupContent
-             [sa/ListSA {:bulleted true}
-              (for [user user-list
-                    :let [title (-> user :user/role config/user-role->title)]]
-                [sa/ListItem {:key (:user/role user)} title])]]]
+             [event-role-list user-list]]]
            [sa/TableCell [event-actions event]]])]])))
 
 (defn events-panel

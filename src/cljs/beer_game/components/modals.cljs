@@ -5,15 +5,20 @@
 
 (defn generic-modal
   "A generic modal with title and, content components passed.
-  Passes the modal state to the given subcomponents."
+  Passes the modal state to the given subcomponents.
+  The reagent trigger element vector has to have an options map."
   [trigger title content options]
   (let [modal-state (ra/atom false)
-        trigger-el (->> trigger
-                        (cutil/with-options-raw
-                          {:onClick #(reset! modal-state true)})
-                        ra/as-element)]
-    (fn []
-      [sa/Modal (merge {:trigger trigger-el
+        wrap-trigger (fn [t]
+                       (if (fn? t)
+                         (ra/as-element
+                          (t #(reset! modal-state true)))
+                         (->> t
+                              (cutil/with-options-raw
+                                {:onClick #(reset! modal-state true)})
+                              ra/as-element)))]
+    (fn [trigger title content options]
+      [sa/Modal (merge {:trigger (wrap-trigger trigger)
                         :dimmer :blurring
                         :open @modal-state} options)
        [sa/Icon {:name "close"
