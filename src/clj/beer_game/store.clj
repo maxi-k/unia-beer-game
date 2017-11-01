@@ -189,7 +189,6 @@
   "Logs out given client."
   [client-id]
   (let [user-id (client-id->user-id client-id)]
-    (println client-id user-id)
     (remove-client! client-id)
     (let [other-clients (user-id->client-id user-id)]
       (if (empty? other-clients)
