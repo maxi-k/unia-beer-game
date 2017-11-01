@@ -45,10 +45,11 @@
       (merge player-panels default-panels))))
 
 (defn show-panel [panels panel-name user-data]
-  (let [active-panel (get panels panel-name :default-panel)
-        active-panel (if (keyword? active-panel)
-                       (get panels active-panel {:comp :div})
-                       active-panel)
+  (let [;; Recursively look up the panel to show
+        active-panel (loop [selected-panel panel-name]
+                       (if (keyword? selected-panel)
+                         (recur (get panels selected-panel :default-panel))
+                         selected-panel))
         auth-fn (get active-panel :auth-fn (constantly true))]
     (if (auth-fn user-data)
       [(:comp active-panel)]
