@@ -33,7 +33,8 @@
 (defn round-view
   "Renders the game view for the current round."
   [round-data round-num]
-  (if (>= (count round-data) round-num)
+  (if (or (>= (count round-data) round-num)
+          (neg? (count round-data)))
     (msgs/render-message (msgs/invalid-round-count round-num))
     (let [cur-round (nth round-data round-num)]
       [sa/Grid {:class-name "game-view-grid"}

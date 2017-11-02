@@ -8,7 +8,7 @@
             [beer-game.components.inputs :as inputs]
             [beer-game.components.tables :as tables]
             [beer-game.spec.event]
-            [beer-game.spec.game]))
+            [beer-game.spec.game :as game-spec]))
 
 (defn- event-role-list
   ([user-list] (event-role-list {} user-list))
@@ -23,6 +23,7 @@
   (let [form-values (ra/atom {:event/id (cutil/gen-event-id)
                               :event/name ""
                               :game/data {:game/settings config/default-game-settings}})
+        game-settings (ra/cursor form-values [:game/data :game/settings])
         update-form (fn [k v]
                       (if (vector? k)
                         (swap! form-values assoc-in k (.-value v))
@@ -47,10 +48,18 @@
                        {:key :round-amount
                         :label "Rundenzahl"
                         :transform js/parseInt
-                        :spec :beer-game.spec.game/round-amount
+                        :spec ::game-spec/round-amount
                         :invalid-msg "Bitte eine positive, ganze Zahl eingeben."
-                        :value-fn #(get-in @form-values [:game/data :game/settings :round-amount])
-                        :on-change #(update-form [:game/data :game/settings :round-amount] %2)}]
+                        :value-fn #(:round-amount @game-settings)
+                        :on-change #(update-form [:game/data :game/settings :round-amount] %2)}
+                       {:key :user-demands
+                        :label "Kundennachfrage"
+                        :placeholder "Nachfrage des Kunden."
+                        :spec ::game-spec/user-demands
+                        :transform js/parseInt
+                        :invalid-msg "Bitte eine ganze Zahl eingeben."
+                        :value-fn #(:user-demands @game-settings)
+                        :on-change #(update-form [:game/data :game/settings :user-demands] %2)}]
         input-elements (doall (map inputs/make-validated-input input-options))]
     (fn []
       [inputs/validated-form

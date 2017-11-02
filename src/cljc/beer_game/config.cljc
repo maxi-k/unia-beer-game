@@ -47,7 +47,8 @@
    :supply-chain [:role/brewery :role/distributor
                   :role/big-market :role/small-market
                   :role/customer]
-   :default-game-settings {:round-amount 20}
+   :default-game-settings {:round-amount 20
+                           :user-demands 5}
    :user-role-image-path "img/roles"})
 
 (def supply-chain
