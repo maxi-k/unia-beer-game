@@ -26,7 +26,9 @@
 
 (def definitions
   "Returns the common config shared among all environments."
-  {:public-root "public"
+  {:game-title "Beer Game"
+   :public-root "public"
+   :game-logo "img/icons/pint.svg"
    :websocket-endpoint "/ws"
    :websocket-packer :edn
    :realms #:realm{:player {:title "Mitspieler"}
@@ -67,6 +69,10 @@
 (def public-root
   (:public-root definitions))
 
+(def game-logo
+  "The main logo for the game."
+  (:game-logo definitions))
+
 (def realms (definitions :realms))
 (def player-realm :realm/player)
 (def leader-realm :realm/leader)
@@ -78,6 +84,10 @@
 
 (def user-role-image-path
   (:user-role-image-path definitions))
+
+(def game-title
+  "The name of the game"
+  (:game-title definitions))
 
 (defn user-role->image
   "Takes the name of a user role and returns a path

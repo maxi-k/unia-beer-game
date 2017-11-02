@@ -4,7 +4,8 @@
             [reagent.core :as ra]
             [beer-game.client-util :as util]
             [beer-game.util :refer [keyword->string]]
-            [beer-game.config :as config]))
+            [beer-game.config :as config]
+            [beer-game.components.game-title :as game-title]))
 
 (defn login-button
   [on-click]
@@ -77,7 +78,7 @@
     [sa/Divider {:horizontal true} "Login"]))
 
 
-(defn login-card [name auth-data]
+(defn login-card [auth-data]
   (let [pane-opts {:as "div"}
         wrap-fn (comp util/native-render-fn
                       #(wrap-tab-pane pane-opts %))
@@ -88,9 +89,8 @@
                 :centered true
                 :raised true}
        [sa/CardHeader
-        [:h3 @name]
-        [sa/Icon {:name "beer" :color "yellow" :size :large}]
-        [sa/Icon {:name "play circle" :size :large}]]
+        [:h3 {:class-name "login-title"}
+         [game-title/game-title-split :p]]]
        [auth-message auth-data]
        [sa/CardContent
         [sa/Container {:text-align :center}
@@ -102,8 +102,7 @@
 (defn login-view
   "View for when the user is not logged in yet."
   []
-  (let [name (rf/subscribe [:name])
-        auth-data (rf/subscribe [:user])]
+  (let [auth-data (rf/subscribe [:user])]
     (fn []
       [:div.login-card-wrapper
-       [login-card name auth-data]])))
+       [login-card auth-data]])))
