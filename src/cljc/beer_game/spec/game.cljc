@@ -31,8 +31,9 @@
        #(gen))))
 
 (s/def ::game-round-bound
-  (fn [game-map] (< (:game/current-round game-map)
-                   (count (:game/rounds game-map)))))
+  (s/or :round-zero #(== 0 (:game/current-round %))
+        :round-in-bounds #(< (:game/current-round %)
+                             (count (:game/rounds %)))))
 
 (s/def :game/rounds (s/coll-of :game/round))
 (s/def :game/current-round nat-int?)
