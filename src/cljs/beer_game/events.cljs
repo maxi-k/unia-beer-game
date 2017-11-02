@@ -201,3 +201,8 @@
  :game/data
  (fn [db [_ data]]
    (assoc db :game data)))
+
+(rf/reg-event-fx
+ :game/data-fetch
+ (fn [{:keys [db]} [_]]
+   {:ws-auth [(:user db) [:game/data-fetch]]}))

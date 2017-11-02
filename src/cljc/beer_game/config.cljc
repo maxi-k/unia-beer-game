@@ -42,13 +42,19 @@
                       :customer {:title "Kunde"
                                  :icon ["customer-male" "customer-female"]
                                  :except #{:realm/player}}}
+   :supply-chain [:role/brewery :role/distributor
+                  :role/big-market :role/small-market
+                  :role/customer]
+   :default-game-settings {:round-amount 20}
    :user-role-image-path "img/roles"})
 
 (def supply-chain
   "Define the order in which the roles form a supply chain."
-  [:role/brewery :role/distributor
-   :role/big-market :role/small-market
-   :role/customer])
+  (:supply-chain definitions))
+
+(def default-game-settings
+  "The default game settings map."
+  (:default-game-settings definitions))
 
 (def websocket-endpoint
   "The relative url of the websocket endpoint."

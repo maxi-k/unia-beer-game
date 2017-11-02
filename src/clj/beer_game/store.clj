@@ -267,6 +267,16 @@
   "Returns the game data stored for given event-id."
   (comp :game/data event-data))
 
+(defn init-game-data
+  "Initializes a game-data map or ensures
+  complete game-data for the given partial data-map."
+  ([] (init-game-data {}))
+  ([data]
+   (cond-> data
+     true (update :game/settings #(merge config/default-game-settings %))
+     (nil? (:game/current-round data)) (assoc :game/current-round 0)
+     (empty? (:game/rounds data)) (assoc :game/rounds []))))
+
 (defn create-event!
   "Creates a new event with given id and given data."
   [{:as event-data :keys [:event/id]}]
@@ -275,10 +285,11 @@
     {:created false
      :reason :event/id
      :event/id id}
-    (do
-      (dosync
-       (alter data-map assoc-in [:event/data id] event-data))
-      (assoc event-data :created true))))
+    (let [full-data (update event-data :game/data init-game-data)]
+      (do
+        (dosync
+         (alter data-map assoc-in [:event/data id] full-data))
+        (assoc full-data :created true)))))
 
 (defn destroy-event!
   "Destroys given event and logs out all the users associated with it.

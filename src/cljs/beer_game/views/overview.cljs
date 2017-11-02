@@ -1,5 +1,6 @@
 (ns beer-game.views.overview
   (:require [re-frame.core :as rf]
+            [reagent.core :as ra]
             [soda-ash.core :as sa]
             [beer-game.api :as api]
             [beer-game.components.messages :as msgs]
@@ -32,17 +33,19 @@
 (defn round-view
   "Renders the game view for the current round."
   [round-data round-num]
-  (let [cur-round (nth round-data round-num)]
-    [sa/Grid {:class-name "game-view-grid"}
-     [sa/GridColumn
-      [sa/GridRow
-       [mail cur-round]]
-      [sa/GridRow
-       [incoming cur-round]]]
-     [sa/GridColumn
-      [stock cur-round]]
-     [sa/GridColumn
-      [outgoing cur-round]]]))
+  (if (>= (count round-data) round-num)
+    (msgs/render-message (msgs/invalid-round-count round-num))
+    (let [cur-round (nth round-data round-num)]
+      [sa/Grid {:class-name "game-view-grid"}
+       [sa/GridColumn
+        [sa/GridRow
+         [mail cur-round]]
+        [sa/GridRow
+         [incoming cur-round]]]
+       [sa/GridColumn
+        [stock cur-round]]
+       [sa/GridColumn
+        [outgoing cur-round]]])))
 
 (defn game-view
   "Renders the game view for the current player."
@@ -50,18 +53,24 @@
     :keys [:game/current-round :game/rounds]}]
   (if (spec/valid? :game/data game-data)
     [round-view rounds current-round]
-    [msgs/render-message (msgs/invalid-game-data-msg)]))
+    [msgs/render-message
+     (msgs/invalid-game-data-msg
+      (spec/explain-str :game/data game-data))]))
 
 (defn overview-panel []
   (let [user (rf/subscribe [:user])
         role (:user/role @user)
         img (config/user-role->image role)
         game (rf/subscribe [:game])]
-    [sa/Container {:class-name "game-wrapper"
-                   :text true}
-     [sa/Header {:class-name "role-title"
-                 :content (config/user-role->title role)
-                 :text-align :center
-                 :as :h1
-                 :image img}]
-     [game-view game]]))
+    (ra/create-class
+     {:component-did-mount #(rf/dispatch [:game/data-fetch])
+      :reagent-render
+      (fn []
+        [sa/Container {:class-name "game-wrapper"
+                       :text true}
+         [sa/Header {:class-name "role-title"
+                     :content (config/user-role->title role)
+                     :text-align :center
+                     :as :h1
+                     :image img}]
+         [game-view @game]])})))

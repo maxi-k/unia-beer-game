@@ -22,7 +22,7 @@
   [modal-close-fn]
   (let [form-values (ra/atom {:event/id (cutil/gen-event-id)
                               :event/name ""
-                              :game/data {:game/settings {:round-amount 20}}})
+                              :game/data {:game/settings config/default-game-settings}})
         update-form (fn [k v]
                       (if (vector? k)
                         (swap! form-values assoc-in k (.-value v))

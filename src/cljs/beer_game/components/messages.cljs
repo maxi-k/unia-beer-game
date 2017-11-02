@@ -8,9 +8,10 @@
   [{:as msg
     :keys [:message/title :message/content :message/icon]}]
   [sa/Message {:header title
-               :content (if (vector? content)
-                          (ra/as-element content)
-                          (str content))
+               :content (cond
+                          (nil? content) nil
+                          (vector? content) (ra/as-element content)
+                          :else (str content))
                :icon icon}])
 
 (defn debug-msg
@@ -75,8 +76,18 @@
 
 (defn invalid-game-data-msg
   "A message for invalid game data."
-  []
-  #:message {:icon "exclamation triangle"
-             :title "Fehlerhafte Spieldaten."
-             :content [:p
-                       "Die vom Server empfangenen Spieldaten sind fehlerhaft oder unvollständig."]})
+  ([] (invalid-game-data-msg ""))
+  ([reason]
+   #:message {:icon "exclamation triangle"
+              :title "Fehlerhafte Spieldaten."
+              :content [:p
+                        "Die vom Server empfangenen Spieldaten sind fehlerhaft oder unvollständig."
+                        [:br]
+                        (str reason)]}))
+
+(defn invalid-round-count
+  [round-num]
+  #:message {:icon "info circle"
+             :title (if (<= round-num 0)
+                      "Spiel hat noch nicht angefangen."
+                      "Spiel ist vorbei.")})
