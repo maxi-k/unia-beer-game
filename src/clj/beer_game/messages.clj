@@ -50,7 +50,7 @@
     (if (nil? user-data)
       nil
       (let [role (:user/role user-data)
-            game-data (:game/date event)
+            game-data (:game/data event)
             relevant-data
             (update game-data :game/rounds #(util/filter-round-data % role))]
         [:game/data relevant-data]))))

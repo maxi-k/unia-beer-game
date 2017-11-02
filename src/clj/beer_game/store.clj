@@ -1,6 +1,7 @@
 (ns beer-game.store
   (:require [beer-game.config :as config]
-            [beer-game.server-utils :as util]))
+            [beer-game.server-utils :as util]
+            [beer-game.logic.game :as game-logic]))
 
 (defn create-store
   []
@@ -267,16 +268,6 @@
   "Returns the game data stored for given event-id."
   (comp :game/data event-data))
 
-(defn init-game-data
-  "Initializes a game-data map or ensures
-  complete game-data for the given partial data-map."
-  ([] (init-game-data {}))
-  ([data]
-   (cond-> data
-     true (update :game/settings #(merge config/default-game-settings %))
-     (nil? (:game/current-round data)) (assoc :game/current-round 0)
-     (empty? (:game/rounds data)) (assoc :game/rounds []))))
-
 (defn create-event!
   "Creates a new event with given id and given data."
   [{:as event-data :keys [:event/id]}]
@@ -285,7 +276,7 @@
     {:created false
      :reason :event/id
      :event/id id}
-    (let [full-data (update event-data :game/data init-game-data)]
+    (let [full-data (update event-data :game/data game-logic/init-game-data)]
       (do
         (dosync
          (alter data-map assoc-in [:event/data id] full-data))
