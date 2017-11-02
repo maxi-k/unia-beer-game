@@ -3,9 +3,19 @@
             [beer-game.config :as config]))
 
 ;; TODO: Stub
-(s/def ::stock nat-int?)
+;; The stock one player has in a round
+(s/def :round/stock nat-int?)
+;; The cost a player has in one round
+(s/def :round/cost nat-int?)
+;; The demand a player has to fulfill for the player
+;; one step lower in the supply chain
+(s/def :round/demand nat-int?)
+;; The requests a player has for the player
+;; up 1 step from the supply chain
+(s/def :round/request nat-int?)
 
-(s/def ::role-data (s/keys :req-un [::stock]))
+(s/def ::role-data (s/keys :opt [:round/stock :round/cost
+                                 :round/demand :round/request]))
 (s/def :user/role config/allowed-user-roles)
 (s/def :game/roles
   (s/map-of :user/role ::role-data))
