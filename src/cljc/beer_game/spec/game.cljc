@@ -31,7 +31,7 @@
        #(gen))))
 
 (s/def ::game-round-bound
-  (s/or :round-zero #(== 0 (:game/current-round %))
+  (s/or :round-zero #(zero? (:game/current-round %))
         :round-in-bounds #(< (:game/current-round %)
                              (count (:game/rounds %)))))
 
