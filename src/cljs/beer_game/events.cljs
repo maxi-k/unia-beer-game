@@ -197,6 +197,23 @@
      {:db (update (:db w) :events dissoc id)}
      {:dispatch [:message/add (messages/event-not-destroyed-msg (str data))]})))
 
+(rf/reg-event-fx
+ :event/start
+ (fn [{:keys [db]}
+     [_ {:keys [:event/id]}]]
+   {:ws-auth [(:user db) [:event/start {:event/id id}]]}))
+
+(rf/reg-event-fx
+ :event/started
+ (fn [{:keys [db]}
+     [_ {:as event
+         :keys [:event/started? :event/id]}]]
+   (if started?
+     {:db (update-in db [:events id] merge event)
+      :dispatch [:message/add (messages/event-started-msg event)]}
+     {:dispatch [:message/add (messages/event-not-started-msg event)]
+      :db (update-in db [:events id] merge event)})))
+
 (rf/reg-event-db
  :game/data
  (fn [db [_ data]]

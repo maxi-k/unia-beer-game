@@ -58,11 +58,14 @@
      (msgs/invalid-game-data-msg
       (spec/explain-str :game/data game-data))]))
 
-(defn overview-panel []
+(defn overview-panel
+  []
   (let [user (rf/subscribe [:user])
         role (:user/role @user)
         img (config/user-role->image role)
-        game (rf/subscribe [:game])]
+        game (rf/subscribe [:game])
+        events (rf/subscribe [:events])
+        event-id (:event/id @user)]
     (ra/create-class
      {:component-did-mount #(rf/dispatch [:game/data-fetch])
       :reagent-render
@@ -74,4 +77,6 @@
                      :text-align :center
                      :as :h1
                      :image img}]
-         [game-view @game]])})))
+         (if (get-in @events [event-id :event/started?])
+           [game-view @game]
+           [msgs/render-message (msgs/game-not-yet-started)])])})))

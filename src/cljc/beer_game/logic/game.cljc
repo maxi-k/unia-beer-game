@@ -14,30 +14,34 @@
            :ret :game/data-update)
 
 (defn init-round-role
-  "Initializes the round role information for one user"
-  [user-role]
-  {:round/stock  0 :round/cost    0
-   :round/demand 0 :round/request 0})
+  "Initializes the round role information for one user."
+  [{:as settings :keys [initial-stock]} user-role]
+  (let [data {:round/stock  initial-stock
+              :round/cost  0
+              :round/demand 0 :round/order 0}]
+    (if (= (last config/supply-chain) user-role)
+      (assoc data :round/demand (:user-demand settings))
+      data)))
 
 (defn init-round-roles
   "Initializes the role map for one round."
-  []
+  [settings]
   (reduce
    (fn [coll item]
-     (assoc coll item (init-round-role item)))
+     (assoc coll item (init-round-role settings item)))
    {}
    config/supply-chain))
 
 (defn init-game-round
   "Initializes the map for one game round."
-  []
-  {:game/roles (init-round-roles)})
+  [settings]
+  {:game/roles (init-round-roles settings)})
 
 (defn init-game-rounds
   "Initializes the rounds-vector for a game."
-  [round-amount]
+  [{:as settings :keys [round-amount]}]
   (vec
-   (repeat (inc round-amount) (init-game-round))))
+   (repeat (inc round-amount) (init-game-round settings))))
 
 (defn init-game-data
   "Initializes a game-data map or ensures
@@ -48,8 +52,7 @@
      true (update :game/settings #(merge config/default-game-settings %))
      (nil? (:game/current-round data)) (assoc :game/current-round 0)
      (empty? (:game/rounds data)) (assoc :game/rounds
-                                         (init-game-rounds
-                                          (:round-amount settings))))))
+                                         (init-game-rounds settings)))))
 
 (defn overall-cost
   "Takes a round vector and returns the overall cost for the entire game

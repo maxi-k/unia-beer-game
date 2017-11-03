@@ -25,18 +25,6 @@
   :internal-id)
 
 (defmethod handle-game-msg
-  :commit-round
-  [{:as msg}]
-  (with-auth msg
-    (fn [_ user-data]
-      {:type :reply
-       :message
-       (->> (:?data msg)
-            #((assoc % :user/role (:user/role user-data)))
-            (game-logic/handle-commit (store/game-data (:event/id user-data)))
-            (apply-update user-data))})))
-
-(defmethod handle-game-msg
   :data-fetch
   [msg]
   (with-auth msg
@@ -58,6 +46,18 @@
              [:game/data {:invalid :event/id}])}
           {:type :reply
            :message [:auth/unauthorized {:event/id event-id}]})))))
+
+(defmethod handle-game-msg
+  :commit-round
+  [{:as msg}]
+  (with-auth msg
+    (fn [_ user-data]
+      {:type :reply
+       :message
+       (->> (:?data msg)
+            #((assoc % :user/role (:user/role user-data)))
+            (game-logic/handle-commit (store/game-data (:event/id user-data)))
+            (apply-update user-data))})))
 
 (defmethod handle-game-msg :default
   [msg]

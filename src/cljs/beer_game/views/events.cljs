@@ -59,7 +59,15 @@
                         :transform js/parseInt
                         :invalid-msg "Bitte eine ganze Zahl eingeben."
                         :value-fn #(:user-demands @game-settings)
-                        :on-change #(update-form [:game/data :game/settings :user-demands] %2)}]
+                        :on-change #(update-form [:game/data :game/settings :user-demands] %2)}
+                       {:key :initial-stock
+                        :label "Anfänglicher Lagerbestand"
+                        :placeholder "Anfänglicher Lagerbestand"
+                        :spec ::game-spec/initial-stock
+                        :transform js/parseInt
+                        :invalid-msg "Bitte eine ganze Zahl eingeben."
+                        :value-fn #(:initial-stock @game-settings)
+                        :on-change #(update-form [:game/data :game/settings :initial-stock] %2)}]
         input-elements (doall (map inputs/make-validated-input input-options))]
     (fn []
       [inputs/validated-form
@@ -120,10 +128,22 @@
 (defn- event-actions
   "Actions buttons for a single event (RUD)."
   [event]
-  (let [modal-state (ra/atom {:delete false})]
-    (fn [event]
+  (let [modal-state (ra/atom {:delete false
+                              :start false})]
+    (fn [{:as event
+         user-list :user/list}]
       [:div.clearfloat
        [sa/ButtonGroup {:floated :right}
+        (if (contains? (set (map :user/role user-list))
+                       (first config/supply-chain))
+          ;; All the necessary players have joined
+          [sa/Button {:positive true
+                      :disabled (:event/started? event)
+                      :on-click (if (= (count user-list)
+                                       (count config/player-user-roles))
+                                  #(rf/dispatch [:event/start event])
+                                  #(swap! modal-state assoc :start true))}
+           "Event starten"])
         [show-event-modal
          [sa/Button {} "Anzeigen"]
          event]
@@ -136,7 +156,14 @@
                      :content "Sicher? Alle Spieler-Sessions in diesem Event werden beendet."
                      :on-confirm #(do (rf/dispatch [:event/destroy event])
                                       (swap! modal-state assoc :delete false))
-                     :on-cancel #(swap! modal-state :delete false)}]]])))
+                     :on-cancel #(swap! modal-state :delete false)}]
+        [sa/Confirm {:open (:start @modal-state)
+                     :cancel-button "Abbrechen"
+                     :header "Event starten"
+                     :content "Sicher? Die fehlenden Spieler in der Supply-Chain werden ausgelessen."
+                     :on-confirm #(do (rf/dispatch [:event/start event])
+                                      (swap! modal-state assoc :start false))
+                     :on-cancel #(swap! modal-state assoc :start false)}]]])))
 
 (defn- event-list
   []

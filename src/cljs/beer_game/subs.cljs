@@ -62,6 +62,12 @@
    (get-in db [:events])))
 
 (rf/reg-sub
+ :event
+ :<- [:events]
+ (fn [events event-id]
+   (get events event-id)))
+
+(rf/reg-sub
  :game
  (fn [db]
    (get-in db [:game])))

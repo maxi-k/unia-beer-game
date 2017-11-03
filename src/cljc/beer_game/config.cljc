@@ -48,7 +48,8 @@
                   :role/big-market :role/small-market
                   :role/customer]
    :default-game-settings {:round-amount 20
-                           :user-demands 5}
+                           :user-demands 5
+                           :initial-stock 5}
    :user-role-image-path "img/roles"})
 
 (def supply-chain
@@ -82,6 +83,8 @@
 
 (def user-roles (definitions :user-roles))
 (def allowed-user-roles (-> definitions :user-roles keys set))
+(def player-user-roles
+  (disj allowed-user-roles :role/customer))
 
 (def user-role-image-path
   (:user-role-image-path definitions))

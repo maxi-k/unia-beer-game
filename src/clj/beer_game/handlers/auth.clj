@@ -8,7 +8,6 @@
   "Returns nil if given client-id is not logged in."
   store/client-id->user-id)
 
-
 (defn auth-leader
   "Tries to authenticate the given client-id with given password in the leader realm."
   [client-id client-key]

@@ -259,6 +259,15 @@
        keys
        (mapcat user-id->client-id)))
 
+(defn event->user-roles
+  "Returns the logged-on user-roles for given event."
+  [event-id]
+  (reduce
+   (fn [coll [_ v]]
+     (conj coll (:user/role v)))
+   #{}
+   (event->users event-id)))
+
 (defn event-data
   "Returns the data stored for given event-id."
   [event-id]
@@ -300,6 +309,25 @@
       {:clients @clients
        :message {:destroyed true
                  :event/id event-id}})))
+
+(defn start-event!
+  "Starts the given event if the data is valid.
+  Returns the saved data or a map explaining why it wasn't saved & started."
+  [event-id]
+  (cond
+    (or (nil? event-id)
+        (not (single-event? event-id))) {:event/started? false
+                                         :reason {:event/id event-id}}
+    (not (contains?
+          (event->user-roles event-id)
+          (first config/supply-chain))) {:event/started? false
+                                         :event/id event-id
+                                         :reason {:user/list (first config/supply-chain)}}
+    :else
+    (do
+      (dosync
+       (alter data-map assoc-in [:event/data event-id :event/started?] true))
+      (events event-id))))
 
 ;;;
 ;;; GAME

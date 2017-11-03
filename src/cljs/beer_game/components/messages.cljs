@@ -67,6 +67,21 @@
                       [:br]
                       reason]})
 
+(defn event-started-msg
+  "A message for the case when an event was started successuflly."
+  [{:keys [:event/id :event/name]}]
+  #:message {:icon "info circle"
+             :title (str "Das Event \"" name "\" (" id ") wurde erfolgreich gestartet.")})
+
+(defn event-not-started-msg
+  "A message for the case when an event could net be started."
+  [{:as event :keys [:reason :event/id :event/name]}]
+  #:message {:icon "exclamation triangle"
+             :title (str "Das Event " id " konnte nicht gestarted werden.")
+             :content [:p "Technische Informationen: "
+                       [:br]
+                       (or (:reason event) "Nicht verfügbar.")]})
+
 (defn invalid-submission-msg
   "A message for invalid form submissions."
   []
@@ -84,6 +99,13 @@
                         "Die vom Server empfangenen Spieldaten sind fehlerhaft oder unvollständig."
                         [:br]
                         (str reason)]}))
+
+(defn game-not-yet-started
+  "A message indicating that the game has not yet been started by the leader."
+  []
+  #:message {:icon "info circle"
+             :title "Spiel wurde noch nicht gestartet."
+             :content [:p "Der Spielleiter hat das Spiel noch nicht gestartet."]})
 
 (defn invalid-round-count
   [round-num]

@@ -15,6 +15,7 @@
     :auth/unauthorized   (rf/dispatch [:auth/unauthorized data])
     :event/created       (rf/dispatch [:event/created data])
     :event/destroyed     (rf/dispatch [:event/destroyed data])
+    :event/started       (rf/dispatch [:event/started data])
     :event/list          (rf/dispatch [:event/list data])
     :game/data           (rf/dispatch [:game/data data])
     :system/connection   (rf/dispatch [:system/connection data])

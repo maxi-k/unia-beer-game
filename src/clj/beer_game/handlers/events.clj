@@ -11,7 +11,7 @@
       {:type :reply
        :message [:auth/unauthorized {:user/realm realm}]}
       (if (fn? reply-fn)
-        (reply-fn msg)
+        (reply-fn msg user-data)
         reply-fn))))
 
 (defmulti handle-event-msg
@@ -23,7 +23,7 @@
   [ev-msg]
   (with-auth
     ev-msg
-    (fn [msg]
+    (fn [msg _]
       (let [events (get-in msg [:?data :event/id] :all)]
         {:type :reply
          :message (msgs/event-list events)}))))
@@ -33,7 +33,7 @@
   [ev-msg]
   (with-auth
     ev-msg
-    (fn [{:as msg :keys [?data]}]
+    (fn [{:as msg :keys [?data]} _]
       ;; TODO: Create new event here
       (let [safe-data (select-keys ?data [:event/id :event/name :game/data])
             result-data (store/create-event! safe-data)]
@@ -46,7 +46,7 @@
   [ev-msg]
   (with-auth
     ev-msg
-    (fn [{:as msg :keys [?data]}]
+    (fn [{:as msg :keys [?data]} _]
       (let [{:keys [clients message]} (store/destroy-event! (:event/id ?data))]
         (if (:destroyed message)
           [{:type :broadcast
@@ -57,3 +57,16 @@
             :message #(msgs/logout-forced %)}]
           {:type :reply
            :message [:event/destroyed message]})))))
+
+(defmethod handle-event-msg
+  :start
+  [{:as msg :keys [?data]}]
+  (with-auth msg
+    (fn [_ user-data]
+      {:type :broadcast
+       :uids (store/event->clients (:event/id ?data))
+       :message
+       [:event/started
+        (->> ?data
+             :event/id
+             store/start-event!)]})))
