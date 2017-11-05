@@ -6,7 +6,7 @@
 (defn handle-commit
   "Handles the game-round commit requested by a client."
   [cur-game-data commit]
-  cur-game-data)
+  {:game/data cur-game-data})
 
 (spec/fdef handle-commit
            :args (spec/cat :cur-game-data :game/data
@@ -40,8 +40,9 @@
 (defn init-game-rounds
   "Initializes the rounds-vector for a game."
   [{:as settings :keys [round-amount]}]
-  (vec
-   (repeat (inc round-amount) (init-game-round settings))))
+  (-> (repeat round-amount {})
+      vec
+      (assoc 0 (init-game-round settings))))
 
 (defn init-game-data
   "Initializes a game-data map or ensures

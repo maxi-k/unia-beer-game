@@ -160,7 +160,7 @@
         [sa/Confirm {:open (:start @modal-state)
                      :cancel-button "Abbrechen"
                      :header "Event starten"
-                     :content "Sicher? Die fehlenden Spieler in der Supply-Chain werden ausgelessen."
+                     :content "Sicher? Die fehlenden Spieler in der Supply-Chain werden ausgelassen."
                      :on-confirm #(do (rf/dispatch [:event/start event])
                                       (swap! modal-state assoc :start false))
                      :on-cancel #(swap! modal-state assoc :start false)}]]])))

@@ -29,6 +29,7 @@
   {:game-title "Beer Game"
    :public-root "public"
    :game-logo "img/icons/pint.svg"
+   :game-area-path "img/game-areas/"
    :websocket-endpoint "/ws"
    :websocket-packer :edn
    :realms #:realm{:player {:title "Mitspieler"}
@@ -74,6 +75,9 @@
 (def game-logo
   "The main logo for the game."
   (:game-logo definitions))
+(def game-area-path
+  "The path where the images for the game-area backgrounds are stores."
+  (:game-area-path definitions))
 
 (def realms (definitions :realms))
 (def player-realm :realm/player)

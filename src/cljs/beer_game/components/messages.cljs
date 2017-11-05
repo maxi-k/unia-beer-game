@@ -77,7 +77,7 @@
   "A message for the case when an event could net be started."
   [{:as event :keys [:reason :event/id :event/name]}]
   #:message {:icon "exclamation triangle"
-             :title (str "Das Event " id " konnte nicht gestarted werden.")
+             :title (str "Das Event " id " konnte nicht gestartet werden.")
              :content [:p "Technische Informationen: "
                        [:br]
                        (or (:reason event) "Nicht verfügbar.")]})

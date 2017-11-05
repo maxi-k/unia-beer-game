@@ -51,5 +51,5 @@
           :opt []))
 
 (s/def :game/data-update
-  (s/keys :req []
+  (s/keys :req [:game/data]
           :opt []))
