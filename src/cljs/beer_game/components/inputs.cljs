@@ -31,7 +31,7 @@
         opts (dissoc options :spec :as :invalid-msg :label)
         field-options (dissoc opts :on-change :value :value-fn :placeholder)
         input-options (-> opts
-                          (select-keys [:placeholder :value-fn])
+                          (select-keys [:placeholder :value-fn :class-name])
                           (assoc :on-change change-fn))]
     {:key (or (:key options) (str (random-uuid)))
      :field-state field-state

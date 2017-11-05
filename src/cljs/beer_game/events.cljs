@@ -223,3 +223,8 @@
  :game/data-fetch
  (fn [{:keys [db]} [_]]
    {:ws-auth [(:user db) [:game/data-fetch]]}))
+
+(rf/reg-event-fx
+ :game/round-commit
+ (fn [{:keys [db]} [_ commit-data]]
+   {:ws-auth [(:user db) [:game/round-commit commit-data]]}))
