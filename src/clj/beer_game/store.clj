@@ -69,14 +69,17 @@
 (defn user-id->client-id
   "Converts given user-id to a set of client-ids."
   [user-id]
-  {:pre [(string? user-id)]
+  {:pre [(or (nil? user-id)
+             (string? user-id))]
    :post [(set? %)]}
-  (reduce
-   (fn [coll [client-id server-uuid]]
-     (if (= server-uuid user-id)
-       (conj coll client-id)
-       coll))
-   #{} (:clients/authorized @data-map)))
+  (if (nil? user-id)
+    #{}
+    (reduce
+     (fn [coll [client-id server-uuid]]
+       (if (= server-uuid user-id)
+         (conj coll client-id)
+         coll))
+     #{} (:clients/authorized @data-map))))
 
 (defn filter-user-data
   "Filters the user data using given function `f`,
