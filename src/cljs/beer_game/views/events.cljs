@@ -100,6 +100,7 @@
       [tables/definition-table
        {"Event ID" (:event/id event-data)
         "Event Name" (:event/name event-data)
+        "Gestartet" (if (:event/started? event-data) "Ja" "Nein")
         "Rundenzahl" (get-in event-data [:game/data :game/settings :round-amount])
         "Spieler" [event-role-list {:bulleted false} (:user/list event-data)]}]
       [sa/Button {:on-click #(reset! modal-state false)
