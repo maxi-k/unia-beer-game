@@ -67,7 +67,15 @@
                         :transform js/parseInt
                         :invalid-msg "Bitte eine ganze Zahl eingeben."
                         :value-fn #(:initial-stock @game-settings)
-                        :on-change #(update-form [:game/data :game/settings :initial-stock] %2)}]
+                        :on-change #(update-form [:game/data :game/settings :initial-stock] %2)}
+                       {:key :cost-factor
+                        :label "Kostenmultiplikator"
+                        :placeholder "Kosten pro Item im Lager."
+                        :spec ::game-spec/cost-factor
+                        :transfor js/parseInt
+                        :invalid-msg "Bitte eine positive, ganze Zahl eingeben."
+                        :value-fn #(:cost-factor @game-settings)
+                        :on-change #(update-form [:game/data :game/settings :cost-factor] %2)}]
         input-elements (doall (map inputs/make-validated-input input-options))]
     (fn []
       [inputs/validated-form

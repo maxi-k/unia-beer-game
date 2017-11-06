@@ -4,15 +4,19 @@
             [beer-game.messages :as msgs]))
 
 (defn- with-auth
-  [msg reply-fn]
-  (let [{:as user-data :keys [:user/realm]} (store/message->user-data msg)]
-    (if (or (nil? user-data)
-            (not= realm config/leader-realm))
-      {:type :reply
-       :message [:auth/unauthorized {:user/realm realm}]}
-      (if (fn? reply-fn)
-        (reply-fn msg user-data)
-        reply-fn))))
+  ([msg reply-fn] (with-auth msg nil reply-fn))
+  ([msg event-id reply-fn]
+   (let [{:as user-data :keys [:user/realm :event/id]}
+         (store/message->user-data msg)]
+     (if (or (nil? user-data)
+             (not (or (= realm config/leader-realm)
+                      (= id event-id))))
+       {:type :reply
+        :message [:auth/unauthorized {:user/realm realm}]}
+       (if (fn? reply-fn)
+         (reply-fn msg user-data)
+         reply-fn)))))
+
 
 (defmulti handle-event-msg
   "Dispatches all 'events' messages"
@@ -23,10 +27,16 @@
   [ev-msg]
   (with-auth
     ev-msg
-    (fn [msg _]
-      (let [events (get-in msg [:?data :event/id] :all)]
-        {:type :reply
-         :message (msgs/event-list events)}))))
+    ;; Also allow users which participate in event to fetch
+    (get-in ev-msg [:?data :event/id])
+    (fn [msg user-data]
+      (let [events (get-in msg [:?data :event/id] :all)
+            event-msg (msgs/event-list events)]
+        (if (= (:user/realm user-data) config/leader-realm)
+          {:type :reply
+           :message event-msg}
+          {:type :reply
+           :message (update event-msg 1 msgs/events-status-only)})))))
 
 (defmethod handle-event-msg
   :create

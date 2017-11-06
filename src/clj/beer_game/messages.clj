@@ -14,6 +14,15 @@
   (let [users (-> data :event/id store/event->users vals)]
     (assoc data :user/list users)))
 
+(defn events-status-only
+  "Takes a map of events and returns a map of events without the game data."
+  [events]
+  (reduce
+   (fn [coll [id val]]
+     (assoc coll id (-> val (dissoc :game/data))))
+   {}
+   events))
+
 (defn enrich-user
   "Enrich the user model with more information to be given back to the client."
   [user-id data]
@@ -36,10 +45,15 @@
 
 (defn event-list
   [events]
-  [:event/list (reduce (fn [coll [id data]]
-                         (assoc coll id (enrich-event data)))
-                       {}
-                       (store/events events))])
+  (let [event-map (store/events events)
+        event-map (if (store/single-event? events)
+                    {events event-map}
+                    event-map)]
+    [:event/list (reduce (fn [coll [id data]]
+                           (assoc coll id (enrich-event data)))
+                         {}
+                         event-map)]))
+
 
 (defn game-data
   "A message for sending the relevant game data to the given user."

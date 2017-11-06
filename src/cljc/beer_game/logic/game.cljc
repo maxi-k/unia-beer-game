@@ -3,6 +3,13 @@
             [beer-game.spec.game :as game-spec]
             [beer-game.config :as config]))
 
+(defn start-game
+  [game-data user-roles]
+  (let [all-roles (conj user-roles (last config/supply-chain))
+        supply-chain (filter #(contains? all-roles %) config/supply-chain)]
+    (-> game-data
+        (assoc-in [:game/settings :game/supply-chain] supply-chain))))
+
 (defn handle-commit
   "Handles the game-round commit requested by a client."
   [cur-game-data commit]

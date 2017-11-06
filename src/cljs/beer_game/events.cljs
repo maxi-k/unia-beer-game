@@ -120,7 +120,9 @@
 (rf/reg-event-fx
  :auth/logout
  (fn [w [_ server-side?]]
-   (let [db-map {:db (assoc (:db w) :user {:auth false})
+   (let [db-map {:db (-> (:db w)
+                         (assoc :user {:auth false})
+                         (assoc :events {}))
                  :goto "/"}]
      (if server-side?
        (merge db-map {:ws [:auth/logout]})
@@ -144,12 +146,13 @@
                       :auth/key key
                       :event/id id}]}))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  :auth/login-success
- (fn [db [_ data-map]]
-   (update db :user merge data-map {:auth true
-                                    :auth-failure false
-                                    :logout-success true})))
+ (fn [{:keys [db]} [_ data-map]]
+   {:db (update db :user merge data-map {:auth true
+                                         :auth-failure false
+                                         :logout-success true})
+    :dispatch [:event/fetch (select-keys data-map [:event/id])]}))
 
 (rf/reg-event-db
  :system/connection

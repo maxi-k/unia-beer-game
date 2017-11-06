@@ -26,6 +26,14 @@
   "User model:"
   (create-store))
 
+(def all-event-ids
+  #{:all :event/all})
+
+(defn single-event?
+  "Returns true if given event-id refers to a single event."
+  [id]
+  (not (contains? all-event-ids id)))
+
 #_(if config/development?
     (add-watch data-map :log
                (fn [_ _ _ new] (println new))))
@@ -233,12 +241,6 @@
 ;;; 
 ;;;
 
-(defn single-event?
-  "Returns true if given event-id refers to a single event."
-  [id]
-  (not (or (= :event/all id)
-           (= :all id))))
-
 (defn events
   "Returns a list of events stored."
   ([] (get @data-map :event/data))
@@ -252,7 +254,9 @@
   [event-id]
   (filter-user-data
    (fn [[user-id user-data]]
-     (= (:event/id user-data) event-id))))
+     (or
+      (contains? all-event-ids (:event/id user-data))
+      (= (:event/id user-data) event-id)))))
 
 (defn event->clients
   "Returns a list of client ids participating in given event(-id)."
@@ -288,7 +292,9 @@
     {:created false
      :reason :event/id
      :event/id id}
-    (let [full-data (update event-data :game/data game-logic/init-game-data)]
+    (let [full-data (-> event-data
+                        (update :game/data game-logic/init-game-data)
+                        (assoc :event/started? false))]
       (do
         (dosync
          (alter data-map assoc-in [:event/data id] full-data))
@@ -317,20 +323,25 @@
   "Starts the given event if the data is valid.
   Returns the saved data or a map explaining why it wasn't saved & started."
   [event-id]
-  (cond
-    (or (nil? event-id)
-        (not (single-event? event-id))) {:event/started? false
-                                         :reason {:event/id event-id}}
-    (not (contains?
-          (event->user-roles event-id)
-          (first config/supply-chain))) {:event/started? false
-                                         :event/id event-id
-                                         :reason {:user/list (first config/supply-chain)}}
-    :else
-    (do
-      (dosync
-       (alter data-map assoc-in [:event/data event-id :event/started?] true))
-      (events event-id))))
+  (let [roles (event->user-roles event-id)]
+    (cond
+      (or (nil? event-id)
+          (not (single-event? event-id))) {:event/started? false
+                                           :reason {:event/id event-id}}
+      (not (contains?
+            roles
+            (first config/supply-chain))) {:event/started? false
+                                           :event/id event-id
+                                           :reason {:user/list (first config/supply-chain)}}
+      :else
+      (let [start-fn (fn [event]
+                       (-> event
+                           (assoc :event/started? true)
+                           (update :game/data game-logic/start-game roles)))]
+        (do
+          (dosync
+           (alter data-map update-in [:event/data event-id] start-fn))
+          (events event-id))))))
 
 ;;;
 ;;; GAME
