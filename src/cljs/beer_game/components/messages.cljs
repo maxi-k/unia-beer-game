@@ -71,7 +71,8 @@
   "A message for the case when an event was started successuflly."
   [{:keys [:event/id :event/name]}]
   #:message {:icon "info circle"
-             :title (str "Das Event \"" name "\" (" id ") wurde erfolgreich gestartet.")})
+             :title (str "Das Event \"" name "\" (" id ") wurde erfolgreich gestartet.")
+             :time 3000})
 
 (defn event-not-started-msg
   "A message for the case when an event could net be started."
