@@ -69,13 +69,18 @@
 .right-floated { float: right; }
 .left-floated { float: left; }
 
-#app-wrapper {
+html, body,
+#app, #app-wrapper,
+.full-height {
     display: block;
     height: 100%;
+    overflow: hidden;
 }
 
 #main-content-wrapper {
     padding: 1.2rem;
+    overflow: auto;
+    height: 100%;
 }
 
 .themeable {
@@ -84,6 +89,7 @@
 
 #app-menu {
     .themeable;
+    .full-height;
     display: flex;
     justify-content: space-between;
 
