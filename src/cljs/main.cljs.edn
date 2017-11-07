@@ -5,5 +5,4 @@
                     :asset-path           "js/compiled/out"
                     :preloads [devtools.preload]
                     :external-config {:devtools/config {:features-to-install :all}}
-                    :externs ["cljsjs/plotly/common/plotly.ext.js"]
                     }}
