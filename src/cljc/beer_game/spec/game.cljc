@@ -1,4 +1,6 @@
 (ns beer-game.spec.game
+  #?(:clj (:require [clojure.spec.gen.alpha :as gen]
+                    [clojure.spec.alpha :as spec]))
   (:require [clojure.spec.alpha :as s]
             [beer-game.config :as config]))
 
@@ -34,8 +36,9 @@
 (s/def ::initial-stock nat-int?)
 (s/def ::cost-factor pos-int?)
 (s/def ::user-demands
-  (s/or :constant ::demand
-        :changing (s/coll-of ::demand)))
+  ::demand
+  #_(s/or :constant ::demand
+          :changing (s/coll-of ::demand)))
 (s/def :game/supply-chain
   (s/coll-of :user/role))
 (s/def :game/settings
@@ -68,3 +71,13 @@
 (s/def :game/data-update
   (s/keys :req [:game/data :update/diff :update/valid?]
           :opt [:update/reason]))
+
+
+#?(:clj
+
+   (defn random-game-data
+     "Creates random data required to create a game."
+     []
+     {:game/data
+      {:game/settings (first (gen/sample (spec/gen :game/settings)))}})
+   )

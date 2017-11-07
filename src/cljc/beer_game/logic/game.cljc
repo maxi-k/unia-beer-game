@@ -187,8 +187,8 @@
    (cond-> data
      true (update :game/settings #(merge config/default-game-settings %))
      (nil? (:game/current-round data)) (assoc :game/current-round 0)
-     (empty? (:game/rounds data)) (assoc :game/rounds
-                                         (init-game-rounds settings)))))
+     (empty? (:game/rounds data)) (#(assoc % :game/rounds
+                                            (init-game-rounds (:game/settings %)))))))
 
 (defn overall-cost
   "Takes a round vector and returns the overall cost for the entire game

@@ -4,8 +4,13 @@
             [beer-game.handlers.auth :as auth]
             [beer-game.message-handler :as msg]
             [beer-game.server-utils :as sutil]
+            [clojure.spec.alpha :as spec]
+            [clojure.spec.gen.alpha :as gen]
+            [beer-game.spec.event :as event-spec]
+            [beer-game.spec.game :as game-spec]
             [clojure.test :refer :all]
-            [clojure.data :as data]))
+            [clojure.data :as data]
+            [beer-game.spec.game :as game-spec]))
 
 (defn filter-msgs
   [result filter-fn]
@@ -41,12 +46,14 @@
 
 (defn with-test-event!
   ([event-data function]
-   (let [event (store/create-event! event-data)]
+   (let [event-data (if (contains? event-data :game/data)
+                      event-data
+                      (assoc event-data :game/data (game-spec/random-game-data)))
+         event (store/create-event! event-data)]
      (function event)
      (store/destroy-event! (:event/id event-data))))
   ([function]
-   (with-test-event! {:event/id (str "TEST-EVENT-" (sutil/uuid))
-                      :event/name "Test event for automated testing."}
+   (with-test-event! (event-spec/random-event-data)
      function)))
 
 (defn test-all-roles!
