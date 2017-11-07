@@ -29,7 +29,8 @@
   [game-area {} :outgoing
    "Warenausgang"
    [:div.message-data.single-value
-    (:round/demand round-data)
+    (min (:round/demand round-data)
+         (:round/stock round-data))
     ]])
 
 (defn incoming

@@ -89,11 +89,12 @@
                new-round?)
         {:type :broadcast
          :uids (store/event->clients event-id)
-         :message [:game/data-update (fn [client-id]
-                                       (let [user (store/client-id->user-data)
-                                             role (:user/role user)]
-                                         (update game-update :game/rounds
-                                                 util/filter-round-data role)))]}
+         :message (fn [client-id]
+                    (let [user (store/client-id->user-data client-id)
+                          role (:user/role user)]
+                      [:game/data-update
+                       (update game-update :game/rounds
+                               util/filter-round-data role)]))}
         {:type :reply
          :message [:game/data-update (update game-update :game/rounds
                                              util/filter-round-data user-role)]}))))

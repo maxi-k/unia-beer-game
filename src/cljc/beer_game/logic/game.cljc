@@ -14,6 +14,27 @@
         (< (inc role-idx) chain-length) (assoc 1 (nth supply-chain (inc role-idx)))
         (>= (dec role-idx) 0)           (assoc 0 (nth supply-chain (dec role-idx)))))))
 
+(defn update-stocks
+  "Update all the stock values when a round is done."
+  [rounds cur-round {:as settings :keys [:game/supply-chain]}]
+  (let [next-round (inc cur-round)
+        last-round? (>= next-round (count rounds))
+        updater (fn [roles]
+                  (reduce
+                   (fn [coll [role val]]
+                     (let [cur-stock (get-in rounds [cur-round :game/roles role :round/stock])]
+                       (assoc coll role
+                              (assoc val :round/stock
+                                     (max 0
+                                          (+ cur-stock
+                                             (- (or (:round/incoming val) 0)
+                                                (or (:round/demand val) 0))))))))
+                   {}
+                   roles))]
+    (if last-round?
+      rounds
+      (update-in rounds [next-round :game/roles] updater))))
+
 (defn apply-round-update
   "Applies a commit to the game rounds vector."
   [rounds cur-round {:as settings :keys [:game/supply-chain cost-factor]}
@@ -23,33 +44,27 @@
         last-round? (>= next-round (count rounds))
         role-data (get-in rounds [cur-round :game/roles role])
         post-data (get-in rounds [cur-round :game/roles post])
-        cost (* cost-factor (:round/stock role-data) )
-        delivered (min order (:round/stock role-data))]
+        cost (* cost-factor (:round/stock role-data))
+        delivered (min (or (:round/demand role-data) 0)
+                       (or (:round/stock role-data) 0))]
     (cond-> rounds
       true (assoc-in [cur-round :game/roles role :round/commited?] true)
       true (assoc-in [cur-round :game/roles role :round/cost] cost)
-      ;; ---
-      (not last-round?)
-      (assoc-in [next-round :game/roles role :round/stock]
-                (- (:round/stock role-data) delivered))
+      ;; --- add the delivered to the next in the supply chain
+      ;; -- in the next round
+      (and (some? post)
+           (not last-round?))
+      (assoc-in [next-round :game/roles post :round/incoming] delivered)
       ;; --- first role in supply chain
       (and (nil? pre)
            (not last-round?))
-      (-> (assoc-in [next-round :game/roles role :round/stock] (+ (:round/stock role-data)
-                                                                  order))
-          (assoc-in [next-round :game/roles role :round/incoming] order))
-      ;; ---
-      (and (some? post)
-           (not last-round?))
-      (-> (assoc-in [next-round :game/roles post :round/stock] (+ (:round/stock post-data)
-                                                                  delivered))
-          (assoc-in [next-round :game/roles post :round/incoming] delivered))
-      ;; ---
+      (assoc-in [next-round :game/roles role :round/incoming] order)
+      ;; --- if not first role in the supply chain
+      ;; -- place the order from the commit as demand on the previous element
       (and (some? pre)
            (not last-round?))
-      (->
-       (assoc-in [next-round :game/roles pre :round/demand] order)))
-    ))
+      ;; place the own order
+      (assoc-in [next-round :game/roles pre :round/demand] order))))
 
 (defn round-completed?
   "Takes the current round map and the game supply chain
@@ -111,6 +126,10 @@
                  update-in [:game/data :game/rounds]
                  apply-round-update cur-round settings {:user/role :role/customer
                                                         :round/order (:user-demands settings)})
+          ;; Update the stock of every role at the end
+          (swap! data-atom update-in [:game/data :game/rounds]
+                 update-stocks cur-round settings)
+
           (swap! data-atom update-in [:game/data :game/current-round] inc)
           (swap! data-atom #(assoc-in % [:update/diff :game/current-round]
                                       (get-in % [:game/data :game/current-round]))))
