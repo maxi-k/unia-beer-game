@@ -18,6 +18,7 @@
     :event/started       (rf/dispatch [:event/started data])
     :event/list          (rf/dispatch [:event/list data])
     :game/data           (rf/dispatch [:game/data data])
+    :game/data-update    (rf/dispatch [:game/data-update data])
     :system/connection   (rf/dispatch [:system/connection data])
     :testing/echo        (rf/dispatch [:test :ws-echo data])
     :chsk/ws-ping        (rf/dispatch [:server/ping])

@@ -4,7 +4,8 @@
             [beer-game.db :as db]
             [beer-game.util :as util]
             [beer-game.client :as client]
-            [beer-game.components.messages :as messages]))
+            [beer-game.components.messages :as messages]
+            [beer-game.components.messages :as msgs]))
 
 
 ;; Register a fx-handler for sending websocket stuff
@@ -231,3 +232,10 @@
  :game/round-commit
  (fn [{:keys [db]} [_ commit-data]]
    {:ws-auth [(:user db) [:game/round-commit commit-data]]}))
+
+(rf/reg-event-fx
+ :game/data-update
+ (fn [{:keys [db]} [_ {:as update-data :keys [:game/updated?]}]]
+   (if updated?
+     {:db (assoc db :game update-data)}
+     {:dispatch [:message/add (msgs/game-update-failed update-data)]})))

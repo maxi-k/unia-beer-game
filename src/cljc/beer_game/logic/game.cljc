@@ -3,6 +3,124 @@
             [beer-game.spec.game :as game-spec]
             [beer-game.config :as config]))
 
+(defn roles-around
+  "Returns the roles before and after the passed role in the supply chain."
+  [role supply-chain]
+  (let [role-idx (.indexOf supply-chain role)
+        chain-length (count supply-chain)]
+    (if (< role-idx 0)
+      [nil nil]
+      (cond-> [nil nil]
+        (< (inc role-idx) chain-length) (assoc 1 (nth supply-chain (inc role-idx)))
+        (>= (dec role-idx) 0)           (assoc 0 (nth supply-chain (dec role-idx)))))))
+
+(defn apply-round-update
+  "Applies a commit to the game rounds vector."
+  [rounds cur-round {:as settings :keys [:game/supply-chain cost-factor]}
+   {:as commit :keys [:round/order :user/role]}]
+  (let [[pre post] (roles-around role supply-chain)
+        next-round (inc cur-round)
+        last-round? (>= next-round (count rounds))
+        role-data (get-in rounds [cur-round :game/roles role])
+        post-data (get-in rounds [cur-round :game/roles post])
+        cost (* cost-factor (:round/stock role-data) )
+        delivered (min order (:round/stock role-data))]
+    (cond-> rounds
+      true (assoc-in [cur-round :game/roles role :round/commited?] true)
+      true (assoc-in [cur-round :game/roles role :round/cost] cost)
+      ;; ---
+      (not last-round?)
+      (assoc-in [next-round :game/roles role :round/stock]
+                (- (:round/stock role-data) delivered))
+      ;; --- first role in supply chain
+      (and (nil? pre)
+           (not last-round?))
+      (-> (assoc-in [next-round :game/roles role :round/stock] (+ (:round/stock role-data)
+                                                                  order))
+          (assoc-in [next-round :game/roles role :round/incoming] order))
+      ;; ---
+      (and (some? post)
+           (not last-round?))
+      (-> (assoc-in [next-round :game/roles post :round/stock] (+ (:round/stock post-data)
+                                                                  delivered))
+          (assoc-in [next-round :game/roles post :round/incoming] delivered))
+      ;; ---
+      (and (some? pre)
+           (not last-round?))
+      (->
+       (assoc-in [next-round :game/roles pre :round/demand] order)))
+    ))
+
+(defn round-completed?
+  "Takes the current round map and the game supply chain
+  and returns true if the round is completed."
+  [{:as round-data :keys [:game/roles]}
+   supply-chain]
+  (let [relevant-roles (butlast supply-chain)]
+    (every? #(get-in roles [% :round/commited?])
+            relevant-roles)))
+
+(defn handle-commit
+  "Handles the game-round commit requested by a client."
+  [{:as cur-game-data
+    cur-round :game/current-round
+    cur-rounds :game/rounds
+    settings :game/settings}
+   {:as commit
+    commit-orders :round/order
+    user-role :user/role}]
+  (let [update-map {:game/data cur-game-data
+                    :update/diff {}
+                    :update/valid? true}]
+    (cond
+      (not (contains? (set (:game/supply-chain settings)) user-role))
+      (assoc update-map
+             :update/valid? false
+             :update/reason {:game/supply-chain (:game/supply-chain settings)
+                             :user/role user-role})
+      ;; -----
+      (>= cur-round (count cur-rounds))
+      (assoc update-map
+             :update/valid? false
+             :update/reason {:game/current-round cur-round
+                             :game/rounds (count cur-rounds)})
+      ;; -----
+      (get-in cur-rounds [cur-round :game/roles user-role :round/commited?])
+      (assoc update-map
+             :update/valid? false
+             :update/reason {:round/commited? true})
+      ;; -----
+      :else
+      (let [data-atom (atom update-map)
+            {:as settings :keys [:game/supply-chain]}
+            (get-in @data-atom [:game/data :game/settings])]
+        ;; Apply the round update
+        (swap! data-atom
+               update-in [:game/data :game/rounds]
+               apply-round-update cur-round settings commit)
+        ;; Add it to the diff
+        (swap! data-atom
+               #(assoc-in % [:update/diff :game/rounds]
+                          (get-in % [:game/data :game/rounds])))
+        ;; Increase the current round if every round was commited
+        (when (round-completed?
+               (get-in @data-atom [:game/data :game/rounds cur-round])
+               supply-chain)
+          ;; Apply the user order
+          (swap! data-atom
+                 update-in [:game/data :game/rounds]
+                 apply-round-update cur-round settings {:user/role :role/customer
+                                                        :round/order (:user-demands settings)})
+          (swap! data-atom update-in [:game/data :game/current-round] inc)
+          (swap! data-atom #(assoc-in % [:update/diff :game/current-round]
+                                      (get-in % [:game/data :game/current-round]))))
+        @data-atom))))
+
+(spec/fdef handle-commit
+           :args (spec/cat :cur-game-data :game/data
+                           :commit :game/round-commit)
+           :ret :game/data-update)
+
 (defn start-game
   [game-data user-roles]
   (let [all-roles (conj user-roles (last config/supply-chain))
@@ -10,22 +128,13 @@
     (-> game-data
         (assoc-in [:game/settings :game/supply-chain] supply-chain))))
 
-(defn handle-commit
-  "Handles the game-round commit requested by a client."
-  [cur-game-data commit]
-  {:game/data cur-game-data})
-
-(spec/fdef handle-commit
-           :args (spec/cat :cur-game-data :game/data
-                           :commit :game/round-commit)
-           :ret :game/data-update)
-
 (defn init-round-role
   "Initializes the round role information for one user."
   [{:as settings :keys [initial-stock]} user-role]
-  (let [data {:round/stock  initial-stock
+  (let [data {:round/stock initial-stock
               :round/cost  0
-              :round/demand 0 :round/order 0}]
+              :round/demand 0
+              :round/order 0}]
     (if (= (last config/supply-chain) user-role)
       (assoc data :round/demand (:user-demand settings))
       data)))

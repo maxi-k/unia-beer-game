@@ -9,17 +9,22 @@
 (s/def :round/cost nat-int?)
 ;; The demand a player has to fulfill for the player
 ;; one step lower in the supply chain
-(s/def :round/demand nat-int?)
-;; The order a player has for the player
-;; up 1 step from the supply chain
-(s/def :round/order nat-int?)
+(s/def :round/demand (s/nilable nat-int?))
+;; The items that were incoming for the given player
+;; in a round
+(s/def :round/incoming nat-int?)
 ;; Indicates whether a piece of round-data has been
 ;; commited by the player
 (s/def :round/commited? boolean?)
 
-(s/def ::role-data (s/keys :opt [:round/stock :round/cost
-                                 :round/demand :round/order
-                                 :round/commited?]))
+;; The order a player has for the player
+;; up 1 step from the supply chain
+(s/def :round/order nat-int?)
+
+(s/def ::role-data
+  (s/keys :opt [:round/stock :round/cost
+                :round/demand :round/incoming
+                :round/commited?]))
 (s/def :user/role config/allowed-user-roles)
 (s/def :game/roles
   (s/map-of :user/role ::role-data))
@@ -38,7 +43,7 @@
           :opt [:game/supply-chain]))
 
 (s/def :game/round
-  (s/keys :req [:game/roles]))
+  (s/keys :opt [:game/roles]))
 
 (s/def ::game-round-bound
   (s/or :round-zero #(zero? (:game/current-round %))
@@ -57,6 +62,9 @@
   (s/keys :req [:round/order :user/role]
           :opt []))
 
+(s/def :update/diff map?)
+(s/def :update/valid? boolean?)
+(s/def :update/reason map?)
 (s/def :game/data-update
-  (s/keys :req [:game/data]
-          :opt []))
+  (s/keys :req [:game/data :update/diff :update/valid?]
+          :opt [:update/reason]))

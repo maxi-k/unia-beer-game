@@ -71,8 +71,10 @@
   where the data for reach round only contains the information
   for the given user-role."
   [rounds user-role]
-  (map
-   (fn [round]
-     (update round :game/roles
-             select-keys [user-role]))
-   rounds))
+  (if (or (nil? rounds) (nil? user-role))
+    nil
+    (map
+     (fn [round]
+       (update round :game/roles
+               select-keys [user-role]))
+     rounds)))

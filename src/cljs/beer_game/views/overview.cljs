@@ -39,7 +39,7 @@
   [game-area {} :incoming
    "Wareneingang"
    [:div.message-data.single-value
-    (:round/order round-data)]])
+    (:round/incoming round-data)]])
 
 (defn mail
   "The part of the view that represents the mailbox of the current player."
@@ -128,20 +128,20 @@
 (defn game-view
   "Renders the game view for the current player."
   [user-role]
-  (let [{:as game-data
-         :keys [:game/current-round :game/rounds]}
-        @(rf/subscribe [:game])]
+  (let [game (rf/subscribe [:game])]
     (fn [user-role]
-      (cond
-        (not (spec/valid?
-              :game/data game-data)) [msgs/render-message
-                                      (msgs/invalid-game-data-msg
-                                       (spec/explain-str :game/data game-data))]
-        (or (>= current-round (count rounds))
-            (neg? current-round)) (msgs/render-message
-                                   (msgs/invalid-round-count current-round))
-        :else
-        [round-view rounds current-round user-role]))))
+      (let [{:as game-data
+             :keys [:game/current-round :game/rounds]} @game]
+        (cond
+          (not (spec/valid?
+                :game/data game-data)) [msgs/render-message
+                                        (msgs/invalid-game-data-msg
+                                         (spec/explain-str :game/data game-data))]
+          (or (>= current-round (count rounds))
+              (neg? current-round)) (msgs/render-message
+                                     (msgs/invalid-round-count current-round))
+          :else
+          [round-view rounds current-round user-role])))))
 
 (defn overview-panel
   []

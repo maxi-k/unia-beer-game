@@ -1,5 +1,6 @@
 (ns beer-game.components.messages
-  (:require [reagent.core :as ra]
+  (:require [clojure.string :as string]
+            [reagent.core :as ra]
             [soda-ash.core :as sa]
             [beer-game.config :as config]
             [beer-game.util :as util]))
@@ -109,8 +110,19 @@
              :content [:p "Der Spielleiter hat das Spiel noch nicht gestartet."]})
 
 (defn invalid-round-count
+  "A message indicating an out-of-bounds or invalid round-count."
   [round-num]
   #:message {:icon "info circle"
              :title (if (<= round-num 0)
                       "Spiel hat noch nicht angefangen."
                       "Spiel ist vorbei.")})
+
+(defn game-update-failed
+  "A message telling the user that a game-update (round-commit) has failed."
+  [update-map]
+  #:message {:icon "exclamation triangle"
+             :title "Spielupdate gescheitert."
+             :content [:p "Das Spielupdate konnte nicht durchgeführt werden."
+                       "Technische Daten:"
+                       [:br]
+                       (string/join (take 500 (str (:update/reason update-map))))]})

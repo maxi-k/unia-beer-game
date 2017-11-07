@@ -1,7 +1,9 @@
 (ns beer-game.store
   (:require [beer-game.config :as config]
             [beer-game.server-utils :as util]
-            [beer-game.logic.game :as game-logic]))
+            [beer-game.logic.game :as game-logic]
+            [beer-game.spec.game :as game-spec]
+            [clojure.spec.alpha :as spec]))
 
 (defn create-store
   []
@@ -346,3 +348,26 @@
 ;;;
 ;;; GAME
 ;;;
+(defn update-game!
+  "Updates a game instance with the given new data.
+  Returns a map wich contains the game-data if updated,
+  and a key :game/updated? indicating whether the game-data
+  in the store was in fact updated, as well as a :update/reason key
+  if it was not. "
+  [event-id game-data]
+  (cond
+    (or (not (single-event? event-id))
+        (empty? (events event-id)))
+    {:game/updated? false
+     :update/reason {:event/id event-id}}
+    ;; -----
+    ;; (not (spec/valid? :game/data game-data))
+    ;; {:game/updated? false
+    ;;  :update/reason {:game/data (spec/explain-str :game/data game-data)}
+
+    ;; -----
+    :else
+    (do
+      (dosync
+       (alter data-map assoc-in [:event/data event-id :game/data] game-data))
+      (assoc game-data :game/updated? true))))
