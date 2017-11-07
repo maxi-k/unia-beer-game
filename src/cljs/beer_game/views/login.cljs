@@ -63,6 +63,16 @@
    :content "Der eingegebene Schlüssel war nicht gültig."
    :icon "exclamation circle"})
 
+(def invalid-event-msg
+  {:header "Event-ID ungültig"
+   :content "Das gewählte Event existiert nicht."
+   :icon "exclamation circle"})
+
+(def event-started-msg
+  {:header "Event läuft ohne gewählte Rolle"
+   :content "Das gewählte Event wurde bereits ohne die gewählte Rolle gestartet."
+   :icon "info circle"})
+
 (def successful-logout-msg
   {:header "Ausloggen erfolgreich"
    :content "Du wurdest erfolgreich abgemeldet."
@@ -70,7 +80,11 @@
 
 (defn auth-message [auth-data]
   (if-let [options (cond
-                     (:auth-failure @auth-data) invalid-credentials-msg
+                     (:auth-failure @auth-data)
+                     (condp #(contains? %2 %1) (:auth-failure-reason @auth-data)
+                       :user/role event-started-msg
+                       :event/id invalid-event-msg
+                       invalid-credentials-msg)
                      (:logout-success @auth-data) successful-logout-msg
                      :default nil)]
     [sa/Message (merge {:className "embedded"

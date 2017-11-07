@@ -114,12 +114,13 @@
       (let [panels (user->panels @user-data)]
         [app-wrapper
          (if (:auth @user-data)
-           [sa/SidebarPushable
+           [sa/SidebarPushable {:class-name "full-height"}
             [app-menu panels @active-panel]
             [sa/SidebarPusher {:style {:width (str (- (:width @window-size) sidebar-width)
                                                    "px")
+                                       :height "100%"
                                        :min-width "500px"}}
-             [:main#main-content-wrapper
+             [:main#main-content-wrapper {:height (str (:height @window-size) "px")}
               [show-panel panels @active-panel @user-data]]]]
            [login/login-view])
          [:div.system-message-tray
