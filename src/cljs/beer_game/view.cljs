@@ -103,9 +103,8 @@
                       :onDismiss #(rf/dispatch [:message/remove msg-id])}])))))
 
 (defn app-wrapper [& children]
-  (let [window-size (re-frame/subscribe [:client/window])]
-    [:div#app-wrapper {:style @window-size}
-     (util/keyify children)]))
+  [:div#app-wrapper
+   (util/keyify children)])
 
 (defn main-panel []
   (let [active-panel (re-frame/subscribe [:active-panel])
