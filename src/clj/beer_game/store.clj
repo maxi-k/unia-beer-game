@@ -31,10 +31,14 @@
 (def all-event-ids
   #{:all :event/all})
 
-(defn single-event?
-  "Returns true if given event-id refers to a single event."
+(defn multiple-events?
+  "Returns true if given event-id refers to multiple events."
   [id]
-  (not (contains? all-event-ids id)))
+  (contains? all-event-ids id))
+
+(def single-event?
+  "Returns true if given event-id refers to a single event."
+  (comp not multiple-events?))
 
 #_(if config/development?
     (add-watch data-map :log
@@ -94,16 +98,26 @@
 (defn filter-user-data
   "Filters the user data using given function `f`,
   returning a map of only those entries for which `f` returned true.
-  f is given a vector of [key value] as argument."
-  [f]
-  (transduce (filter f) conj
-             {} (:user/data @data-map)))
+  f is given a vector of [key value] as argument.
+  An optional second argument is treated as an existing user-data map
+  instead of the one in the store."
+  ([f coll]
+   (transduce (filter f) conj
+              {} coll))
+  ([f]
+   (filter-user-data f (:user/data @data-map))))
 
 (defn event-id-user-role-filter
   [event-id user-role]
   (fn [[user-id data]]
     (and (= event-id  (:event/id  data))
          (= user-role (:user/role data)))))
+
+(defn single-event-user-filter
+  "Takes a map from user-id -> user-data and returns only those entries where
+  the user takes part in a single event."
+  [[user-id user-data]]
+  (single-event? (:event/id user-data)))
 
 (defn user-data-fn->client-id
   "Given a filter-function on user data, returns all matching client-ids."
@@ -282,6 +296,7 @@
   [event-id]
   (get-in @data-map [:event/data event-id]))
 
+
 (def game-data
   "Returns the game data stored for given event-id."
   (comp :game/data event-data))
@@ -312,7 +327,9 @@
      :message {:destroyed false
                :reason :event/id
                :event/id event-id}}
-    (let [users (keys (event->users event-id))
+    (let [users (keys (filter-user-data
+                       single-event-user-filter
+                       (event->users event-id)))
           clients (ref nil)]
       (dosync
        (alter data-map update :event/data dissoc event-id)
@@ -328,8 +345,8 @@
   (let [roles (event->user-roles event-id)]
     (cond
       (or (nil? event-id)
-          (not (single-event? event-id))) {:event/started? false
-                                           :reason {:event/id event-id}}
+          (multiple-events? event-id)) {:event/started? false
+                                        :reason {:event/id event-id}}
       (not (contains?
             roles
             (first config/supply-chain))) {:event/started? false
@@ -356,7 +373,7 @@
   if it was not. "
   [event-id game-data]
   (cond
-    (or (not (single-event? event-id))
+    (or (multiple-events? event-id)
         (empty? (events event-id)))
     {:game/updated? false
      :update/reason {:event/id event-id}}
