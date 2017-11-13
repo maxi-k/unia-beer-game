@@ -22,15 +22,17 @@
 
 
 #?(:clj
-   (defn qualified-keyword?
-     "Returns true if given keyword is a qualified keyword (with namespace)."
-     [kw]
-     (if (re-find #"/" (str kw)) true false)))
+   (when-not (resolve 'qualified-keyword?)
+     (defn qualified-keyword?
+       "Returns true if given keyword is a qualified keyword (with namespace)."
+       [kw]
+       (if (re-find #"/" (str kw)) true false))))
 
 #?(:clj
-   (def simple-keyword?
-     "Returns true if given keyword is a simple keyword (without namespace)."
-     (comp not qualified-keyword?)))
+   (when-not (resolve 'simple-keyword?)
+     (def simple-keyword?
+       "Returns true if given keyword is a simple keyword (without namespace)."
+       (comp not qualified-keyword?))))
 
 (defn keyword->string
   "Turns a (qualified) keyword into a string,
@@ -63,3 +65,16 @@
                       event-id :event-id}]]
      (update coll event-id assoc user-id user-data))
    {} user-map))
+
+(defn filter-round-data
+  "Takes a vector of round-data and returns a vector of round-data
+  where the data for reach round only contains the information
+  for the given user-role."
+  [rounds user-role]
+  (if (or (nil? rounds) (nil? user-role))
+    nil
+    (map
+     (fn [round]
+       (update round :game/roles
+               select-keys [user-role]))
+     rounds)))

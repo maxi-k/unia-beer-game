@@ -8,7 +8,6 @@
   "Returns nil if given client-id is not logged in."
   store/client-id->user-id)
 
-
 (defn auth-leader
   "Tries to authenticate the given client-id with given password in the leader realm."
   [client-id client-key]
@@ -24,16 +23,29 @@
 (defn auth-player
   "Tries to authenticate the given client-id in the player realm."
   [client-id event-id client-key]
-  (if (contains? config/allowed-user-roles client-key)
-    (if (store/events event-id)
-        (let [data {:user/role client-key
-                    :user/realm config/player-realm
-                    :event/id event-id
-                    :client/id client-id}
-              user-id (store/auth-user! data)]
-          [:auth/login-success (msgs/enrich-user user-id data)])
-      [:auth/login-invalid {:event/id event-id}])
-    [:auth/login-invalid {:auth/key client-key}]))
+  (let [event (store/events event-id)]
+    (cond
+      (or (not (contains? config/allowed-user-roles client-key))
+          (contains? (get-in config/allowed-user-roles [client-key :except])
+                     config/player-realm))
+      [:auth/login-invalid {:auth/key client-key}]
+      ;; ---------
+      (nil? event)
+      [:auth/login-invalid {:event/id event-id}]
+      ;; ---------
+      (and (:event/started? event)
+           (not (contains?
+                 (set (get-in event [:game/data :game/settings :game/supply-chain]))
+                 client-key)))
+      [:auth/login-invalid {:user/role client-key}]
+      ;; ---------
+      :else
+      (let [data {:user/role client-key
+                  :user/realm config/player-realm
+                  :event/id event-id
+                  :client/id client-id}
+            user-id (store/auth-user! data)]
+        [:auth/login-success (msgs/enrich-user user-id data)]))))
 
 (defn authenticate!
   "Authenticate with given realm and key."
@@ -47,14 +59,20 @@
       [:auth/login-invalid {:user/realm realm}])}
    {:type :broadcast
     :uids (store/leader-clients)
-    :message (msgs/event-list :event/all)}])
+    :message (msgs/event-list :event/all)}
+   {:type :broadcast
+    :uids (store/event->clients event-id)
+    :message (msgs/game-data event-id (store/client-id->user-id client-id))}])
 
 (defn logout!
   "Logs out given client."
   [client-id]
   (store/logout-client! client-id)
-  {:type :reply
-   :message (msgs/logout-success client-id)})
+  [{:type :reply
+    :message (msgs/logout-success client-id)}
+   {:type :broadcast
+    :uids (store/leader-clients)
+    :message (msgs/event-list :event/all)}])
 
 (defn handle-msg
   "Dispatch method for handling authentication requests."

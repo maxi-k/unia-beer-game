@@ -26,15 +26,41 @@
 
 (def definitions
   "Returns the common config shared among all environments."
-  {:public-root "public"
+  {:game-title "Beer Game"
+   :public-root "public"
+   :game-logo "img/icons/pint.svg"
+   :game-area-path "img/game-areas/"
    :websocket-endpoint "/ws"
    :websocket-packer :edn
-   :realms {:realm/player {:title "Mitspieler"}
-            :realm/leader {:title "Spielleiter"}}
-   :user-roles {:role/brewery {:title "Brauerei"}
-                :role/big-market {:title "Großhandel"}
-                :role/small-market {:title "Kleinhandel"}
-                :role/customer {:title "Kunde"}}})
+   :realms #:realm{:player {:title "Mitspieler"}
+                   :leader {:title "Spielleiter"}}
+   :user-roles #:role{:brewery {:title "Brauerei"
+                                :icon "brewery"}
+                      :distributor {:title "Distributor"
+                                    :icon "distribution"}
+                      :big-market {:title "Großhandel"
+                                   :icon "big-market"}
+                      :small-market {:title "Kleinhandel"
+                                     :icon "small-market"}
+                      :customer {:title "Kunde"
+                                 :icon ["customer-male" "customer-female"]
+                                 :except #{:realm/player}}}
+   :supply-chain [:role/brewery :role/distributor
+                  :role/big-market :role/small-market
+                  :role/customer]
+   :default-game-settings {:round-amount 20
+                           :user-demands 5
+                           :initial-stock 5
+                           :cost-factor 5}
+   :user-role-image-path "img/roles"})
+
+(def supply-chain
+  "Define the order in which the roles form a supply chain."
+  (:supply-chain definitions))
+
+(def default-game-settings
+  "The default game settings map."
+  (:default-game-settings definitions))
 
 (def websocket-endpoint
   "The relative url of the websocket endpoint."
@@ -47,6 +73,13 @@
 (def public-root
   (:public-root definitions))
 
+(def game-logo
+  "The main logo for the game."
+  (:game-logo definitions))
+(def game-area-path
+  "The path where the images for the game-area backgrounds are stores."
+  (:game-area-path definitions))
+
 (def realms (definitions :realms))
 (def player-realm :realm/player)
 (def leader-realm :realm/leader)
@@ -55,6 +88,24 @@
 
 (def user-roles (definitions :user-roles))
 (def allowed-user-roles (-> definitions :user-roles keys set))
+(def player-user-roles
+  (disj allowed-user-roles :role/customer))
+
+(def user-role-image-path
+  (:user-role-image-path definitions))
+
+(def game-title
+  "The name of the game"
+  (:game-title definitions))
+
+(defn user-role->image
+  "Takes the name of a user role and returns a path
+  to an image that represents it."
+  [role-key]
+  (if-let [img (get-in user-roles [role-key :icon])]
+    (let [path (if (vector? img) (rand-nth img) img)]
+         (str public-root "/" user-role-image-path "/" path ".svg"))
+    ""))
 
 (defn user-role->title
   "Returns the title of given user Role."

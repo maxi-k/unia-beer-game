@@ -1,7 +1,7 @@
 (set-env!
  :source-paths #{"src/clj" "src/cljc" "src/cljs" "src/less"}
  :resource-paths #{"resources"}
- :dependencies '[[org.clojure/clojure "1.8.0"]
+ :dependencies '[[org.clojure/clojure "1.9.0-beta2"]
                  [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async "0.3.443"]
 
@@ -17,6 +17,7 @@
                  [reloaded.repl               "0.2.3"  :scope "test"]
                  [binaryage/devtools          "0.9.4"  :scope "test"]
                  [tolitius/boot-check         "0.1.6"  :scope "test"]
+                 [org.clojure/test.check      "0.9.0"  :scope "test"]
                  ;; Other development dependencies
                  [org.danielsz/system "0.4.0"]
 
@@ -39,7 +40,6 @@
 
 
 (require
- '[boot.pod              :as pod]
  '[clojure.java.io       :as io]
  '[adzerk.boot-test      :refer [test]]
  '[adzerk.boot-cljs      :refer [cljs]]
@@ -47,8 +47,8 @@
  '[adzerk.boot-reload    :refer [reload]]
  '[tolitius.boot-check   :as    check]
  '[system.boot           :refer [system run]]
- '[beer-game.server      :refer [server-system]]
- '[boot.pod              :as pod])
+ '[beer-game.server      :refer [server-system]])
+
 
 
 (task-options!
@@ -93,24 +93,18 @@
   (GC Overflow error)."
   [i  input   INPUT_FILE  str "The input file path"
    o  output  OUTPUT_FILE str "The output file path"]
-  (let [todir (tmp-dir!)
-        less-pod (future (pod/make-pod))
-        prev (atom nil)]
+  (let [todir (tmp-dir!)]
     (with-pre-wrap fileset
       (let [candidates (->> fileset
-                           input-files
-                           (by-ext [".less" ".config" ".overrides"]))
-            changed-files (fileset-diff @prev candidates)
+                            input-files
+                            (by-ext [".less" ".config" ".overrides"]))
             in-file (first (by-path [input] candidates))
             tmp-in (tmp-file in-file)
             tmp-out (io/file todir output)]
-        (when (seq changed-files)
-          (empty-dir! todir)
-          (println "Compiling Less...")
-          (pod/with-call-in @less-pod
-            (boot.util/dosh "lessc" ~(.getPath tmp-in) ~(.getPath tmp-out)
-                  "--clean-css" "--s1 --advanced --compatibility=ie8")))
-        (reset! prev candidates)
+        (empty-dir! todir)
+        (println "Compiling Less...")
+        (boot.util/dosh "lessc" (.getPath tmp-in) (.getPath tmp-out)
+                        "--clean-css" "--s1 --advanced --compatibility=ie8")
         (-> fileset
             (add-resource todir)
             commit!)))))
@@ -120,7 +114,7 @@
   []
   (comp
     (check/with-eastwood)
-    (check/with-kibit) ;; Problematic code
+    (check/with-kibit)
     (check/with-bikeshed)))
 
 (deftask auto-test
@@ -147,10 +141,8 @@
    (system :sys #'server-system :auto true)
    (reload :on-jsload 'beer-game.core/mount-root)
    (repl :server true)
-   (cljs :source-map true
-         :optimizations :none)
-   (less-js :input "site.less"
-            :output "public/css/site.css")
+   (cljs :source-map true :optimizations :none)
+   (less-js :input "site.less" :output "public/css/site.css")
    (notify :visual true
            :audible false)))
 

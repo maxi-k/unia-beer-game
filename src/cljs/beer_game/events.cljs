@@ -1,9 +1,11 @@
 (ns beer-game.events
   (:require [re-frame.core :as rf]
+            [secretary.core :as secretary]
             [beer-game.db :as db]
             [beer-game.util :as util]
             [beer-game.client :as client]
-            [beer-game.components.messages :as messages]))
+            [beer-game.components.messages :as messages]
+            [beer-game.components.messages :as msgs]))
 
 
 ;; Register a fx-handler for sending websocket stuff
@@ -35,6 +37,11 @@
    (.setTimeout js/window
                 (fn [] (rf/dispatch msg))
                 time)))
+
+(rf/reg-fx
+ :goto
+ (fn [url]
+   (secretary/dispatch! url)))
 
 (rf/reg-event-db
  :initialize-db
@@ -80,6 +87,11 @@
  (fn [db [_ id]]
    (update db :messages dissoc id)))
 
+(rf/reg-event-fx
+ :submission/invalid
+ (fn [w [_]]
+   {:dispatch [:message/add (messages/invalid-submission-msg)]}))
+
 ;;
 ;; Server Events
 ;;
@@ -109,7 +121,10 @@
 (rf/reg-event-fx
  :auth/logout
  (fn [w [_ server-side?]]
-   (let [db-map {:db (assoc (:db w) :user {:auth false})}]
+   (let [db-map {:db (-> (:db w)
+                         (assoc :user {:auth false})
+                         (assoc :events {}))
+                 :goto "/"}]
      (if server-side?
        (merge db-map {:ws [:auth/logout]})
        db-map))))
@@ -132,12 +147,13 @@
                       :auth/key key
                       :event/id id}]}))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  :auth/login-success
- (fn [db [_ data-map]]
-   (update db :user merge data-map {:auth true
-                                    :auth-failure false
-                                    :logout-success true})))
+ (fn [{:keys [db]} [_ data-map]]
+   {:db (update db :user merge data-map {:auth true
+                                         :auth-failure false
+                                         :logout-success true})
+    :dispatch [:event/fetch (select-keys data-map [:event/id])]}))
 
 (rf/reg-event-db
  :system/connection
@@ -184,3 +200,42 @@
    (if destroyed
      {:db (update (:db w) :events dissoc id)}
      {:dispatch [:message/add (messages/event-not-destroyed-msg (str data))]})))
+
+(rf/reg-event-fx
+ :event/start
+ (fn [{:keys [db]}
+     [_ {:keys [:event/id]}]]
+   {:ws-auth [(:user db) [:event/start {:event/id id}]]}))
+
+(rf/reg-event-fx
+ :event/started
+ (fn [{:keys [db]}
+     [_ {:as event
+         :keys [:event/started? :event/id]}]]
+   (if started?
+     {:db (update-in db [:events id] merge event)
+      :dispatch [:message/add (messages/event-started-msg event)]}
+     {:dispatch [:message/add (messages/event-not-started-msg event)]
+      :db (update-in db [:events id] merge event)})))
+
+(rf/reg-event-db
+ :game/data
+ (fn [db [_ data]]
+   (assoc db :game data)))
+
+(rf/reg-event-fx
+ :game/data-fetch
+ (fn [{:keys [db]} [_]]
+   {:ws-auth [(:user db) [:game/data-fetch]]}))
+
+(rf/reg-event-fx
+ :game/round-commit
+ (fn [{:keys [db]} [_ commit-data]]
+   {:ws-auth [(:user db) [:game/round-commit commit-data]]}))
+
+(rf/reg-event-fx
+ :game/data-update
+ (fn [{:keys [db]} [_ {:as update-data :keys [:game/updated?]}]]
+   (if updated?
+     {:db (assoc db :game update-data)}
+     {:dispatch [:message/add (msgs/game-update-failed update-data)]})))

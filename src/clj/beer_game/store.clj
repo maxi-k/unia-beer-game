@@ -1,6 +1,9 @@
 (ns beer-game.store
   (:require [beer-game.config :as config]
-            [beer-game.server-utils :as util]))
+            [beer-game.server-utils :as util]
+            [beer-game.logic.game :as game-logic]
+            [beer-game.spec.game :as game-spec]
+            [clojure.spec.alpha :as spec]))
 
 (defn create-store
   []
@@ -18,22 +21,31 @@
         ;; where event-data must contains
         ;; :event/id        :: id of the event (same as map key)
         ;; :event/name      :: human readable event name
-        :event/data {}
-        ;; A map from {event-id -> game-data}
-        :game/data {}
-        }))
+        ;; :game/data       :: the data associated with the game
+        :event/data {}}))
 
 (def data-map
   "User model:"
   (create-store))
+
+(def all-event-ids
+  #{:all :event/all})
+
+(defn multiple-events?
+  "Returns true if given event-id refers to multiple events."
+  [id]
+  (contains? all-event-ids id))
+
+(def single-event?
+  "Returns true if given event-id refers to a single event."
+  (comp not multiple-events?))
 
 #_(if config/development?
     (add-watch data-map :log
                (fn [_ _ _ new] (println new))))
 
 ;;;
-;;; USERS & AUTH
-;;; 
+;;; General functions
 ;;;
 
 (defn authorized-clients
@@ -71,28 +83,41 @@
 (defn user-id->client-id
   "Converts given user-id to a set of client-ids."
   [user-id]
-  {:pre [(string? user-id)]
+  {:pre [(or (nil? user-id)
+             (string? user-id))]
    :post [(set? %)]}
-  (reduce
-   (fn [coll [client-id server-uuid]]
-     (if (= server-uuid user-id)
-       (conj coll client-id)
-       coll))
-   #{} (:clients/authorized @data-map)))
+  (if (nil? user-id)
+    #{}
+    (reduce
+     (fn [coll [client-id server-uuid]]
+       (if (= server-uuid user-id)
+         (conj coll client-id)
+         coll))
+     #{} (:clients/authorized @data-map))))
 
 (defn filter-user-data
   "Filters the user data using given function `f`,
   returning a map of only those entries for which `f` returned true.
-  f is given a vector of [key value] as argument."
-  [f]
-  (transduce (filter f) conj
-             {} (:user/data @data-map)))
+  f is given a vector of [key value] as argument.
+  An optional second argument is treated as an existing user-data map
+  instead of the one in the store."
+  ([f coll]
+   (transduce (filter f) conj
+              {} coll))
+  ([f]
+   (filter-user-data f (:user/data @data-map))))
 
 (defn event-id-user-role-filter
   [event-id user-role]
   (fn [[user-id data]]
     (and (= event-id  (:event/id  data))
          (= user-role (:user/role data)))))
+
+(defn single-event-user-filter
+  "Takes a map from user-id -> user-data and returns only those entries where
+  the user takes part in a single event."
+  [[user-id user-data]]
+  (single-event? (:event/id user-data)))
 
 (defn user-data-fn->client-id
   "Given a filter-function on user data, returns all matching client-ids."
@@ -120,6 +145,28 @@
   (first
    (filter-user-data
     (event-id-user-role-filter event-id role))))
+
+(defn user-id->event-id
+  "Takes a user-id and returns the event the user
+  belongs to."
+  [user-id]
+  (get-in @data-map [:user/data user-id :event/id]))
+
+(def client-id->event-id
+  (comp
+   user-id->event-id
+   client-id->user-id))
+
+(def message->event-id
+  "Takes a message and returns the event id it belongs to."
+  (comp
+   client-id->event-id
+   :client-id))
+
+;;;
+;;; USERS & AUTH
+;;; 
+;;;
 
 (defn leader-clients
   "Returns all client-ids which are associated with leader-users."
@@ -160,9 +207,21 @@
      (alter data-map update-in [:user/data user-id] user-data)
      (alter data-map assoc-in [:user/data user-id] user-data))))
 
-(def logout-client!
-  "Logs out given client."
-  remove-client!)
+(defn remove-user-data!
+  "Removes the user-data stored for given user-id"
+  [user-id]
+  (dosync
+   (alter data-map update :user/data dissoc user-id)))
+
+(defn logout-client!
+  "Logs out given client. If it was the last client associated
+  with a user-id, also destroys that user-data."
+  [client-id]
+  (let [user-id (client-id->user-id client-id)]
+    (remove-client! client-id)
+    (let [other-clients (user-id->client-id user-id)]
+      (if (empty? other-clients)
+        (remove-user-data! user-id)))))
 
 (defn logout-user!
   "Logs out all clients that are associated with given `user-id`.
@@ -198,12 +257,6 @@
 ;;; 
 ;;;
 
-(defn single-event?
-  "Returns true if given event-id refers to a single event."
-  [id]
-  (not (or (= :event/all id)
-           (= :all id))))
-
 (defn events
   "Returns a list of events stored."
   ([] (get @data-map :event/data))
@@ -217,7 +270,36 @@
   [event-id]
   (filter-user-data
    (fn [[user-id user-data]]
-     (= (:event/id user-data) event-id))))
+     (or
+      (contains? all-event-ids (:event/id user-data))
+      (= (:event/id user-data) event-id)))))
+
+(defn event->clients
+  "Returns a list of client ids participating in given event(-id)."
+  [event-id]
+  (->> event-id
+       event->users
+       keys
+       (mapcat user-id->client-id)))
+
+(defn event->user-roles
+  "Returns the logged-on user-roles for given event."
+  [event-id]
+  (reduce
+   (fn [coll [_ v]]
+     (conj coll (:user/role v)))
+   #{}
+   (event->users event-id)))
+
+(defn event-data
+  "Returns the data stored for given event-id."
+  [event-id]
+  (get-in @data-map [:event/data event-id]))
+
+
+(def game-data
+  "Returns the game data stored for given event-id."
+  (comp :game/data event-data))
 
 (defn create-event!
   "Creates a new event with given id and given data."
@@ -227,10 +309,13 @@
     {:created false
      :reason :event/id
      :event/id id}
-    (do
-      (dosync
-       (alter data-map assoc-in [:event/data id] event-data))
-      (assoc event-data :created true))))
+    (let [full-data (-> event-data
+                        (update :game/data game-logic/init-game-data)
+                        (assoc :event/started? false))]
+      (do
+        (dosync
+         (alter data-map assoc-in [:event/data id] full-data))
+        (assoc full-data :created true)))))
 
 (defn destroy-event!
   "Destroys given event and logs out all the users associated with it.
@@ -242,7 +327,9 @@
      :message {:destroyed false
                :reason :event/id
                :event/id event-id}}
-    (let [users (keys (event->users event-id))
+    (let [users (keys (filter-user-data
+                       single-event-user-filter
+                       (event->users event-id)))
           clients (ref nil)]
       (dosync
        (alter data-map update :event/data dissoc event-id)
@@ -251,7 +338,53 @@
        :message {:destroyed true
                  :event/id event-id}})))
 
+(defn start-event!
+  "Starts the given event if the data is valid.
+  Returns the saved data or a map explaining why it wasn't saved & started."
+  [event-id]
+  (let [roles (event->user-roles event-id)]
+    (cond
+      (or (nil? event-id)
+          (multiple-events? event-id)) {:event/started? false
+                                        :reason {:event/id event-id}}
+      (not (contains?
+            roles
+            (first config/supply-chain))) {:event/started? false
+                                           :event/id event-id
+                                           :reason {:user/list (first config/supply-chain)}}
+      :else
+      (let [start-fn (fn [event]
+                       (-> event
+                           (assoc :event/started? true)
+                           (update :game/data game-logic/start-game roles)))]
+        (do
+          (dosync
+           (alter data-map update-in [:event/data event-id] start-fn))
+          (events event-id))))))
 
 ;;;
 ;;; GAME
 ;;;
+(defn update-game!
+  "Updates a game instance with the given new data.
+  Returns a map wich contains the game-data if updated,
+  and a key :game/updated? indicating whether the game-data
+  in the store was in fact updated, as well as a :update/reason key
+  if it was not. "
+  [event-id game-data]
+  (cond
+    (or (multiple-events? event-id)
+        (empty? (events event-id)))
+    {:game/updated? false
+     :update/reason {:event/id event-id}}
+    ;; -----
+    ;; (not (spec/valid? :game/data game-data))
+    ;; {:game/updated? false
+    ;;  :update/reason {:game/data (spec/explain-str :game/data game-data)}
+
+    ;; -----
+    :else
+    (do
+      (dosync
+       (alter data-map assoc-in [:event/data event-id :game/data] game-data))
+      (assoc game-data :game/updated? true))))

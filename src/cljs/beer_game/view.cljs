@@ -11,33 +11,45 @@
             [beer-game.views.statistics :as statistics]
             [beer-game.views.events :as events-view]
             [beer-game.views.login :as login]
+            [beer-game.views.imprint :as imprint]
             [re-frame.core :as rf]
             [reagent.core :as ra]))
 
 (defn user->panels
   [{:as user-data :keys [:user/realm]}]
   (let [default-panels
+        {:statistics-panel {:title "Statistiken"
+                            :path "#statistics"
+                            :icon "line graph"
+                            :comp statistics/statistics-panel}
+         :imprint-panel {:title "Impressum"
+                         :path "#imprint"
+                         :icon "law"
+                         :comp imprint/imprint-panel}}
+        player-panels
         {:overview-panel {:title "Übersicht"
                           :path "#overview"
                           :icon "dashboard"
                           :comp overview/overview-panel}
-         :statistics-panel {:title "Statistiken"
-                            :path "#statistics"
-                            :icon "line graph"
-                            :comp statistics/statistics-panel}}
+         :default-panel :overview-panel}
         leader-panels
         {:events-panel {:title "Events"
                         :path "#events"
                         :icon "users"
                         :comp events-view/events-panel
                         :auth-fn #(= (:user/realm %)
-                                     config/leader-realm)}}]
+                                     config/leader-realm)}
+         :default-panel :events-panel}]
     (if (= realm config/leader-realm)
-      (merge default-panels leader-panels)
-      default-panels)))
+      (merge leader-panels default-panels)
+      (merge player-panels default-panels))))
 
 (defn show-panel [panels panel-name user-data]
-  (let [active-panel (get panels panel-name {:comp :div})
+  (let [;; Recursively look up the panel to show
+        active-panel (loop [selected-panel panel-name]
+                       (if (keyword? selected-panel)
+                         (recur (get panels selected-panel :default-panel))
+                         selected-panel))
         auth-fn (get active-panel :auth-fn (constantly true))]
     (if (auth-fn user-data)
       [(:comp active-panel)]
@@ -91,9 +103,8 @@
                       :onDismiss #(rf/dispatch [:message/remove msg-id])}])))))
 
 (defn app-wrapper [& children]
-  (let [window-size (re-frame/subscribe [:client/window])]
-    [:div#app-wrapper {:style @window-size}
-     (util/keyify children)]))
+  [:div#app-wrapper
+   (util/keyify children)])
 
 (defn main-panel []
   (let [active-panel (re-frame/subscribe [:active-panel])
@@ -103,12 +114,13 @@
       (let [panels (user->panels @user-data)]
         [app-wrapper
          (if (:auth @user-data)
-           [sa/SidebarPushable
+           [sa/SidebarPushable {:class-name "full-height"}
             [app-menu panels @active-panel]
             [sa/SidebarPusher {:style {:width (str (- (:width @window-size) sidebar-width)
                                                    "px")
+                                       :height "100%"
                                        :min-width "500px"}}
-             [:main#main-content-wrapper
+             [:main#main-content-wrapper {:height (str (:height @window-size) "px")}
               [show-panel panels @active-panel @user-data]]]]
            [login/login-view])
          [:div.system-message-tray
