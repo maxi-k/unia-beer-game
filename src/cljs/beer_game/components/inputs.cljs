@@ -28,7 +28,7 @@
                       (on-change e v)
                       (apply-spec! svalue)
                       (swap! field-state assoc :value svalue)))
-        opts (dissoc options :spec :as :invalid-msg :label)
+        opts (dissoc options :spec :as :invalid-msg :label :transform)
         field-options (dissoc opts :on-change :value :value-fn :placeholder)
         input-options (-> opts
                           (select-keys [:placeholder :value-fn :class-name])

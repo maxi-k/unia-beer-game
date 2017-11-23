@@ -6,7 +6,8 @@
 (s/def :event/id (s/and string? (partial re-matches #"^\S+$")))
 (s/def :event/name (s/and string? (partial re-matches #"^(\S+\s*\S*)+$")))
 (s/def :event/data
-  (s/keys :req [:game/data :event/id :event/name]))
+  (s/keys :req [:game/data :event/id :event/name]
+          :opt [:event/started?]))
 
 #?(:clj
    (defn random-event-data

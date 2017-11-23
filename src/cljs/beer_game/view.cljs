@@ -19,10 +19,15 @@
 (defn user->panels
   [{:as user-data :keys [:user/realm]}]
   (let [default-panels
-        {:statistics-panel {:title "Statistiken"
+        {:game-data-panel {:title "Spieldaten"
+                           :path "#game-data"
+                           :icon "gamepad"
+                           :comp game-data-view/game-data-panel}
+         :statistics-panel {:title "Statistiken"
                             :path "#statistics"
                             :icon "line graph"
                             :comp statistics/statistics-panel}
+
          :imprint-panel {:title "Impressum"
                          :path "#imprint"
                          :icon "law"
@@ -40,12 +45,6 @@
                         :comp events-view/events-panel
                         :auth-fn #(= (:user/realm %)
                                      config/leader-realm)}
-         :game-data-panel {:title "Spieldaten"
-                           :path "#game-data"
-                           :icon "gamepad"
-                           :comp game-data-view/game-data-panel
-                           :auth-fn #(= (:user/realm %)
-                                        config/leader-realm)}
          :default-panel :events-panel}]
     :default-panel :events-panel
     (if (= realm config/leader-realm)
