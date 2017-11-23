@@ -36,14 +36,18 @@
         {:type :reply
          :message [:game/data (if (util/single-event? event-id)
                                 (:game/data (store/events event-id))
-                                (map :game/data (store/events event-id)))]}
+                                (store/events event-id))]}
         (if (util/single-event? event-id)
           {:type :reply
            :message
-           (if-let [event (:game/data (store/events event-id))]
-             [:game/data
-              (update event :game/rounds util/filter-round-data user-role)]
-             [:game/data {:invalid :event/id}])}
+           (let [event (store/events event-id)
+                 game-data (:game/data event)]
+             (if game-data
+               [:game/data
+                (-> game-data
+                    (update :game/rounds util/filter-round-data user-role)
+                    (assoc :event/id (:event/id event)))]
+               [:game/data {:invalid :event/id}]))}
           {:type :reply
            :message [:auth/unauthorized {:event/id event-id}]})))))
 
@@ -84,7 +88,8 @@
     ;; -----
     :else
     (let [new-round? (get-in [:update/diff :game/current-round] nil)
-          game-update (store/update-game! event-id (:game/data update-map))]
+          game-update (-> (store/update-game! event-id (:game/data update-map))
+                          (assoc :event/id event-id))]
       (if (and (:game/updated? game-update)
                new-round?)
         {:type :broadcast
@@ -92,9 +97,11 @@
          :message (fn [client-id]
                     (let [user (store/client-id->user-data client-id)
                           role (:user/role user)]
-                      [:game/data-update
-                       (update game-update :game/rounds
-                               util/filter-round-data role)]))}
+                      (if (= config/leader-realm (:user/realm user))
+                        [:game/data-update game-update]
+                        [:game/data-update
+                         (update game-update :game/rounds
+                                 util/filter-round-data role)])))}
         {:type :reply
-         :message [:game/data-update (update game-update :game/rounds
+         :message [:game/data-update (update :game/rounds
                                              util/filter-round-data user-role)]}))))

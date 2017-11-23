@@ -219,9 +219,26 @@
       :db (update-in db [:events id] merge event)})))
 
 (rf/reg-event-db
+ :event/select
+ (fn [db [_ event-id]]
+   (assoc db :selected-event event-id)))
+
+(rf/reg-event-db
  :game/data
  (fn [db [_ data]]
-   (assoc db :game data)))
+   (let [event-id (or (:event/id data)
+                      (get-in db [:user :event/id]))]
+     (if (util/single-event? event-id)
+       (assoc-in db [:events event-id :game/data]
+                 (dissoc data :event/id))
+       db
+       #_(update db :events
+                 reduce
+                 (fn [coll [k v]]
+                   (if (contains? data k)
+                     (assoc coll k (get data k))
+                     (assoc coll k v)))
+                 {})))))
 
 (rf/reg-event-fx
  :game/data-fetch
@@ -237,5 +254,11 @@
  :game/data-update
  (fn [{:keys [db]} [_ {:as update-data :keys [:game/updated?]}]]
    (if updated?
-     {:db (assoc db :game update-data)}
+     (let [event-id (or (get update-data :event/id)
+                        (get-in db [:user :event/id]))]
+       (if (util/single-event? event-id)
+         {:db (assoc-in db [:events event-id :game/data]
+                        (dissoc update-data :event/id))}
+         {:dispatch [:message/add (msgs/game-update-failed {:update/reason
+                                                            {:event/id event-id}})]}))
      {:dispatch [:message/add (msgs/game-update-failed update-data)]})))

@@ -72,7 +72,7 @@
                         :label "Kostenmultiplikator"
                         :placeholder "Kosten pro Item im Lager."
                         :spec ::game-spec/cost-factor
-                        :transfor js/parseInt
+                        :transform js/parseInt
                         :invalid-msg "Bitte eine positive, ganze Zahl eingeben."
                         :value-fn #(:cost-factor @game-settings)
                         :on-change #(update-form [:game/data :game/settings :cost-factor] %2)}]

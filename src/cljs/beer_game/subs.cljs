@@ -1,6 +1,7 @@
 (ns beer-game.subs
   (:require-macros [reagent.ratom :refer [reaction]])
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [beer-game.util :as util]))
 
 (rf/reg-sub
  :name
@@ -68,7 +69,15 @@
    (get events event-id)))
 
 (rf/reg-sub
+ :selected-event
+ (fn [db]
+   (get db :selected-event)))
+
+(rf/reg-sub
  :game
  (fn [db]
    (let [event-id (get-in db [:user :event/id])]
-     (get-in db [:events event-id :game/data]))))
+     (if (util/single-event? event-id)
+       (get-in db [:events event-id :game/data])
+       (map (fn [[k v]] (:game/data v))
+            (get-in db [:events]))))))

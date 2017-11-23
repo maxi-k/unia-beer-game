@@ -3,7 +3,8 @@
             [re-frame.core :as rf]
             [soda-ash.core :as sa]
             [beer-game.components.messages :as msgs]
-            [beer-game.config :as config]))
+            [beer-game.config :as config]
+            [beer-game.util :as util]))
 
 (def game-data-columns
   "A map describing the entries for the header rows of a game table.
@@ -21,23 +22,30 @@
    [:span (config/user-role->title role)]])
 
 (defn game-data-table
-  [event-data]
+  [event-data role-list]
   (fn [{:as event-data
-       {:as game-data :keys [:game/rounds :game/current-round]
-        {:as settings :keys [:game/supply-chain]} :game/settings}
+       {:as game-data :keys [:game/rounds :game/current-round]}
        :game/data}]
-    (if (:event/started? event-data)
+    (cond
+      (nil? event-data)
+      [msgs/render-message (msgs/no-such-event)]
+      ;; -----
+      (not (:event/started? event-data))
+      [msgs/render-message (msgs/game-not-yet-started)]
+      ;; ------
+      :else
       [:div
        (->>
-        (for [role supply-chain]
+        (for [role role-list]
           [sa/Segment {:key role}
            [sa/Table {:definition true}
             [sa/TableHeader
-             [sa/TableHeaderCell {:key "header"}
-              [user-role-title role]]
-             (for [[key title] game-data-columns]
-               [sa/TableHeaderCell {:key key}
-                title])]
+             [sa/TableRow
+              [sa/TableHeaderCell
+               [user-role-title role]]
+              (for [[key title] game-data-columns]
+                [sa/TableHeaderCell {:key key}
+                 title])]]
             [sa/TableBody
              (for [[idx {:as round
                          roles :game/roles}]
@@ -48,11 +56,15 @@
                 (for [[key _] game-data-columns]
                   [sa/TableCell {:key (str idx "-" key)}
                    (get round-data key "-")])])]]])
-        (interpose [:div {:class-name "game-data--supply-chain-arrow"}
-                    [sa/Icon {:name "arrow down"
-                              :size "large"}]])
+        (interleave (map (fn [idx]
+                           [:div {:key (str "arrow-" idx)
+                                  :class-name "game-data--supply-chain-arrow"}
+                            [sa/Icon {:name "arrow down"
+                                      :size "large"}]])
+                         (range)))
+        (drop 1)
         (doall))]
-      [msgs/render-message (msgs/game-not-yet-started)])))
+      )))
 
 (defn event-selector
   [data-atom events]
@@ -71,13 +83,23 @@
 (defn game-data-panel
   []
   (let [events (rf/subscribe [:events])
-        view-data (ra/atom {:selected-event nil})
-        event-cursor (ra/cursor view-data [:selected-event])]
+        user (rf/subscribe [:user])
+        _ (println @user)
+        single-event? (util/single-event? (:event/id @user))
+        event-cursor (if single-event?
+                       (ra/atom (:event/id @user))
+                       (ra/wrap @(rf/subscribe [:selected-event])
+                                #(rf/dispatch [:event/select %])))]
     (fn []
       [:div
        [:h2 "Spieldetails"]
-       [event-selector event-cursor @events]
+       (when-not single-event?
+         [event-selector event-cursor @events])
        [sa/Divider]
        (if (nil? @event-cursor)
          [msgs/select-event-msg]
-         [game-data-table (get @events @event-cursor)])])))
+         (let [event (get @events @event-cursor)]
+           [game-data-table event
+            (if (= config/leader-realm (:user/realm @user))
+              (get-in event [:game/data :game/settings :game/supply-chain])
+              [(:user/role @user)])]))])))

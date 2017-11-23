@@ -93,6 +93,13 @@
                        [:br]
                        (or (:reason event) "Nicht verfügbar.")]})
 
+(defn no-such-event
+  "A message indicating that some selected event does not exist."
+  []
+  #:message {:icon "exclamation triangle"
+             :title (str "Das gewählte Event existiert nicht.")
+             :content "Es wurde entweder gelöscht oder ein Datenverlust liegt zu Grunde."})
+
 (defn invalid-submission-msg
   "A message for invalid form submissions."
   []
