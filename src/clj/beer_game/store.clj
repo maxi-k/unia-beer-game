@@ -1,6 +1,8 @@
 (ns beer-game.store
   (:require [beer-game.config :as config]
+            [beer-game.util :as cutil]
             [beer-game.server-utils :as util]
+            [beer-game.util :as cutil]
             [beer-game.logic.game :as game-logic]
             [beer-game.spec.game :as game-spec]
             [clojure.spec.alpha :as spec]))
@@ -27,18 +29,6 @@
 (def data-map
   "User model:"
   (create-store))
-
-(def all-event-ids
-  #{:all :event/all})
-
-(defn multiple-events?
-  "Returns true if given event-id refers to multiple events."
-  [id]
-  (contains? all-event-ids id))
-
-(def single-event?
-  "Returns true if given event-id refers to a single event."
-  (comp not multiple-events?))
 
 #_(if config/development?
     (add-watch data-map :log
@@ -117,7 +107,7 @@
   "Takes a map from user-id -> user-data and returns only those entries where
   the user takes part in a single event."
   [[user-id user-data]]
-  (single-event? (:event/id user-data)))
+  (cutil/single-event? (:event/id user-data)))
 
 (defn user-data-fn->client-id
   "Given a filter-function on user data, returns all matching client-ids."
@@ -261,7 +251,7 @@
   "Returns a list of events stored."
   ([] (get @data-map :event/data))
   ([id]
-   (if (single-event? id)
+   (if (cutil/single-event? id)
      (get-in @data-map [:event/data id])
      (events))))
 
@@ -271,7 +261,7 @@
   (filter-user-data
    (fn [[user-id user-data]]
      (or
-      (contains? all-event-ids (:event/id user-data))
+      (contains? cutil/all-event-ids (:event/id user-data))
       (= (:event/id user-data) event-id)))))
 
 (defn event->clients
@@ -345,8 +335,8 @@
   (let [roles (event->user-roles event-id)]
     (cond
       (or (nil? event-id)
-          (multiple-events? event-id)) {:event/started? false
-                                        :reason {:event/id event-id}}
+          (cutil/multiple-events? event-id)) {:event/started? false
+                                              :reason {:event/id event-id}}
       (not (contains?
             roles
             (first config/supply-chain))) {:event/started? false
@@ -373,7 +363,7 @@
   if it was not. "
   [event-id game-data]
   (cond
-    (or (multiple-events? event-id)
+    (or (cutil/multiple-events? event-id)
         (empty? (events event-id)))
     {:game/updated? false
      :update/reason {:event/id event-id}}

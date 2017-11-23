@@ -56,6 +56,18 @@
                  (assoc acc new-kw v)))
              {} m))
 
+(def all-event-ids
+  #{:all :event/all})
+
+(defn multiple-events?
+  "Returns true if given event-id refers to multiple events."
+  [id]
+  (contains? all-event-ids id))
+
+(def single-event?
+  "Returns true if given event-id refers to a single event."
+  (comp not multiple-events?))
+
 (defn users-by-event
   "Takes a map from user-id to user-data and reorders it to
   a map from event-id -> { user-id -> user-data }."

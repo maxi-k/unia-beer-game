@@ -34,10 +34,10 @@
            event-id :event/id}]
       (if (= user-realm config/leader-realm)
         {:type :reply
-         :message [:game/data (if (store/single-event? event-id)
+         :message [:game/data (if (util/single-event? event-id)
                                 (:game/data (store/events event-id))
                                 (map :game/data (store/events event-id)))]}
-        (if (store/single-event? event-id)
+        (if (util/single-event? event-id)
           {:type :reply
            :message
            (if-let [event (:game/data (store/events event-id))]

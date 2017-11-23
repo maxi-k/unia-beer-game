@@ -27,7 +27,7 @@
   "Enrich the user model with more information to be given back to the client."
   [user-id data]
   (let [{event-id :event/id :as store-data} (store/user-id->user-data user-id)
-        event-data (if (store/single-event? event-id)
+        event-data (if (util/single-event? event-id)
                      (select-keys (store/events event-id)
                                   public-event-keys)
                      nil)]
@@ -46,7 +46,7 @@
 (defn event-list
   [events]
   (let [event-map (store/events events)
-        event-map (if (store/single-event? events)
+        event-map (if (util/single-event? events)
                     {events event-map}
                     event-map)]
     [:event/list (reduce (fn [coll [id data]]

@@ -70,4 +70,5 @@
 (rf/reg-sub
  :game
  (fn [db]
-   (get-in db [:game])))
+   (let [event-id (get-in db [:user :event/id])]
+     (get-in db [:events event-id :game/data]))))
