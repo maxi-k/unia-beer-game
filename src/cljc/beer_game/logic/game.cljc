@@ -151,6 +151,7 @@
   "Initializes the round role information for one user."
   [{:as settings :keys [initial-stock]} user-role]
   (let [data {:round/stock initial-stock
+              :round/debt 0
               :round/cost  0
               :round/demand 0
               :round/order 0}]

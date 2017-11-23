@@ -7,6 +7,9 @@
 ;; TODO: Stub
 ;; The stock one player has in a round
 (s/def :round/stock nat-int?)
+;; The items that are still due, aka the ones the player has
+;; not yet been able to deliver
+(s/def :round/debt nat-int?)
 ;; The cost a player has in one round
 (s/def :round/cost nat-int?)
 ;; The demand a player has to fulfill for the player
@@ -18,7 +21,8 @@
 ;; Indicates whether a piece of round-data has been
 ;; commited by the player
 (s/def :round/commited? boolean?)
-
+;; Indicates whether a player is ready for the next round
+(s/def :round/ready? boolean?)
 ;; The order a player has for the player
 ;; up 1 step from the supply chain
 (s/def :round/order nat-int?)
@@ -26,7 +30,8 @@
 (s/def ::role-data
   (s/keys :opt [:round/stock :round/cost
                 :round/demand :round/incoming
-                :round/commited?]))
+                :round/debt
+                :round/commited? :round/ready?]))
 (s/def :user/role config/allowed-user-roles)
 (s/def :game/roles
   (s/map-of :user/role ::role-data))
