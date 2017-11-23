@@ -23,6 +23,7 @@
     (defroute "/"           [] (set-panel :default-panel))
     (defroute "/overview"   [] (set-panel :overview-panel))
     (defroute "/events"     [] (set-panel :events-panel))
+    (defroute "/game-data"  [] (set-panel :game-data-panel))
     (defroute "/statistics" [] (set-panel :statistics-panel))
     (defroute "/imprint"    [] (set-panel :imprint-panel))
     ;; -----------------------------

@@ -12,6 +12,7 @@
             [beer-game.views.events :as events-view]
             [beer-game.views.login :as login]
             [beer-game.views.imprint :as imprint]
+            [beer-game.views.game-data :as game-data-view]
             [re-frame.core :as rf]
             [reagent.core :as ra]))
 
@@ -39,7 +40,14 @@
                         :comp events-view/events-panel
                         :auth-fn #(= (:user/realm %)
                                      config/leader-realm)}
+         :game-data-panel {:title "Spieldaten"
+                           :path "#game-data"
+                           :icon "gamepad"
+                           :comp game-data-view/game-data-panel
+                           :auth-fn #(= (:user/realm %)
+                                        config/leader-realm)}
          :default-panel :events-panel}]
+    :default-panel :events-panel
     (if (= realm config/leader-realm)
       (merge leader-panels default-panels)
       (merge player-panels default-panels))))

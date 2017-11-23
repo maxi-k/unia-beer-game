@@ -46,9 +46,18 @@
   ([reason] (no-permission-msg reason {}))
   ([reason options]
    [sa/Message (merge {:icon "exclamation triangle"
-                       :heading "Keine Berechtigung."
+                       :header "Keine Berechtigung."
                        :content reason
                        :warning true}
+                      options)]))
+
+(defn select-event-msg
+  "A message telling the user to select an event to see the view."
+  ([] (select-event-msg {}))
+  ([options]
+   [sa/Message (merge {:icon "info circle"
+                       :header "Wähle ein Event."
+                       :content "Zum Anzeigen dieser Ansicht, wähle bitte ein Event aus."}
                       options)]))
 
 (defn logout-forced-msg
