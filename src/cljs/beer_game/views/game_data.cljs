@@ -56,15 +56,13 @@
                 (for [[key _] game-data-columns]
                   [sa/TableCell {:key (str idx "-" key)}
                    (get round-data key "-")])])]]])
-        (interleave (map (fn [idx]
-                           [:div {:key (str "arrow-" idx)
-                                  :class-name "game-data--supply-chain-arrow"}
-                            [sa/Icon {:name "arrow down"
-                                      :size "large"}]])
-                         (range)))
-        (drop 1)
-        (doall))]
-      )))
+        (util/interpose-indexed
+         (fn [idx]
+           [:div {:key (str "arrow-" idx)
+                  :class-name "game-data--supply-chain-arrow"}
+            [sa/Icon {:name "arrow down"
+                      :size "large"}]]))
+        (doall))])))
 
 (defn event-selector
   [data-atom events]

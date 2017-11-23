@@ -56,6 +56,17 @@
                  (assoc acc new-kw v)))
              {} m))
 
+(defn interpose-indexed
+  "Like interpose, but takes a function instead of a seperator.
+  This function is called with the index of the current call."
+  [sep-fn coll]
+  (drop 1
+        (interleave
+         (map sep-fn (range))
+         coll)))
+
+;; DOMAIN SPECIFIC
+
 (def all-event-ids
   #{:all :event/all})
 

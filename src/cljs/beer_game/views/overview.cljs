@@ -3,12 +3,44 @@
             [reagent.core :as ra]
             [soda-ash.core :as sa]
             [beer-game.api :as api]
+            [beer-game.util :as util]
+            [beer-game.client-util :as cutil]
+            [beer-game.config :as config]
             [beer-game.components.messages :as msgs]
             [beer-game.components.inputs :as inputs]
             [beer-game.config :as config]
             [beer-game.logic.game :as game-logic]
             [clojure.spec.alpha :as spec]
             [beer-game.spec.game]))
+
+(defn game-view-header
+  [game role]
+  (let [supply-chain (or (get-in game [:game/settings :game/supply-chain])
+                         config/supply-chain)]
+    (fn [game role]
+      [sa/Header {:class-name "game-view-header"}
+       [:div.game-view-chain
+        (->>
+         (for [member supply-chain
+               :let [img (config/user-role->image member)]]
+           [sa/Header {:key (str member)
+                       :class-name (if (= role member)
+                                     (str "role-title active")
+                                     (str "role-title inactive"))
+                       :content (config/user-role->title member)
+                       :text-align :center
+                       :as :h2
+                       :image img}])
+         (util/interpose-indexed
+          (fn [idx]
+            [:div.role-title.arrow {:key (str "arrow-" idx)}
+             [sa/Icon {:name "arrow right"
+                       :size "large"}]]))
+         (doall))
+        [:div.clearfloat]]
+       [sa/Divider {:class-name "game-view-header-subtitle"
+                    :horizontal true}
+        (str "Runde " (:game/current-round game))]])))
 
 (defn game-area
   ([options area title children]
@@ -149,7 +181,6 @@
   (let [user (rf/subscribe [:user])
         game (rf/subscribe [:game])
         role (:user/role @user)
-        img (config/user-role->image role)
         events (rf/subscribe [:events])
         event-id (:event/id @user)]
     (ra/create-class
@@ -157,12 +188,7 @@
       :reagent-render
       (fn []
         [sa/Container {:class-name "game-wrapper"}
-         [sa/Header {:class-name "role-title"
-                     :content (config/user-role->title role)
-                     :subheader (str "Runde " (:game/current-round @game))
-                     :text-align :center
-                     :as :h1
-                     :image img}]
+         [game-view-header @game role]
          (if (get-in @events [event-id :event/started?])
            [game-view (:user/role @user)]
            [msgs/render-message (msgs/game-not-yet-started)])])})))

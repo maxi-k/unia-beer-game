@@ -2,11 +2,45 @@
     display: block;
     height: 100%;
 
+    .game-view-header {
+        margin-bottom: 2rem;
+    }
+
+    .game-view-chain {
+        clear: both;
+        display: flex;
+        .justify-content(center);
+        .align-items(center);
+    }
+
+    .game-view-header-subtitle {
+        text-align: center;
+    }
+
     .role-title {
+        display: inline-block;
+        margin-top: 0 !important;
         img+.content {
             display: block !important;
             padding-left: 0 !important;
         }
-        margin-bottom: 2rem;
+    }
+
+    .role-title.arrow {
+        vertical-align: middle;
+        align-self: center;
+        text-align: center;
+        padding: 0 1rem;
+        .icon {
+            padding: 0;
+            margin: 0;
+        }
+    }
+
+    .role-title.active {}
+
+    .role-title.inactive {
+        opacity: 0.4;
+        .filter(grayscale(75%));
     }
 }
