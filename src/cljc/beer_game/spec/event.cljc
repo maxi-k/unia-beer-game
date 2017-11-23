@@ -3,6 +3,7 @@
   (:require [clojure.spec.alpha :as s]
             [beer-game.spec.game]))
 
+(s/def :event/started? (s/nilable boolean?))
 (s/def :event/id (s/and string? (partial re-matches #"^\S+$")))
 (s/def :event/name (s/and string? (partial re-matches #"^(\S+\s*\S*)+$")))
 (s/def :event/data
