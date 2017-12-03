@@ -44,7 +44,7 @@
         last-round? (>= next-round (count rounds))
         role-data (get-in rounds [cur-round :game/roles role])
         post-data (get-in rounds [cur-round :game/roles post])
-        cost (* cost-factor (:round/stock role-data))
+        cost (* cost-factor (or (:round/stock role-data) 0))
         delivered (min (or (:round/demand role-data) 0)
                        (or (:round/stock role-data) 0))]
     (cond-> rounds
