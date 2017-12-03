@@ -15,9 +15,9 @@
 
 (defn game-view-header
   [game role]
-  (let [supply-chain (or (get-in game [:game/settings :game/supply-chain])
-                         config/supply-chain)]
-    (fn [game role]
+  (fn [game role]
+    (let [supply-chain (or (get-in game [:game/settings :game/supply-chain])
+                           config/supply-chain)]
       [sa/Header {:class-name "game-view-header"}
        [:div.game-view-chain
         (->>
