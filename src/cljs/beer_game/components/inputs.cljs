@@ -55,7 +55,9 @@
     children]
    (fn []
      [sa/FormField
-      (assoc field-options :error (some? (:problems @field-state)))
+      (assoc field-options
+             :error (some? (:problems @field-state))
+             :key (:key obj))
       [:label (:label original-options)]
       [as (-> input-options
               (dissoc :value-fn)
