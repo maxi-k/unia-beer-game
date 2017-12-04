@@ -13,7 +13,21 @@
             [clojure.spec.alpha :as spec]
             [beer-game.spec.game]))
 
+(defn user-role-image
+  "Renders the image for a specific user role"
+  [{:as options :keys [user-role as-elem as-content no-text]}]
+  (let [as (or as-elem sa/Header)]
+    [as (merge {:key (str user-role)
+                :style {:text-align :center}}
+               (dissoc options :user-role :no-text :as-elem :as-content))
+     [sa/Image {:src (config/user-role->image user-role)}]
+     (when-not no-text
+       [(or as-content :span)
+        (config/user-role->title user-role)])]))
+
 (defn game-view-header
+  "Renders the header at the top of the game view,
+  where the supply-chain is displayed."
   [game role]
   (fn [game role]
     (let [supply-chain (or (get-in game [:game/settings :game/supply-chain])
@@ -21,18 +35,20 @@
       [sa/Header {:class-name "game-view-header"}
        [:div.game-view-chain
         (->>
-         (for [member supply-chain
-               :let [img (config/user-role->image member)]]
-           [sa/Header {:key (str member)
-                       :class-name (if (= role member)
-                                     (str "role-title active")
-                                     (str "role-title inactive"))
-                       :content (config/user-role->title member)
-                       :text-align :center
-                       :as :h2
-                       :image img}])
+         (for [member supply-chain]
+           ^{:key member}
+           [user-role-image
+            {:key member
+             :user-role member
+             :class-name (if (= role member)
+                           (str "role-title active")
+                           (str "role-title inactive"))
+             :as-elem sa/Header
+             :as-content sa/HeaderContent
+             :as :h2}])
          (util/interpose-indexed
           (fn [idx]
+            ^{:key (str "arrow-" idx)}
             [:div.role-title.arrow {:key (str "arrow-" idx)}
              [sa/Icon {:name "arrow right"
                        :size "large"}]]))
@@ -43,7 +59,7 @@
         (str "Runde " (:game/current-round game))]])))
 
 (defn game-area
-  ([options area title children]
+  ([options area title child]
    (let [area-str (name area)]
      [sa/SegmentGroup (merge {:class-name (str "game-area " area-str)}
                              options)
@@ -52,7 +68,13 @@
       [sa/Segment {:class-name "content-wrapper"}
        [:div.content {:style {:background-image
                               (str "url(" config/game-area-path "/" area-str ".svg" )}}
-        children]]])))
+        child]]])))
+
+(defn unit-text
+  "A component that renders the text for a unit,
+  to give the numeric values context."
+  [text]
+  [:p.unit-text {:key "unit-text"} text])
 
 (defn outgoing
   "The part of the view that represents the outgoing items
@@ -60,10 +82,11 @@
   [round-data]
   [game-area {} :outgoing
    "Warenausgang"
-   [:div.message-data.single-value
-    (min (:round/demand round-data)
-         (:round/stock round-data))
-    ]])
+   [:div.message-data
+    [:span.main-value
+     (min (:round/demand round-data)
+          (:round/stock round-data))]
+    [unit-text "Einheiten"]]])
 
 (defn incoming
   "The part of the view that represents the production / incoming items
@@ -71,8 +94,10 @@
   [round-data]
   [game-area {} :incoming
    "Wareneingang"
-   [:div.message-data.single-value
-    (:round/incoming round-data)]])
+   [:div.message-data
+    [:span.main-value
+     (:round/incoming round-data)]
+    [unit-text "Einheiten"]]])
 
 (defn mail
   "The part of the view that represents the mailbox of the current player."
@@ -83,7 +108,8 @@
     "Angefragt:"
     [:br]
     [:span.main-value
-     (:round/demand round-data)]]])
+     (:round/demand round-data)]
+    [unit-text "Einheiten"]]])
 
 (defn stock
   "The part of the view that represents the stock of the current player.
@@ -91,8 +117,10 @@
   [round-data]
   [game-area {} :stock
    "Lager"
-   [:div.message-data.single-value
-    (:round/stock round-data)]])
+   [:div.message-data
+    [:span.main-value
+     (:round/stock round-data)]
+    [unit-text "Einheiten"]]])
 
 (defn cost
   "The part of the view that represents the overall cost
@@ -100,8 +128,10 @@
   [rounds user-role]
   [game-area {} :cost
    "Kosten"
-   [:div.message-data.single-value
-    (game-logic/overall-cost rounds user-role)]])
+   [:div.message-data
+    [:span.main-value
+     (game-logic/overall-cost rounds user-role)]
+    [unit-text "Dollar"]]])
 
 (defn order
   "The part of the view that represents the request
@@ -126,37 +156,88 @@
                                 :style {:display :block}
                                 :validated-inputs [input-data]
                                 :submit-atom submit-fn}
-         ^{:key :input}
-         [inputs/validated-input input-data]
+         ^{:key :input} [inputs/validated-input input-data]
+         ^{:key :units} [unit-text "Einheiten"]
          [sa/Button {:key :btn
                      :primary true
                      :on-click @submit-fn
                      :content "Bestellen"}]]]])))
 
+(defn info-group-icon
+  "The icon hinting at the purpose of a company-section."
+  [icon-name description]
+  [sa/Popup
+   {:content description
+    :trigger (->> sa/Label
+                  (cutil/with-options
+                    {:icon icon-name
+                     :corner "right"})
+                  cutil/native-component)}])
+
+(defn info-group
+  "Renders one logical group of information as a grid row.
+  Requires an icon and a description, a option map, as well as a `children` map
+  from react-key -> value."
+  [icon-name description options children]
+  [sa/GridRow (merge {:as (cutil/semantic-to-react sa/Segment)
+                      :class-name ""}
+                     options)
+   [info-group-icon icon-name description]
+   (for [[key elem] children]
+     (cutil/with-options-raw {:key key} elem))])
+
+(defn grid-arrow-column
+  "Renders a grid cloumn designated to an arrow."
+  [{:as opts
+    :keys [direction width]
+    :or {direction "right" width 1}}]
+  [sa/GridColumn (merge {:width width
+                         :class-name "game-area-divider"}
+                        (dissoc opts :direction))
+   [sa/Icon {:name (str "arrow " direction)}]])
+
 (defn round-view
   "Renders the game view for the current round."
-  [rounds cur-round user-role]
+  [rounds cur-round user-role supply-chain]
   (let [round-data (get-in (nth rounds cur-round)
-                           [:game/roles user-role])]
+                           [:game/roles user-role])
+        [supplier customer] (game-logic/roles-around user-role supply-chain)]
     [sa/Grid {:class-name "game-view-grid"
               :vertical-align "middle"
               :columns 5}
-     [sa/GridRow
-      [sa/GridColumn {:width 4}
-       [mail round-data]
-       [incoming round-data]]
-      [sa/GridColumn {:width 1
-                      :class-name "game-area-divider"}
-       [sa/Icon {:name "arrow right"}]]
+     [info-group
+      "inbox"
+      "Der Informationsfluss Deiner Firma."
+      {}
+      {:supplier [sa/GridColumn {:width 2} [user-role-image
+                                            {:key (or supplier user-role)
+                                             :user-role (or supplier user-role)
+                                             :no-text true
+                                             :class-name "user-role-segment"
+                                             :as-elem :div}]]
+       :arrow-out [grid-arrow-column {:direction "left"}]
+       :outgoing [sa/GridColumn {:width 5} [order]]
+       :divider [sa/Divider {:vertical true}]
+       :demand [sa/GridColumn {:width 5} [mail round-data]]
+       :arrow-in [grid-arrow-column {:direction "left"}]
+       :customer [sa/GridColumn {:width 2} [user-role-image
+                                            {:key (or supplier user-role)
+                                             :user-role (or customer user-role)
+                                             :no-text true
+                                             :class-name "user-role-segment"
+                                             :as-elem :div}]]}]
+     [sa/GridRow {:centered true}
       [sa/GridColumn {:width 6}
-       [stock round-data]
-       [cost (take cur-round rounds) user-role]
-       [order]]
-      [sa/GridColumn {:width 1
-                      :class-name "game-area-divider"}
-       [sa/Icon {:name "arrow right"}]]
-      [sa/GridColumn {:width 4}
-       [outgoing round-data]]]]))
+       [cost (take cur-round rounds) user-role]]]
+     [info-group
+      "exchange"
+      "Der Warenfluss Deiner Firma."
+      {}
+      {:incoming [sa/GridColumn {:width 4} [incoming round-data]]
+       :arrow-in [grid-arrow-column {:direction "right"}]
+       :stock [sa/GridColumn {:width 6} [stock round-data]]
+       :arrow-out [grid-arrow-column {:direction "right"}]
+       :outgoing [sa/GridColumn {:width 4} [outgoing round-data]]}]]))
 
 (defn game-view
   "Renders the game view for the current player."
@@ -164,7 +245,7 @@
   (let [game (rf/subscribe [:game])]
     (fn [user-role]
       (let [{:as game-data
-             :keys [:game/current-round :game/rounds]} @game]
+             :keys [:game/current-round :game/rounds :game/settings]} @game]
         (cond
           (not (spec/valid?
                 :game/data game-data)) [msgs/render-message
@@ -174,7 +255,7 @@
               (neg? current-round)) (msgs/render-message
                                      (msgs/invalid-round-count current-round))
           :else
-          [round-view rounds current-round user-role])))))
+          [round-view rounds current-round user-role (:game/supply-chain settings)])))))
 
 (defn overview-panel
   []
