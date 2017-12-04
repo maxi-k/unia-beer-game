@@ -58,14 +58,15 @@
 
 (defn game-area
   ([options area title child]
-   (let [area-str (name area)]
+   (let [area-str (if area (name area) "")]
      [sa/SegmentGroup (merge {:class-name (str "game-area " area-str)}
                              options)
       [sa/Segment {:class-name "title"}
        [:h3 title]]
       [sa/Segment {:class-name "content-wrapper"}
-       [:div.content {:style {:background-image
-                              (str "url(" config/game-area-path "/" area-str ".svg" )}}
+       [:div.content {:style (when area
+                               {:background-image
+                                (str "url(" config/game-area-path "/" area-str ".svg" )})}
         child]]])))
 
 (defn unit-text
@@ -119,6 +120,20 @@
     [:span.main-value
      (:round/stock round-data)]
     [unit-text "Einheiten"]]])
+
+(defn debt
+  "The part of the view that represents the overall debt of the current player
+  for the rounds given."
+  [rounds user-role]
+  ;; TODO: Implement debt calculation
+  (let [overall-debt 0]
+    [game-area {} :debt
+     "Ausstehend"
+     [:div.message-data
+      [:span.main-value
+       {:style {:color (if (<= overall-debt 0) "#21BA45" "#DB2828")}}
+       overall-debt]
+      [unit-text "Einheiten"]]]))
 
 (defn cost
   "The part of the view that represents the overall cost
@@ -203,7 +218,7 @@
                   {:width width
                    :class-name (str "game-area-curved-arrow " rotation)}
                   (dissoc opts :rotation))
-   [sa/Image {:src (str config/icon-path "curve-down-arrow.svg")}]])
+   [sa/Image {:src (str config/icon-path "curved-arrow.svg")}]])
 
 (defn supply-chain-column-box
   "An infobox for the supply-chain element given by the user-role."
@@ -211,7 +226,7 @@
     :keys [width user-role title]
     :or {width 2}}]
   [sa/GridColumn {:width width}
-   [game-area {} :supply-chain
+   [game-area {} nil ;; No background icon
     (or title (config/user-role->title user-role))
     [user-role-image
      {:user-role user-role
@@ -233,9 +248,10 @@
       "Der Informationsfluss Deiner Firma."
       {}
       [[:arrow-out [grid-curved-arrow-column {:rotation "down-left"}]]
-       [:outgoing [sa/GridColumn {:width 6} [order]]]
-       [:demand [sa/GridColumn {:width 6} [mail round-data]]]
-       [:arrow-in [grid-curved-arrow-column {:rotation "down-right"}]]]]
+       [:outgoing [sa/GridColumn {:width 4} [order]]]
+       [:debt [sa/GridColumn {:width 4} [debt (take cur-round rounds) user-role]]]
+       [:demand [sa/GridColumn {:width 4} [mail round-data]]]
+       [:arrow-in [grid-curved-arrow-column {:rotation "up-left"}]]]]
      [sa/GridRow {:centered true}
       [supply-chain-column-box {:user-role (or supplier user-role)
                                 :title (when (= user-role (first supply-chain))
@@ -250,7 +266,7 @@
       "exchange"
       "Der Warenfluss Deiner Firma."
       {}
-      [[:arrow-in1 [grid-curved-arrow-column {:rotation "up-left"}]]
+      [[:arrow-in1 [grid-curved-arrow-column {:rotation "down-right"}]]
        [:incoming [sa/GridColumn {:width 3} [incoming round-data]]]
        [:arrow-in2 [grid-arrow-column {:direction "right"}]]
        [:stock [sa/GridColumn {:width 4} [stock round-data]]]

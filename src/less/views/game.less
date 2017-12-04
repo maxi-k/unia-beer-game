@@ -79,28 +79,22 @@
 .game-area-curved-arrow {
     height: 100%;
     img {
+        opacity: .80;
         height: 100%;
         width: 100%;
     }
-    @x-scale-factor: 1.0;
-    @y-scale-factor: 1.0;
-    /**
-    Matrix:
-     1  1
-    -1  1
-    -1 -1
-     1 -1
-    **/
-    &.down-right {
-        .transform(scaleX(@x-scale-factor) scaleY(@y-scale-factor));
+    @x-scale-factor: 0.6;
+    @y-scale-factor: 0.7;
+    &.up-left {
+        .transform(scaleX(@x-scale-factor) scaleY(-@y-scale-factor));
     }
     &.down-left {
+        .transform(scaleX(@x-scale-factor) scaleY(-@y-scale-factor) rotate(90deg));
+    }
+    &.down-right {
         .transform(scaleX(-@x-scale-factor) scaleY(@y-scale-factor));
     }
-    &.up-left {
-        .transform(scaleX(-@x-scale-factor) scaleY(-@y-scale-factor));
-    }
     &.up-right {
-        .transform(scaleX(@x-scale-factor) scaleY(-@y-scale-factor));
+        .transform(scaleX(-@x-scale-factor) scaleY(@y-scale-factor) rotate(90deg));
     }
 }
