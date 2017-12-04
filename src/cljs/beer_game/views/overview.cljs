@@ -36,7 +36,6 @@
        [:div.game-view-chain
         (->>
          (for [member supply-chain]
-           ^{:key member}
            [user-role-image
             {:key member
              :user-role member
@@ -48,7 +47,6 @@
              :as :h2}])
          (util/interpose-indexed
           (fn [idx]
-            ^{:key (str "arrow-" idx)}
             [:div.role-title.arrow {:key (str "arrow-" idx)}
              [sa/Icon {:name "arrow right"
                        :size "large"}]]))
@@ -74,7 +72,7 @@
   "A component that renders the text for a unit,
   to give the numeric values context."
   [text]
-  [:p.unit-text {:key "unit-text"} text])
+  [:p.unit-text text])
 
 (defn outgoing
   "The part of the view that represents the outgoing items
@@ -139,8 +137,7 @@
   []
   (let [form-data (atom {:round/order 0})
         input-data (inputs/make-validated-input
-                    {:key "order-input"
-                     :class-name "order-input"
+                    {:class-name "order-input"
                      :spec :round/order
                      :placeholder "Bestellung"
                      :transform js/parseInt
@@ -189,12 +186,38 @@
 (defn grid-arrow-column
   "Renders a grid cloumn designated to an arrow."
   [{:as opts
-    :keys [direction width]
+    :keys [direction width rotation]
     :or {direction "right" width 1}}]
   [sa/GridColumn (merge {:width width
-                         :class-name "game-area-divider"}
-                        (dissoc opts :direction))
+                         :class-name "game-area-divider"
+                         :style (when rotation {:transform (str "rotate(" rotation ")")})}
+                        (dissoc opts :direction :rotation))
    [sa/Icon {:name (str "arrow " direction)}]])
+
+(defn grid-curved-arrow-column
+  [{:as opts
+    :keys [rotation width]
+    :or {rotation 0
+         width 2}}]
+  [sa/GridColumn (merge
+                  {:width width
+                   :class-name (str "game-area-curved-arrow " rotation)}
+                  (dissoc opts :rotation))
+   [sa/Image {:src (str config/icon-path "curve-down-arrow.svg")}]])
+
+(defn supply-chain-column-box
+  "An infobox for the supply-chain element given by the user-role."
+  [{:as options
+    :keys [width user-role title]
+    :or {width 2}}]
+  [sa/GridColumn {:width width}
+   [game-area {} :supply-chain
+    (or title (config/user-role->title user-role))
+    [user-role-image
+     {:user-role user-role
+      :no-text true
+      :class-name "user-role-segment"
+      :as-elem :div}]]])
 
 (defn round-view
   "Renders the game view for the current round."
@@ -209,35 +232,31 @@
       "inbox"
       "Der Informationsfluss Deiner Firma."
       {}
-      {:supplier [sa/GridColumn {:width 2} [user-role-image
-                                            {:key (or supplier user-role)
-                                             :user-role (or supplier user-role)
-                                             :no-text true
-                                             :class-name "user-role-segment"
-                                             :as-elem :div}]]
-       :arrow-out [grid-arrow-column {:direction "left"}]
-       :outgoing [sa/GridColumn {:width 5} [order]]
-       :divider [sa/Divider {:vertical true}]
-       :demand [sa/GridColumn {:width 5} [mail round-data]]
-       :arrow-in [grid-arrow-column {:direction "left"}]
-       :customer [sa/GridColumn {:width 2} [user-role-image
-                                            {:key (or supplier user-role)
-                                             :user-role (or customer user-role)
-                                             :no-text true
-                                             :class-name "user-role-segment"
-                                             :as-elem :div}]]}]
+      [[:arrow-out [grid-curved-arrow-column {:rotation "down-left"}]]
+       [:outgoing [sa/GridColumn {:width 6} [order]]]
+       [:demand [sa/GridColumn {:width 6} [mail round-data]]]
+       [:arrow-in [grid-curved-arrow-column {:rotation "down-right"}]]]]
      [sa/GridRow {:centered true}
-      [sa/GridColumn {:width 6}
-       [cost (take cur-round rounds) user-role]]]
+      [supply-chain-column-box {:user-role (or supplier user-role)
+                                :title (when (= user-role (first supply-chain))
+                                         "Produktion")}]
+      [sa/GridColumn {:width 3}]
+      [sa/GridColumn {:width 6} [cost (take cur-round rounds) user-role]]
+      [sa/GridColumn {:width 3}]
+      [supply-chain-column-box {:user-role (or customer user-role)
+                                :title (when (= user-role (last supply-chain))
+                                         "Konsum")}]]
      [info-group
       "exchange"
       "Der Warenfluss Deiner Firma."
       {}
-      {:incoming [sa/GridColumn {:width 4} [incoming round-data]]
-       :arrow-in [grid-arrow-column {:direction "right"}]
-       :stock [sa/GridColumn {:width 6} [stock round-data]]
-       :arrow-out [grid-arrow-column {:direction "right"}]
-       :outgoing [sa/GridColumn {:width 4} [outgoing round-data]]}]]))
+      [[:arrow-in1 [grid-curved-arrow-column {:rotation "up-left"}]]
+       [:incoming [sa/GridColumn {:width 3} [incoming round-data]]]
+       [:arrow-in2 [grid-arrow-column {:direction "right"}]]
+       [:stock [sa/GridColumn {:width 4} [stock round-data]]]
+       [:arrow-out1 [grid-arrow-column {:direction "right"}]]
+       [:outgoing [sa/GridColumn {:width 3} [outgoing round-data]]]
+       [:arrow-out2 [grid-curved-arrow-column {:rotation "up-right"}]]]]]))
 
 (defn game-view
   "Renders the game view for the current player."

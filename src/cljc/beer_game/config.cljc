@@ -30,6 +30,7 @@
    :public-root "public"
    :game-logo "img/icons/pint.svg"
    :game-area-path "img/game-areas/"
+   :icon-path "img/icons/"
    :websocket-endpoint "/ws"
    :websocket-packer :edn
    :realms #:realm{:player {:title "Mitspieler"}
@@ -76,9 +77,14 @@
 (def game-logo
   "The main logo for the game."
   (:game-logo definitions))
+
 (def game-area-path
   "The path where the images for the game-area backgrounds are stores."
   (:game-area-path definitions))
+
+(def icon-path
+  "The path were general icons are stored"
+  (:icon-path definitions))
 
 (def realms (definitions :realms))
 (def player-realm :realm/player)
