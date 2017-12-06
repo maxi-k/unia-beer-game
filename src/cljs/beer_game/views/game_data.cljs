@@ -82,7 +82,6 @@
   []
   (let [events (rf/subscribe [:events])
         user (rf/subscribe [:user])
-        _ (println @user)
         single-event? (util/single-event? (:event/id @user))
         event-cursor (if single-event?
                        (ra/atom (:event/id @user))
