@@ -145,10 +145,18 @@
      (game-logic/overall-cost rounds user-role)]
     [unit-text "Dollar"]]])
 
+(defn commit-round-btn
+  [submit-fn commited?]
+  [sa/Button {:key :btn
+              :primary true
+              :disabled commited?
+              :on-click submit-fn
+              :content (if commited? "Bestellt" "Bestellen")}])
+
 (defn order
   "The part of the view that represents the request
   this player has for the guy above him in the supply chain."
-  []
+  [round-data]
   (let [form-data (atom {:round/order 0})
         input-data (inputs/make-validated-input
                     {:class-name "order-input"
@@ -159,7 +167,7 @@
                      :value-fn #(:round/order @form-data)
                      :invalid-msg "Bitte eine ganze Zahl eingeben."})
         submit-fn (atom #(rf/dispatch [:game/round-commit @form-data]))]
-    (fn []
+    (fn [round-data]
       [game-area {} :request
        "Anfrage"
        [:div.message-data
@@ -169,10 +177,9 @@
                                 :submit-atom submit-fn}
          ^{:key :input} [inputs/validated-input input-data]
          ^{:key :units} [unit-text "Einheiten"]
-         [sa/Button {:key :btn
-                     :primary true
-                     :on-click @submit-fn
-                     :content "Bestellen"}]]]])))
+         ^{:key :button} [commit-round-btn
+                          @submit-fn
+                          (:round/commited? round-data)]]]])))
 
 (defn info-group-icon
   "The icon hinting at the purpose of a company-section."
@@ -233,6 +240,13 @@
       :class-name "user-role-segment"
       :as-elem :div}]]])
 
+(defn next-round-button
+  [cur-round ready?]
+  [sa/Button {:on-click #(rf/dispatch [:game/round-ready {:target-round cur-round}])
+              :disabled ready?
+              :content (if ready? "Warten auf andere Spieler..." "Nächste Runde")
+              :primary true}])
+
 (defn round-view
   "Renders the game view for the current round."
   [rounds cur-round user-role supply-chain]
@@ -247,7 +261,7 @@
       "Der Informationsfluss Deiner Firma."
       {}
       [[:arrow-out [grid-curved-arrow-column {:rotation "down-left"}]]
-       [:outgoing [sa/GridColumn {:width 4} [order]]]
+       [:outgoing [sa/GridColumn {:width 4} [order round-data]]]
        [:debt [sa/GridColumn {:width 4} [debt (take cur-round rounds) user-role]]]
        [:demand [sa/GridColumn {:width 4} [mail round-data]]]
        [:arrow-in [grid-curved-arrow-column {:rotation "up-left"}]]]]
@@ -274,9 +288,9 @@
        [:arrow-out2 [grid-curved-arrow-column {:rotation "up-right"}]]]]
      [sa/GridRow {:centered true}
       [sa/GridColumn
-       [sa/Button {:on-click #(rf/dispatch [:game/round-ready {:target-round cur-round}])
-                   :primary true}
-        "Nächste Runde"]]]]))
+       [next-round-button
+        cur-round
+        (get-in round-data [:game/roles user-role :round/ready?])]]]]))
 
 (defn game-view
   "Renders the game view for the current player."
