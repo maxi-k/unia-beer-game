@@ -129,9 +129,8 @@
   (let [overall-debt 0]
     [game-area {} :debt
      "Ausstehend"
-     [:div.message-data
+     [:div.message-data {:style {:color (if (<= overall-debt 0) "#21BA45" "#DB2828")}}
       [:span.main-value
-       {:style {:color (if (<= overall-debt 0) "#21BA45" "#DB2828")}}
        overall-debt]
       [unit-text "Einheiten"]]]))
 
