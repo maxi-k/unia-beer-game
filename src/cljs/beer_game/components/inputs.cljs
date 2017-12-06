@@ -104,5 +104,5 @@
                           (rf/dispatch [:submission/invalid]))))
         opts (dissoc options :as :validated-inputs :submit-atom)]
     (reset! submit-atom wrap-submit)
-    (fn []
+    (fn [options & children]
       [as opts children])))
