@@ -242,10 +242,13 @@
 
 (defn next-round-button
   [cur-round ready?]
-  [sa/Button {:on-click #(rf/dispatch [:game/round-ready {:target-round cur-round}])
-              :disabled ready?
-              :content (if ready? "Warten auf andere Spieler..." "Nächste Runde")
-              :primary true}])
+  (fn [cur-round ready?]
+    [sa/Button {:on-click #(rf/dispatch [:game/round-ready {:target-round cur-round}])
+                :disabled ready?
+                :primary true}
+     (if ready?
+       "Warten auf andere Spieler..."
+       "Nächste Runde")]))
 
 (defn round-view
   "Renders the game view for the current round."
@@ -290,7 +293,7 @@
       [sa/GridColumn
        [next-round-button
         cur-round
-        (get-in round-data [:game/roles user-role :round/ready?])]]]]))
+        (get round-data :round/ready?)]]]]))
 
 (defn game-view
   "Renders the game view for the current player."
