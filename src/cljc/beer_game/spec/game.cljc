@@ -40,6 +40,8 @@
 (s/def ::demand nat-int?)
 (s/def ::initial-stock nat-int?)
 (s/def ::cost-factor pos-int?)
+(s/def ::stock-cost-factor ::cost-factor)
+(s/def ::debt-cost-factor  ::cost-factor)
 (s/def ::user-demands
   ::demand
   #_(s/or :constant ::demand
@@ -47,7 +49,8 @@
 (s/def :game/supply-chain
   (s/coll-of :user/role))
 (s/def :game/settings
-  (s/keys :req-un [::round-amount ::user-demands ::initial-stock ::cost-factor]
+  (s/keys :req-un [::round-amount ::user-demands ::initial-stock
+                   ::stock-cost-factor ::debt-cost-factor]
           :opt [:game/supply-chain]))
 
 (s/def :game/round

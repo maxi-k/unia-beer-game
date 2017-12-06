@@ -55,14 +55,16 @@
 
 (defn apply-round-update
   "Applies a commit to the game rounds vector."
-  [rounds cur-round {:as settings :keys [:game/supply-chain cost-factor]}
+  [rounds cur-round {:as settings :keys [:game/supply-chain
+                                         stock-cost-factor debt-cost-factor]}
    {:as commit :keys [:round/order :user/role]}]
   (let [[pre post] (roles-around role supply-chain)
         next-round (inc cur-round)
         last-round? (>= next-round (count rounds))
         role-data (get-in rounds [cur-round :game/roles role])
         post-data (get-in rounds [cur-round :game/roles post])
-        cost (* cost-factor (or (:round/stock role-data) 0))
+        cost (+ (* stock-cost-factor (or (:round/stock role-data) 0))
+                (* debt-cost-factor  (or (:round/debt role-data) 0)))
         to-deliver (calc-to-deliver role-data)
         delivered (min to-deliver
                        (or (:round/stock role-data) 0))]

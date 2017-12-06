@@ -52,7 +52,8 @@
    :default-game-settings {:round-amount 20
                            :user-demands 5
                            :initial-stock 5
-                           :cost-factor 5}
+                           :stock-cost-factor 5
+                           :debt-cost-factor 10}
    :user-role-image-path "img/roles"})
 
 (def supply-chain
