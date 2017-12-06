@@ -26,7 +26,9 @@
   (fn [roles]
     (reduce
      (fn [coll [role role-data]]
-       (let [cur-stock (get-in rounds [cur-round :game/roles role :round/stock])]
+       (let [round-data (get-in rounds [cur-round :game/roles role])
+             cur-stock (:round/stock round-data)
+             cur-debt (:round/debt round-data)]
          (assoc coll role
                 (let [to-deliver (calc-to-deliver role-data)
                       ;; delivered (min to-deliver (or cur-stock 0))
@@ -36,7 +38,8 @@
                       (assoc :round/stock
                              (max 0 (+ cur-stock diff)))
                       (assoc :round/debt
-                             (- (min 0 (- cur-stock to-deliver)))))))))
+                             (max 0 (+ cur-debt
+                                       (- (- cur-stock to-deliver))))))))))
      {}
      roles)))
 
