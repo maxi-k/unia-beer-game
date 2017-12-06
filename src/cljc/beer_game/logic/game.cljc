@@ -14,23 +14,38 @@
         (< (inc role-idx) chain-length) (assoc 1 (nth supply-chain (inc role-idx)))
         (>= (dec role-idx) 0)           (assoc 0 (nth supply-chain (dec role-idx)))))))
 
+(defn calc-to-deliver
+  "Given the round-data for one user-role, returns the amount
+  of goods they have to deliver."
+  [role-data]
+  (+ (or (:round/demand role-data) 0)
+     (or (:round/debt role-data) 0)))
+
+(defn role-stock-update-fn
+  [rounds cur-round]
+  (fn [roles]
+    (reduce
+     (fn [coll [role role-data]]
+       (let [cur-stock (get-in rounds [cur-round :game/roles role :round/stock])]
+         (assoc coll role
+                (let [to-deliver (calc-to-deliver role-data)
+                      ;; delivered (min to-deliver (or cur-stock 0))
+                      incoming (or (:round/incoming role-data) 0)
+                      diff (- incoming to-deliver)]
+                  (-> role-data
+                      (assoc :round/stock
+                             (max 0 (+ cur-stock diff)))
+                      (assoc :round/debt
+                             (- (min 0 (- cur-stock to-deliver)))))))))
+     {}
+     roles)))
+
 (defn update-stocks
   "Update all the stock values when a round is done."
   [rounds cur-round {:as settings :keys [:game/supply-chain]}]
   (let [next-round (inc cur-round)
         last-round? (>= next-round (count rounds))
-        updater (fn [roles]
-                  (reduce
-                   (fn [coll [role val]]
-                     (let [cur-stock (get-in rounds [cur-round :game/roles role :round/stock])]
-                       (assoc coll role
-                              (assoc val :round/stock
-                                     (max 0
-                                          (+ cur-stock
-                                             (- (or (:round/incoming val) 0)
-                                                (or (:round/demand val) 0))))))))
-                   {}
-                   roles))]
+        updater (role-stock-update-fn rounds cur-round)]
     (if last-round?
       rounds
       (update-in rounds [next-round :game/roles] updater))))
@@ -45,7 +60,8 @@
         role-data (get-in rounds [cur-round :game/roles role])
         post-data (get-in rounds [cur-round :game/roles post])
         cost (* cost-factor (or (:round/stock role-data) 0))
-        delivered (min (or (:round/demand role-data) 0)
+        to-deliver (calc-to-deliver role-data)
+        delivered (min to-deliver
                        (or (:round/stock role-data) 0))]
     (cond-> rounds
       true (assoc-in [cur-round :game/roles role :round/commited?] true)

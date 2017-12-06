@@ -124,12 +124,11 @@
 (defn debt
   "The part of the view that represents the overall debt of the current player
   for the rounds given."
-  [rounds user-role]
-  ;; TODO: Implement debt calculation
-  (let [overall-debt 0]
+  [round-data]
+  (let [overall-debt (or (:round/debt round-data) 0)]
     [game-area {} :debt
      "Ausstehend"
-     [:div.message-data {:style {:color (if (<= overall-debt 0) "#21BA45" "#DB2828")}}
+     [:div.message-data {:style {:color (if (= overall-debt 0) "#21BA45" "#DB2828")}}
       [:span.main-value
        overall-debt]
       [unit-text "Einheiten"]]]))
@@ -265,7 +264,7 @@
       {}
       [[:arrow-out [grid-curved-arrow-column {:rotation "down-left"}]]
        [:outgoing [sa/GridColumn {:width 4} [order round-data]]]
-       [:debt [sa/GridColumn {:width 4} [debt (take cur-round rounds) user-role]]]
+       [:debt [sa/GridColumn {:width 4} [debt round-data]]]
        [:demand [sa/GridColumn {:width 4} [mail round-data]]]
        [:arrow-in [grid-curved-arrow-column {:rotation "up-left"}]]]]
      [sa/GridRow {:centered true}
