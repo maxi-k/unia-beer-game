@@ -78,25 +78,25 @@
 (defn outgoing
   "The part of the view that represents the outgoing items
   for the current-player for the previous round."
-  [round-data]
+  [{:as round-data :keys [:round/demand :round/stock]}]
   [game-area {} :outgoing
    "Warenausgang"
    [:div.message-data
     [:span.main-value
-     (min (:round/demand round-data)
-          (:round/stock round-data))]
+     (min demand stock)]
     [unit-text "Einheiten"]]])
 
 (defn incoming
   "The part of the view that represents the production / incoming items
   for the current player."
-  [round-data]
+  [{:as round-data :keys [:round/incoming]}]
   [game-area {} :incoming
    "Wareneingang"
    [:div.message-data
     [:span.main-value
-     (:round/incoming round-data)]
-    [unit-text "Einheiten"]]])
+     (or incoming "-")]
+    (when incoming
+      [unit-text "Einheiten"])]])
 
 (defn mail
   "The part of the view that represents the mailbox of the current player."
@@ -271,7 +271,12 @@
        [:stock [sa/GridColumn {:width 4} [stock round-data]]]
        [:arrow-out1 [grid-arrow-column {:direction "right"}]]
        [:outgoing [sa/GridColumn {:width 3} [outgoing round-data]]]
-       [:arrow-out2 [grid-curved-arrow-column {:rotation "up-right"}]]]]]))
+       [:arrow-out2 [grid-curved-arrow-column {:rotation "up-right"}]]]]
+     [sa/GridRow {:centered true}
+      [sa/GridColumn
+       [sa/Button {:on-click #(rf/dispatch [:game/round-ready {:target-round cur-round}])
+                   :primary true}
+        "Nächste Runde"]]]]))
 
 (defn game-view
   "Renders the game view for the current player."
