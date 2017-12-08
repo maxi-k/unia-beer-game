@@ -114,3 +114,15 @@
  :<- [:game/current-round]
  (fn [rounds current-round]
    (nth rounds current-round)))
+
+(rf/reg-sub
+ :game/acknowledgements
+ (fn [db]
+   (get-in db [:game-state :acknowledgements])))
+
+(rf/reg-sub
+ :game/round-acknowledgement
+ :<- [:game/acknowledgements]
+ :<- [:game/current-round]
+ (fn [acks cur-round]
+   (get acks cur-round false)))

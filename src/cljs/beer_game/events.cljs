@@ -267,3 +267,9 @@
          {:dispatch [:message/add (msgs/game-update-failed {:update/reason
                                                             {:event/id event-id}})]}))
      {:dispatch [:message/add (msgs/game-update-failed update-data)]})))
+
+
+(rf/reg-event-db
+ :game/acknowledge-round
+ (fn [db [_ round]]
+   (assoc-in db [:game-state :acknowledgements round] true)))

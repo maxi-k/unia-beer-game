@@ -9,4 +9,5 @@
    :user {:auth false}
    :messages {}
    :events {}
+   :game-state {}
    :selected-event nil})

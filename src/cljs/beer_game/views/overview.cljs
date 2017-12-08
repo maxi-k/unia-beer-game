@@ -78,13 +78,21 @@
 (defn outgoing
   "The part of the view that represents the outgoing items
   for the current-player for the previous round."
-  [{:as round-data :keys [:round/demand :round/stock]}]
-  [game-area {} :outgoing
-   "Warenausgang"
-   [:div.message-data
-    [:span.main-value
-     (min demand stock)]
-    [unit-text "Einheiten"]]])
+  [round-data cur-round]
+  (let [acks (rf/subscribe [:game/acknowledgements])]
+    (fn [{:as round-data :keys [:round/demand :round/stock]}
+        cur-round]
+      [game-area {} :outgoing
+       "Warenausgang"
+       [:div.message-data
+        [:span.main-value
+         (min demand stock)]
+        [unit-text "Einheiten"]
+        [sa/Button
+         {:disabled (get @acks cur-round)
+          :primary true
+          :on-click #(rf/dispatch [:game/acknowledge-round cur-round])}
+         "OK"]]])))
 
 (defn incoming
   "The part of the view that represents the production / incoming items
@@ -240,14 +248,20 @@
       :as-elem :div}]]])
 
 (defn next-round-button
-  [cur-round ready?]
-  (fn [cur-round ready?]
-    [sa/Button {:on-click #(rf/dispatch [:game/round-ready {:target-round cur-round}])
-                :disabled ready?
-                :primary true}
-     (if ready?
-       "Warten auf andere Spieler..."
-       "Nächste Runde")]))
+  [cur-round ready? commited?]
+  (let [acks (rf/subscribe [:game/acknowledgements])]
+    (fn [cur-round ready? commited?]
+      (let [acknowledged? (get @acks cur-round)]
+        [sa/Button {:on-click #(rf/dispatch [:game/round-ready {:target-round cur-round}])
+                    :disabled (or (not commited?)
+                                  (not acknowledged?)
+                                  ready?)
+                    :primary true}
+         (cond
+           (not commited?) "Bitte zuerst bestellen"
+           (not acknowledged?) "Bitte zuerst Warenausgang bestätigen"
+           ready? "Warten auf andere Spieler..."
+           :else "Nächste Runde")]))))
 
 (defn cost-multiplier-arrow
   [{:as options
@@ -308,13 +322,14 @@
        [:arrow-in2 [grid-arrow-column {:direction "right"}]]
        [:stock [sa/GridColumn {:width 4} [stock round-data]]]
        [:arrow-out1 [grid-arrow-column {:direction "right"}]]
-       [:outgoing [sa/GridColumn {:width 3} [outgoing round-data]]]
+       [:outgoing [sa/GridColumn {:width 3} [outgoing round-data cur-round]]]
        [:arrow-out2 [grid-curved-arrow-column {:rotation "up-right"}]]]]
      [sa/GridRow {:centered true}
       [sa/GridColumn
        [next-round-button
         cur-round
-        (get round-data :round/ready?)]]]]))
+        (get round-data :round/ready?)
+        (get round-data :round/commited?)]]]]))
 
 (defn game-view
   "Renders the game view for the current player."
