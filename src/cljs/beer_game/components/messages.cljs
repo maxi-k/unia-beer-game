@@ -138,10 +138,24 @@
 
 (defn game-update-failed
   "A message telling the user that a game-update (round-commit) has failed."
-  [update-map]
-  #:message {:icon "exclamation triangle"
-             :title "Spielupdate gescheitert."
-             :content [:p "Das Spielupdate konnte nicht durchgeführt werden."
-                       "Technische Daten:"
-                       [:br]
-                       (string/join (take 500 (str (:update/reason update-map))))]})
+  [{:as update-map :keys [:update/reason]}]
+  (cond
+    (= (:round/commited? reason) false)
+    #:message {:icon "info circle"
+               :title "Bitte zuerst die Bestellung für diese Runde aufgeben."
+               :time 3000}
+    (= (:round/commited? reason) true)
+    #:message {:icon "info circle"
+               :title "Die Bestellung für diese Runde wurde schon aufgegeben."
+               :time 3000}
+    (= (:round/ready? reason) true)
+    #:message {:icon "info circle"
+               :title "Die Runde wurde schon beendet. Warte, bis die anderen Spieler so weit sind."
+               :time 3000}
+    :else
+    #:message {:icon "exclamation triangle"
+               :title "Spielupdate gescheitert."
+               :content [:p "Das Spielupdate konnte nicht durchgeführt werden."
+                         "Technische Daten:"
+                         [:br]
+                         (string/join (take 500 (str reason)))]}))
