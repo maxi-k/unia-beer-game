@@ -127,11 +127,14 @@
 
 (defn invalid-round-count
   "A message indicating an out-of-bounds or invalid round-count."
-  [round-num]
-  #:message {:icon "info circle"
-             :title (if (<= round-num 0)
-                      "Spiel hat noch nicht angefangen."
-                      "Spiel ist vorbei.")})
+  [round-num max-rounds]
+  (if (<= round-num 0)
+    #:message {:icon "info circle"
+               :title "Spiel hat noch nicht angefangen."
+               :content "Der Spielleiter wird das Spiel bald starten."}
+    #:message {:icon "info circle"
+               :title "Spiel ist vorbei."
+               :content "Der Spielleiter wird gleich weitere Instruktionen geben."}))
 
 (defn game-update-failed
   "A message telling the user that a game-update (round-commit) has failed."

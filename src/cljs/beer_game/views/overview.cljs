@@ -302,13 +302,14 @@
       (let [{:as game-data
              :keys [:game/current-round :game/rounds :game/settings]} @game]
         (cond
+          (or (nil? current-round) (empty? rounds)
+              (>= current-round (count rounds))
+              (neg? current-round)) (msgs/render-message
+                                     (msgs/invalid-round-count current-round (count rounds)))
           (not (spec/valid?
                 :game/data game-data)) [msgs/render-message
                                         (msgs/invalid-game-data-msg
                                          (spec/explain-str :game/data game-data))]
-          (or (>= current-round (count rounds))
-              (neg? current-round)) (msgs/render-message
-                                     (msgs/invalid-round-count current-round))
           :else
           [round-view rounds current-round user-role (:game/supply-chain settings)])))))
 
