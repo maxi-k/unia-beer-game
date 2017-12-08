@@ -14,6 +14,12 @@
    (:user db)))
 
 (rf/reg-sub
+ :user/role
+ :<- [:user]
+ (fn [user]
+   (:user/role user)))
+
+(rf/reg-sub
  :active-panel
  (fn [db _]
    (:active-panel db)))
@@ -81,3 +87,42 @@
        (get-in db [:events event-id :game/data])
        (map (fn [[k v]] (:game/data v))
             (get-in db [:events]))))))
+
+(rf/reg-sub
+ :game/rounds
+ :<- [:game]
+ :game/rounds)
+
+(rf/reg-sub
+ :game/current-round
+ :<- [:game]
+ :game/current-round)
+
+(rf/reg-sub
+ :game/settings
+ :<- [:game]
+ :game/settings)
+
+(rf/reg-sub
+ :game/supply-chain
+ :<- [:game/settings]
+ :game/supply-chain)
+
+(rf/reg-sub
+ :game/current-round-data
+ :<- [:game/rounds]
+ :<- [:game/current-round]
+ (fn [rounds current-round]
+   (nth rounds current-round)))
+
+(rf/reg-sub
+ :game/acknowledgements
+ (fn [db]
+   (get-in db [:game-state :acknowledgements])))
+
+(rf/reg-sub
+ :game/round-acknowledgement
+ :<- [:game/acknowledgements]
+ :<- [:game/current-round]
+ (fn [acks cur-round]
+   (get acks cur-round false)))

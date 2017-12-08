@@ -13,7 +13,23 @@
     margin: 1rem 1rem;
     text-align: center;
 
+    .info-group {
+        padding-top: 4rem !important;
+        padding-bottom: 4rem !important;
+    }
+
+    .game-view-grid {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+
+    .user-role-segment {
+        font-size: 1.5vw !important;
+    }
+
     .title {
+        font-size: inherit;
+        font-size: 1.5vw;
         font-weight: 900;
         padding: 0.4rem;
     }
@@ -51,7 +67,44 @@
         line-height: 2.5rem;
     }
 
+    .unit-text {
+        font-sizze: 1.5rem;
+    }
+
     .order-input {
         background: rgba(255, 255, 255, 0.8);
+    }
+}
+
+
+.cost-multiplier-arrow {
+    text-align: center;
+
+    .multiplier-string {
+        font-weight: bold;
+        font-family: Lato,'Helvetica Neue',Arial,Helvetica,sans-serif;
+    }
+}
+
+.game-area-curved-arrow {
+    height: 100%;
+    img {
+        opacity: .80;
+        height: 100%;
+        width: 100%;
+    }
+    @x-scale-factor: 0.6;
+    @y-scale-factor: 0.7;
+    &.up-left {
+        .transform(scaleX(@x-scale-factor) scaleY(-@y-scale-factor));
+    }
+    &.down-left {
+        .transform(scaleX(@x-scale-factor) scaleY(-@y-scale-factor) rotate(90deg));
+    }
+    &.down-right {
+        .transform(scaleX(-@x-scale-factor) scaleY(@y-scale-factor));
+    }
+    &.up-right {
+        .transform(scaleX(-@x-scale-factor) scaleY(@y-scale-factor) rotate(90deg));
     }
 }

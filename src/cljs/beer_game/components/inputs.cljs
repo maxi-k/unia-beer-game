@@ -55,7 +55,9 @@
     children]
    (fn []
      [sa/FormField
-      (assoc field-options :error (some? (:problems @field-state)))
+      (assoc field-options
+             :error (some? (:problems @field-state))
+             :key (:key obj))
       [:label (:label original-options)]
       [as (-> input-options
               (dissoc :value-fn)
@@ -102,5 +104,5 @@
                           (rf/dispatch [:submission/invalid]))))
         opts (dissoc options :as :validated-inputs :submit-atom)]
     (reset! submit-atom wrap-submit)
-    (fn []
+    (fn [options & children]
       [as opts children])))

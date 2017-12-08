@@ -251,6 +251,11 @@
    {:ws-auth [(:user db) [:game/round-commit commit-data]]}))
 
 (rf/reg-event-fx
+ :game/round-ready
+ (fn [{:keys [db]} [_ ready-data]]
+   {:ws-auth [(:user db) [:game/round-ready ready-data]]}))
+
+(rf/reg-event-fx
  :game/data-update
  (fn [{:keys [db]} [_ {:as update-data :keys [:game/updated?]}]]
    (if updated?
@@ -262,3 +267,9 @@
          {:dispatch [:message/add (msgs/game-update-failed {:update/reason
                                                             {:event/id event-id}})]}))
      {:dispatch [:message/add (msgs/game-update-failed update-data)]})))
+
+
+(rf/reg-event-db
+ :game/acknowledge-round
+ (fn [db [_ round]]
+   (assoc-in db [:game-state :acknowledgements round] true)))

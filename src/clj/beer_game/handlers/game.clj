@@ -64,6 +64,16 @@
            (game-logic/handle-commit (store/game-data (:event/id user-data)))
            (apply-update user-data)))))
 
+(defmethod handle-game-msg
+  :round-ready
+  [{:as msg}]
+  (with-auth msg
+    (fn [_ user-data]
+      (->> (:?data msg)
+           (#(assoc % :user/role (:user/role user-data)))
+           (game-logic/handle-ready (store/game-data (:event/id user-data)))
+           (apply-update user-data)))))
+
 (defmethod handle-game-msg :default
   [msg]
   {:type ::unhandled})
@@ -79,7 +89,8 @@
     (empty? update-map)
     {:type :reply
      :message [:game/data-update {:game/updated? false
-                                  :update/reason {:unknown true}}]}
+                                  :update/reason {:unknown true
+                                                  :update-data update-map}}]}
     ;; -----
     (not (:update/valid? update-map))
     {:type :reply

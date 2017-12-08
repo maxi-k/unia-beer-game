@@ -48,7 +48,6 @@
   [options [name own-options children]]
   [name (merge own-options options) children])
 
-
 (defn with-options
   "Returns the given component with the given option map merged."
   [options component]

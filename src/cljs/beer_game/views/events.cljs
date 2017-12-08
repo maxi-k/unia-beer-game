@@ -68,14 +68,22 @@
                         :invalid-msg "Bitte eine ganze Zahl eingeben."
                         :value-fn #(:initial-stock @game-settings)
                         :on-change #(update-form [:game/data :game/settings :initial-stock] %2)}
-                       {:key :cost-factor
-                        :label "Kostenmultiplikator"
+                       {:key :stock-cost-factor
+                        :label "Kosten pro Runde für Einheiten im Lager."
                         :placeholder "Kosten pro Item im Lager."
-                        :spec ::game-spec/cost-factor
+                        :spec ::game-spec/stock-cost-factor
                         :transform js/parseInt
                         :invalid-msg "Bitte eine positive, ganze Zahl eingeben."
-                        :value-fn #(:cost-factor @game-settings)
-                        :on-change #(update-form [:game/data :game/settings :cost-factor] %2)}]
+                        :value-fn #(:stock-cost-factor @game-settings)
+                        :on-change #(update-form [:game/data :game/settings :stock-cost-factor] %2)}
+                       {:key :debt-cost-factor
+                        :label "Kosten pro Runde für ausstehende Lieferungen."
+                        :placeholder "Kosten pro ausstehendes Item."
+                        :spec ::game-spec/debt-cost-factor
+                        :transform js/parseInt
+                        :invalid-msg "Bitte eine positive, ganze Zahl eingeben."
+                        :value-fn #(:debt-cost-factor @game-settings)
+                        :on-change #(update-form [:game/data :game/settings :debt-cost-factor] %2)}]
         input-elements (doall (map inputs/make-validated-input input-options))]
     (fn []
       [inputs/validated-form

@@ -14,38 +14,59 @@
         (< (inc role-idx) chain-length) (assoc 1 (nth supply-chain (inc role-idx)))
         (>= (dec role-idx) 0)           (assoc 0 (nth supply-chain (dec role-idx)))))))
 
+(defn calc-to-deliver
+  "Given the round-data for one user-role, returns the amount
+  of goods they have to deliver."
+  [role-data]
+  (+ (or (:round/demand role-data) 0)
+     (or (:round/debt role-data) 0)))
+
+(defn role-stock-update-fn
+  [rounds cur-round]
+  (fn [roles]
+    (reduce
+     (fn [coll [role role-data]]
+       (let [round-data (get-in rounds [cur-round :game/roles role])
+             cur-stock (:round/stock round-data)
+             cur-debt (:round/debt round-data)]
+         (assoc coll role
+                (let [to-deliver (calc-to-deliver role-data)
+                      ;; delivered (min to-deliver (or cur-stock 0))
+                      incoming (or (:round/incoming role-data) 0)
+                      diff (- incoming to-deliver)]
+                  (-> role-data
+                      (assoc :round/stock
+                             (max 0 (+ cur-stock diff)))
+                      (assoc :round/debt
+                             (max 0 (+ cur-debt
+                                       (- (- cur-stock to-deliver))))))))))
+     {}
+     roles)))
+
 (defn update-stocks
   "Update all the stock values when a round is done."
   [rounds cur-round {:as settings :keys [:game/supply-chain]}]
   (let [next-round (inc cur-round)
         last-round? (>= next-round (count rounds))
-        updater (fn [roles]
-                  (reduce
-                   (fn [coll [role val]]
-                     (let [cur-stock (get-in rounds [cur-round :game/roles role :round/stock])]
-                       (assoc coll role
-                              (assoc val :round/stock
-                                     (max 0
-                                          (+ cur-stock
-                                             (- (or (:round/incoming val) 0)
-                                                (or (:round/demand val) 0))))))))
-                   {}
-                   roles))]
+        updater (role-stock-update-fn rounds cur-round)]
     (if last-round?
       rounds
       (update-in rounds [next-round :game/roles] updater))))
 
 (defn apply-round-update
   "Applies a commit to the game rounds vector."
-  [rounds cur-round {:as settings :keys [:game/supply-chain cost-factor]}
+  [rounds cur-round {:as settings :keys [:game/supply-chain
+                                         stock-cost-factor debt-cost-factor]}
    {:as commit :keys [:round/order :user/role]}]
   (let [[pre post] (roles-around role supply-chain)
         next-round (inc cur-round)
         last-round? (>= next-round (count rounds))
         role-data (get-in rounds [cur-round :game/roles role])
         post-data (get-in rounds [cur-round :game/roles post])
-        cost (* cost-factor (:round/stock role-data))
-        delivered (min (or (:round/demand role-data) 0)
+        cost (+ (* stock-cost-factor (or (:round/stock role-data) 0))
+                (* debt-cost-factor  (or (:round/debt role-data) 0)))
+        to-deliver (calc-to-deliver role-data)
+        delivered (min to-deliver
                        (or (:round/stock role-data) 0))]
     (cond-> rounds
       true (assoc-in [cur-round :game/roles role :round/commited?] true)
@@ -66,14 +87,48 @@
       ;; place the own order
       (assoc-in [next-round :game/roles pre :round/demand] order))))
 
+(defn apply-user-ready
+  "Applies an update to the given round that signals
+  that the given user is ready for the next round."
+  [round user-role]
+  (assoc-in round [:game/roles user-role :round/ready?] true))
+
 (defn round-completed?
   "Takes the current round map and the game supply chain
   and returns true if the round is completed."
   [{:as round-data :keys [:game/roles]}
    supply-chain]
   (let [relevant-roles (butlast supply-chain)]
-    (every? #(get-in roles [% :round/commited?])
+    (every? #(and (get-in roles [% :round/commited?])
+                  (get-in roles [% :round/ready?]))
             relevant-roles)))
+
+(defn maybe-next-round
+  "Takes an update data map and applies the transformations
+  required to start the next round. Also requires the current-round
+  and the game settings to be passed.
+  If the round is not completed yet, just returns the update-data map. "
+  [{:as update-data
+    {:as game-data
+     cur-round :game/current-round
+     {:as settings
+      :keys [:game/supply-chain]} :game/settings} :game/data}]
+  (if (round-completed?
+       (get-in game-data [:game/rounds cur-round])
+       supply-chain)
+    (-> update-data
+        (update-in [:game/data :game/rounds]
+                   apply-round-update
+                   cur-round settings
+                   {:user/role :role/customer
+                    :round/order (:user-demands settings)})
+        ;; Update the stock of every role at the end
+        (update-in [:game/data :game/rounds]
+                   update-stocks cur-round settings)
+        (update-in [:game/data :game/current-round] inc)
+        (#(assoc-in % [:update/diff :game/current-round]
+                    (get-in % [:game/data :game/current-round]))))
+    update-data))
 
 (defn handle-commit
   "Handles the game-round commit requested by a client."
@@ -106,39 +161,62 @@
              :update/reason {:round/commited? true})
       ;; -----
       :else
-      (let [data-atom (atom update-map)
-            {:as settings :keys [:game/supply-chain]}
-            (get-in @data-atom [:game/data :game/settings])]
+      (let [{:as settings :keys [:game/supply-chain]}
+            (get-in update-map [:game/data :game/settings])]
         ;; Apply the round update
-        (swap! data-atom
-               update-in [:game/data :game/rounds]
-               apply-round-update cur-round settings commit)
-        ;; Add it to the diff
-        (swap! data-atom
-               #(assoc-in % [:update/diff :game/rounds]
-                          (get-in % [:game/data :game/rounds])))
-        ;; Increase the current round if every round was commited
-        (when (round-completed?
-               (get-in @data-atom [:game/data :game/rounds cur-round])
-               supply-chain)
-          ;; Apply the user order
-          (swap! data-atom
-                 update-in [:game/data :game/rounds]
-                 apply-round-update cur-round settings {:user/role :role/customer
-                                                        :round/order (:user-demands settings)})
-          ;; Update the stock of every role at the end
-          (swap! data-atom update-in [:game/data :game/rounds]
-                 update-stocks cur-round settings)
-
-          (swap! data-atom update-in [:game/data :game/current-round] inc)
-          (swap! data-atom #(assoc-in % [:update/diff :game/current-round]
-                                      (get-in % [:game/data :game/current-round]))))
-        @data-atom))))
+        (-> update-map
+            (update-in [:game/data :game/rounds]
+                       apply-round-update cur-round settings commit)
+            ;; Add it to the diff
+            (#(assoc-in % [:update/diff :game/rounds]
+                        (get-in % [:game/data :game/rounds]))))))))
 
 (spec/fdef handle-commit
            :args (spec/cat :cur-game-data :game/data
                            :commit :game/round-commit)
            :ret :game/data-update)
+
+(defn handle-ready
+  "Handles a clients signal that they are ready for the next round."
+  [{:as cur-game-data
+    cur-round :game/current-round
+    cur-rounds :game/rounds
+    settings :game/settings}
+   {:as ready-data
+    target-round :target-round
+    user-role :user/role}]
+  (let [update-map {:game/data cur-game-data
+                    :update/diff {}
+                    :update/valid? true}]
+    (cond
+      (not (contains? (set (:game/supply-chain settings)) user-role))
+      (assoc update-map
+             :update/valid? false
+             :update/reason {:game/supply-chain (:game/supply-chain settings)
+                             :user/role user-role})
+      ;; -----
+      (>= cur-round (count cur-rounds))
+      (assoc update-map
+             :update/valid? false
+             :update/reason {:game/current-round cur-round
+                             :game/rounds (count cur-rounds)})
+      ;; -----
+      (get-in cur-rounds [cur-round :game/roles user-role :round/ready?])
+      (assoc update-map
+             :update/valid? false
+             :update/reason {:round/ready? true})
+      ;; -----
+      (not (get-in cur-rounds [cur-round :game/roles user-role :round/commited?]))
+      (assoc update-map
+             :update/valid? false
+             :update/reason {:round/commited? false})
+      ;; -----
+      :else
+      (-> update-map
+          (update-in [:game/data :game/rounds cur-round]
+                     apply-user-ready user-role)
+          ;; Go to the next round if everyone is ready
+          maybe-next-round))))
 
 (defn start-game
   [game-data user-roles]
@@ -151,6 +229,7 @@
   "Initializes the round role information for one user."
   [{:as settings :keys [initial-stock]} user-role]
   (let [data {:round/stock initial-stock
+              :round/debt 0
               :round/cost  0
               :round/demand 0
               :round/order 0}]
@@ -188,7 +267,7 @@
      true (update :game/settings #(merge config/default-game-settings %))
      (nil? (:game/current-round data)) (assoc :game/current-round 0)
      (empty? (:game/rounds data)) (#(assoc % :game/rounds
-                                            (init-game-rounds (:game/settings %)))))))
+                                           (init-game-rounds (:game/settings %)))))))
 
 (defn overall-cost
   "Takes a round vector and returns the overall cost for the entire game
