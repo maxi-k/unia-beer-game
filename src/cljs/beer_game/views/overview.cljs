@@ -249,9 +249,28 @@
        "Warten auf andere Spieler..."
        "Nächste Runde")]))
 
+(defn cost-multiplier-arrow
+  [{:as options
+    :keys [direction]}
+   content]
+  (let [corner-position (if (= (keyword direction) :down)
+                          "top right"
+                          "bottom right")]
+    [:div (merge {:class-name (str "cost-multiplier-arrow "
+                                   (:class-name options))}
+                 (dissoc options :direction :class-name))
+     [sa/IconGroup {:size "big"}
+      [sa/Icon {:name (str "arrow " (name direction))}]
+      [sa/Icon {:class-name corner-position
+                :corner true
+                :name "x"}
+       [:span.multiplier-string content]]]]))
+
 (defn round-view
   "Renders the game view for the current round."
-  [rounds cur-round user-role supply-chain]
+  [rounds cur-round user-role {:as settings :keys [:game/supply-chain
+                                                   stock-cost-factor
+                                                   debt-cost-factor]}]
   (let [round-data (get-in (nth rounds cur-round)
                            [:game/roles user-role])
         [supplier customer] (game-logic/roles-around user-role supply-chain)]
@@ -272,7 +291,10 @@
                                 :title (when (= user-role (first supply-chain))
                                          "Produktion")}]
       [sa/GridColumn {:width 3}]
-      [sa/GridColumn {:width 6} [cost (take cur-round rounds) user-role]]
+      [sa/GridColumn {:width 6}
+       [cost-multiplier-arrow {:direction :down} debt-cost-factor]
+       [cost (take cur-round rounds) user-role]
+       [cost-multiplier-arrow {:direction :up} stock-cost-factor]]
       [sa/GridColumn {:width 3}]
       [supply-chain-column-box {:user-role (or customer user-role)
                                 :title (when (= user-role (last supply-chain))
@@ -311,7 +333,7 @@
                                         (msgs/invalid-game-data-msg
                                          (spec/explain-str :game/data game-data))]
           :else
-          [round-view rounds current-round user-role (:game/supply-chain settings)])))))
+          [round-view rounds current-round user-role settings])))))
 
 (defn overview-panel
   []
