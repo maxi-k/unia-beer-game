@@ -96,13 +96,14 @@
   (let [todir (tmp-dir!)
         prev-less (atom nil)]
     (with-pre-wrap fileset
-      (let [candidates (->> fileset
+      (let [file-extensions [".less" ".config" ".overrides"]
+            candidates (->> fileset
                             input-files
-                            (by-ext [".less" ".config" ".overrides"]))
+                            (by-ext file-extensions))
             changed (->> fileset
                          (fileset-diff @prev-less)
                          input-files
-                         (by-ext [".less" ".config" ".overrides"]))
+                         (by-ext file-extensions))
             in-file (first (by-path [input] candidates))
             tmp-in (tmp-file in-file)
             tmp-out (io/file todir output)]
