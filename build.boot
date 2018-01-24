@@ -93,21 +93,38 @@
   (GC Overflow error)."
   [i  input   INPUT_FILE  str "The input file path"
    o  output  OUTPUT_FILE str "The output file path"]
-  (let [todir (tmp-dir!)]
+  (let [todir (tmp-dir!)
+        prev-less (atom nil)]
     (with-pre-wrap fileset
       (let [candidates (->> fileset
                             input-files
                             (by-ext [".less" ".config" ".overrides"]))
+            changed (->> fileset
+                         (fileset-diff @prev-less)
+                         input-files
+                         (by-ext [".less" ".config" ".overrides"]))
             in-file (first (by-path [input] candidates))
             tmp-in (tmp-file in-file)
             tmp-out (io/file todir output)]
-        (empty-dir! todir)
-        (println "Compiling Less...")
-        (boot.util/dosh "lessc" (.getPath tmp-in) (.getPath tmp-out)
-                        "--clean-css" "--s1 --advanced --compatibility=ie8")
+        (if-not (empty? changed)
+          (do
+            (empty-dir! todir)
+            (println (count changed) " changed files." "Compiling Less...")
+            (boot.util/dosh "lessc" (.getPath tmp-in) (.getPath tmp-out)
+                            "--clean-css" "--s1 --advanced --compatibility=ie8")
+            (reset! prev-less fileset))
+          (println "No Less files to compile..."))
         (-> fileset
             (add-resource todir)
             commit!)))))
+
+(deftask less-only
+  "Task for testing the less-js task"
+  []
+  (comp
+   (dev-env)
+   (watch :verbose true)
+   (less-js :input "site.less" :output "public/css/site.css")))
 
 (deftask check-code
   "Check the code using boot-check"
@@ -141,8 +158,8 @@
    (system :sys #'server-system :auto true)
    (reload :on-jsload 'beer-game.core/mount-root)
    (repl :server true)
-   (cljs :source-map true :optimizations :none)
    (less-js :input "site.less" :output "public/css/site.css")
+   (cljs :source-map true :optimizations :none)
    (notify :visual true
            :audible false)))
 
