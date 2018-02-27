@@ -134,7 +134,11 @@
                :content "Der Spielleiter wird das Spiel bald starten."}
     #:message {:icon "info circle"
                :title "Spiel ist vorbei."
-               :content "Der Spielleiter wird gleich weitere Instruktionen geben."}))
+               :content [:p
+                         "Der Spielleiter wird gleich weitere Instruktionen geben. "
+                         [:br]
+                         "Du kannst währenddessen zum Beispiel deine "
+                         [:a {:href "#statistics"} "Statistiken"] " ansehen."]}))
 
 (defn game-update-failed
   "A message telling the user that a game-update (round-commit) has failed."
