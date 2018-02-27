@@ -89,6 +89,22 @@
      (update coll event-id assoc user-id user-data))
    {} user-map))
 
+(defn apply-transformations
+  "Takes a map `data` and a map `transforms` that maps from key to a transformative function.
+  For every item in the original map, tries to transform it using the
+  function associated with the same key in the `transforms`-map. If
+  there is no such key, assumes `default-transform`, which itselfs
+  defaults to `identity`."
+  ([data transforms] (apply-transformations data transforms identity))
+  ([data transforms default-transform]
+   (reduce
+    (fn [coll [k v]]
+      (if-let [trafo (get transforms k)]
+        (assoc coll k (trafo v))
+        (assoc coll k (default-transform v))))
+    {}
+    data)))
+
 (defn filter-round-data
   "Takes a vector of round-data and returns a vector of round-data
   where the data for reach round only contains the information

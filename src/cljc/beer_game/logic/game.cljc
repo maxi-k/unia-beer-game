@@ -1,5 +1,6 @@
 (ns beer-game.logic.game
   (:require [clojure.spec.alpha :as spec]
+            [beer-game.util :as util]
             [beer-game.spec.game :as game-spec]
             [beer-game.config :as config]))
 
@@ -258,12 +259,23 @@
       vec
       (assoc 0 (init-game-round settings))))
 
+(defn transform-game-settings
+  "Transforms the game settings, trying to make it adhere to the
+  spec (like transforming strings to integers)."
+
+  [settings]
+  (let [to-int #?(:clj #(Integer. %)
+                  :cljs js/parseInt)
+        transform-map {}]
+    (util/apply-transformations settings transform-map to-int)))
+
 (defn init-game-data
   "Initializes a game-data map or ensures
   complete game-data for the given partial data-map."
   ([] (init-game-data {}))
   ([{:as data :keys [:game/settings]}]
    (cond-> data
+     true (update :game/settings transform-game-settings)
      true (update :game/settings #(merge config/default-game-settings %))
      (nil? (:game/current-round data)) (assoc :game/current-round 0)
      (empty? (:game/rounds data)) (#(assoc % :game/rounds
