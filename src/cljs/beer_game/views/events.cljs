@@ -229,7 +229,7 @@
   []
   (let [theme (rf/subscribe [:client/theme])
         inverted (= :dark @theme)]
-    [sa/Segment {:text true :inverted inverted}
+    [sa/Segment {:inverted inverted}
      [:h3 "Eventübersicht"]
      [:p
       "Hier können neue Events erstellt werden.

@@ -244,7 +244,7 @@
    (fn [coll item]
      (assoc coll item (init-round-role settings item)))
    {}
-   config/supply-chain))
+   (or (:game/supply-chain settings) config/supply-chain)))
 
 (defn init-game-round
   "Initializes the map for one game round."

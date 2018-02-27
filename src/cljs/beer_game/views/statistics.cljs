@@ -1,6 +1,31 @@
 (ns beer-game.views.statistics
   (:require [reagent.core :as ra]
-            [cljsjs.plotly]))
+            [cljsjs.plotly]
+            [re-frame.core :as rf]
+            [reagent.core :as ra]
+            [beer-game.config :as config]
+            [beer-game.util :as util]
+            [beer-game.components.event-selector :as event-selector]
+            [beer-game.components.messages :as msgs]
+            [soda-ash.core :as sa]))
+
+(defn inverse-round-data
+  "'Inverses' round-data by turning a vector of round data where each
+  item contains information on each role for that round into a map
+  which roles as keys and values as a vector of round information for
+  that role."
+  [rounds]
+  (reduce
+   (fn [coll round]
+     (if-let [roles (:game/roles round)]
+       (reduce
+        (fn [coll [role role-data]]
+          (update-in coll [role] (fnil conj []) role-data))
+        coll
+        roles)
+       coll))
+   {}
+   rounds))
 
 (def default-plot-options
   {:displaylogo false})
@@ -25,7 +50,7 @@
   "Creates a react component given a function `plot-fn`
   that can draw a plot given a dom node. Takes a display-name
   for the created component as a optional first argument."
-  ([plot-fn] (make-plot-component "automad-plot-component" plot-fn ))
+  ([plot-fn] (make-plot-component "automade-plot-component" plot-fn ))
   ([display-name plot-fn]
    (let [ref (atom nil)
          wrapped-plot-fn #(plot-fn @ref)]
@@ -37,24 +62,109 @@
        (fn []
          [:div {:ref (fn [com] (reset! ref com))}])}))))
 
+(defn per-round-plot! [x-data y-datas accessor layout]
+  (fn [ref]
+    (draw-plot! ref
+                (map
+                 (fn [[role rounds]]
+                   {:x x-data
+                    :y (map accessor rounds)
+                    :name (config/user-role->title role)
+                    :margin {:t 0}
+                    :line {:color (config/user-role->color role)}})
+                 y-datas)
+                layout
+                )))
 
-(defn example-plot! [ref]
-  (draw-plot! ref
-              [{:x [1 2 3 4 5]
-                :y [1 2 4 8 16]
-                :margin {:t 0}}]))
+(defn stock-statistic [rounds round-data]
+  (let [plot (make-plot-component
+              "stock"
+              (per-round-plot! rounds round-data :round/stock
+                               {:title "Gesamter Lagerbestand"
+                                :xaxis {:title "Rundenzahl"}
+                                :yaxis {:title "Lagerbestand in Stück"}}))]
+    [:div
+     [:h2 "Lagerbestand"]
+     [plot]]))
 
+(defn cost-per-round-statistic [rounds round-data]
+  (let [plot (make-plot-component
+              "cost-per-round"
+              (per-round-plot! rounds round-data :round/cost
+                               {:title "Kosten pro Runde"
+                                :xaxis {:title "Rundenzahl"}
+                                :yaxis {:title "Kosten in Geldeinheiten"}}))]
+    [:div
+     [:h2 "Kosten pro Runde"]
+     [plot]]))
 
-(defn example-statistic []
-  (let [plot (make-plot-component "example-statistic" example-plot!)]
-    (fn []
+(defn incoming-statistic [rounds round-data]
+  (let [plot (make-plot-component
+              "incoming-per-round"
+              (per-round-plot! rounds round-data :round/incoming
+                               {:title "Wareneingang"
+                                :xaxis {:title "Rundenzahl"}
+                                :yaxis {:title "Wareneingang in Stück"}}))]
+    [:div
+     [:h2 "Wareneingang"]
+     [plot]]))
+
+(defn demand-statistic [rounds round-data]
+  (let [plot (make-plot-component
+              "outgoing-per-round"
+              (per-round-plot! rounds round-data :round/demand
+                               {:title "Anfragen"
+                                :xaxis {:title "Rundenzahl"}
+                                :yaxis {:title "Anfrage in Stück"}}))]
+    [:div
+     [:h2 "Anfragen"]
+     [plot]]))
+
+(defn debt-per-round-statistic [rounds round-data]
+  (let [plot (make-plot-component
+              "debt-per-round"
+              (per-round-plot! rounds round-data :round/debt
+                               {:title "Ausstehende Einheiten"
+                                :xaxis {:title "Rundenzahl"}
+                                :yaxis {:title "Ausstehend in Stück"}}))]
+    [:div
+     [:h2 "Ausstehend"]
+     [plot]]))
+
+(defn statistics [event-data]
+  (cond
+    (nil? event-data)
+    [msgs/render-message (msgs/no-such-event)]
+    ;; -----
+    (not (:event/started? event-data))
+    [msgs/render-message (msgs/game-not-yet-started)]
+    ;; ------
+    :else
+    (let [game-data (:game/data event-data)
+          cur-round (inc (get game-data :game/current-round))
+          rounds (range 1 cur-round)
+          round-data (inverse-round-data (take cur-round (get game-data :game/rounds)))]
       [:div
-       [:h2 "Cool Plot: "]
-       [plot]])))
-
+       [stock-statistic rounds round-data]
+       [cost-per-round-statistic rounds round-data]
+       [debt-per-round-statistic rounds round-data]
+       [incoming-statistic rounds round-data]
+       [demand-statistic rounds round-data]
+       ])))
 
 (defn statistics-panel []
-  (fn []
-    [:section
-     [:h1 "Statistiken"]
-     [example-statistic]]))
+  (let [user (rf/subscribe [:user])
+        events (rf/subscribe [:events])
+        single-event? (util/single-event? (:event/id @user))
+        selected-event (if single-event?
+                         (ra/cursor user [:event/id])
+                         (rf/subscribe [:selected-event]))]
+    (fn []
+      [:section
+       [:h1 "Statistiken"]
+       [event-selector/connected-event-selector]
+       [sa/Divider]
+       (if (nil? @selected-event)
+         [msgs/select-event-msg]
+         (let [event (get @events @selected-event)]
+           [statistics event]))])))

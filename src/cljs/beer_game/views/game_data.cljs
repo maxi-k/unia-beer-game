@@ -3,6 +3,7 @@
             [re-frame.core :as rf]
             [soda-ash.core :as sa]
             [beer-game.components.messages :as msgs]
+            [beer-game.components.event-selector :as selector]
             [beer-game.config :as config]
             [beer-game.util :as util]))
 
@@ -65,33 +66,21 @@
                       :size "large"}]]))
         (doall))])))
 
-(defn event-selector
-  [value on-change events]
-  (let [options (map
-                 (fn [[k {:keys [:event/id :event/name]}]]
-                   {:key id :text (str id " - " name) :value id})
-                 events)]
-    [sa/FormSelect {:options options
-                    :value value
-                    :placeholder "Event auswählen"
-                    :on-change (fn [e val]
-                                 (on-change
-                                  (:value (js->clj val
-                                                   :keywordize-keys true))))}]))
-
 
 (defn game-data-panel
   []
   (let [events (rf/subscribe [:events])
         user (rf/subscribe [:user])
         single-event? (util/single-event? (:event/id @user))
-        selected-event (if single-event? (:event/id @user) (rf/subscribe [:selected-event]))
+        selected-event (if single-event?
+                         (ra/cursor user [:event/id])
+                         (rf/subscribe [:selected-event]))
         select-on-change (if single-event? identity #(rf/dispatch [:event/select %]))]
     (fn []
       [:div
        [:h2 "Spieldetails"]
        (when-not single-event?
-         [event-selector @selected-event select-on-change @events])
+         [selector/event-selector @selected-event select-on-change @events])
        [sa/Divider]
        (if (nil? @selected-event)
          [msgs/select-event-msg]

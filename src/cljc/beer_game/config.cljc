@@ -36,14 +36,19 @@
    :realms #:realm{:player {:title "Mitspieler"}
                    :leader {:title "Spielleiter"}}
    :user-roles #:role{:brewery {:title "Brauerei"
+                                :color "#FFB200"
                                 :icon "brewery"}
                       :distributor {:title "Distributor"
+                                    :color "#008EFF"
                                     :icon "distribution"}
                       :big-market {:title "Großhandel"
+                                   :color "#2A9300"
                                    :icon "big-market"}
                       :small-market {:title "Kleinhandel"
+                                     :color "#B900FF"
                                      :icon "small-market"}
                       :customer {:title "Kunde"
+                                 :color "#4A4A4A"
                                  :icon ["customer-male" "customer-female"]
                                  :except #{:realm/player}}}
    :supply-chain [:role/brewery :role/distributor
@@ -118,6 +123,11 @@
   "Returns the title of given user Role."
   [user-role]
   (get-in user-roles [user-role :title]))
+
+(defn user-role->color
+  "Returns the hex color value associated with given user-role"
+  [user-role]
+  (get-in user-roles [user-role :color]))
 
 #?(:clj
    ;; Server Side Configuration
