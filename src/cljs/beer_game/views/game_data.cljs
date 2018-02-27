@@ -66,17 +66,18 @@
         (doall))])))
 
 (defn event-selector
-  [data-atom events]
+  [value on-change events]
   (let [options (map
                  (fn [[k {:keys [:event/id :event/name]}]]
                    {:key id :text (str id " - " name) :value id})
                  events)]
     [sa/FormSelect {:options options
+                    :value value
                     :placeholder "Event auswählen"
                     :on-change (fn [e val]
-                                 (reset! data-atom
-                                         (:value (js->clj val
-                                                          :keywordize-keys true))))}]))
+                                 (on-change
+                                  (:value (js->clj val
+                                                   :keywordize-keys true))))}]))
 
 
 (defn game-data-panel
@@ -84,19 +85,17 @@
   (let [events (rf/subscribe [:events])
         user (rf/subscribe [:user])
         single-event? (util/single-event? (:event/id @user))
-        event-cursor (if single-event?
-                       (ra/atom (:event/id @user))
-                       (ra/wrap @(rf/subscribe [:selected-event])
-                                #(rf/dispatch [:event/select %])))]
+        selected-event (if single-event? (:event/id @user) (rf/subscribe [:selected-event]))
+        select-on-change (if single-event? identity #(rf/dispatch [:event/select %]))]
     (fn []
       [:div
        [:h2 "Spieldetails"]
        (when-not single-event?
-         [event-selector event-cursor @events])
+         [event-selector @selected-event select-on-change @events])
        [sa/Divider]
-       (if (nil? @event-cursor)
+       (if (nil? @selected-event)
          [msgs/select-event-msg]
-         (let [event (get @events @event-cursor)]
+         (let [event (get @events @selected-event)]
            [game-data-table event
             (if (= config/leader-realm (:user/realm @user))
               (get-in event [:game/data :game/settings :game/supply-chain])

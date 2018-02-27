@@ -119,6 +119,11 @@
         "Gestartet" (if (:event/started? event-data) "Ja" "Nein")
         "Rundenzahl" (get-in event-data [:game/data :game/settings :round-amount])
         "Spieler" [event-role-list {:bulleted false} (:user/list event-data)]}]
+      [sa/Button {:href "#game-data"
+                  :on-click (fn []
+                              (reset! modal-state false)
+                              (rf/dispatch [:event/select (:event/id event-data)]))}
+       "Spieldaten anzeigen"]
       [sa/Button {:on-click #(reset! modal-state false)
                   :floated :right}
        "Schließen"]
@@ -164,6 +169,11 @@
         [show-event-modal
          [sa/Button {} "Anzeigen"]
          event]
+        (if (:event/started? event)
+          [sa/Button {:href "#game-data"
+                      :on-click (fn []
+                                  (rf/dispatch [:event/select (:event/id event)]))}
+           "Spieldaten"])
         [sa/Button {:negative true
                     :on-click #(swap! modal-state assoc :delete true)}
          "Löschen"]
