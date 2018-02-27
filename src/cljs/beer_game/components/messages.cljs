@@ -155,7 +155,7 @@
     :else
     #:message {:icon "exclamation triangle"
                :title "Spielupdate gescheitert."
-               :content [:p "Das Spielupdate konnte nicht durchgeführt werden."
+               :content [:p "Das Spielupdate konnte nicht durchgeführt werden. "
                          "Technische Daten:"
                          [:br]
                          (string/join (take 500 (str reason)))]}))

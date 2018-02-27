@@ -19,7 +19,8 @@
   [role]
   [:div {:class-name "game-data--user-role-title"}
    [:img {:src (config/user-role->image role)}]
-   [:span (config/user-role->title role)]])
+   [:span (config/user-role->title role)]
+   [:div {:class-name "clearfloat"}]])
 
 (defn game-data-table
   [event-data role-list]
@@ -38,10 +39,10 @@
        (->>
         (for [role role-list]
           [sa/Segment {:key role}
-           [sa/Table {:definition true}
+           [sa/Table {:definition true :compact true}
             [sa/TableHeader
              [sa/TableRow
-              [sa/TableHeaderCell
+              [sa/TableHeaderCell {:width 5}
                [user-role-title role]]
               (for [[key title] game-data-columns]
                 [sa/TableHeaderCell {:key key}
