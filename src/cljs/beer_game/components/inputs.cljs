@@ -12,7 +12,7 @@
          on-change identity
          transform identity
          invalid-msg "Keine gültige Eingabe."
-         as sa/FormInput}}]
+         as sa/Input}}]
   (let [field-state (ra/atom {:problems nil
                               :value ((:value-fn options))})
         get-value (fn []
@@ -28,11 +28,15 @@
                       (on-change e v)
                       (apply-spec! svalue)
                       (swap! field-state assoc :value svalue)))
-        opts (dissoc options :spec :as :invalid-msg :label :transform)
+        opts (dissoc options :spec :as :invalid-msg :label :transform :suffix)
         field-options (dissoc opts :on-change :value :value-fn :placeholder)
         input-options (-> opts
                           (select-keys [:placeholder :value-fn :class-name])
-                          (assoc :on-change change-fn))]
+                          (assoc :on-change change-fn)
+                          (assoc :label-position (if (:suffix options) :right nil))
+                          (assoc :label (if (:suffix options)
+                                          {:basic true :content (:suffix options)}
+                                          nil)))]
     {:key (or (:key options) (str (random-uuid)))
      :field-state field-state
      :as as

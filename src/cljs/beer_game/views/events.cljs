@@ -54,6 +54,7 @@
                         :on-change #(update-form [:game/data :game/settings :round-amount] %2)}
                        {:key :user-demands
                         :label "Kundennachfrage"
+                        :suffix "Stück pro Runde"
                         :placeholder "Nachfrage des Kunden."
                         :spec ::game-spec/user-demands
                         :transform js/parseInt
@@ -62,6 +63,7 @@
                         :on-change #(update-form [:game/data :game/settings :user-demands] %2)}
                        {:key :initial-stock
                         :label "Anfänglicher Lagerbestand"
+                        :suffix "Stück"
                         :placeholder "Anfänglicher Lagerbestand"
                         :spec ::game-spec/initial-stock
                         :transform js/parseInt
@@ -70,6 +72,7 @@
                         :on-change #(update-form [:game/data :game/settings :initial-stock] %2)}
                        {:key :stock-cost-factor
                         :label "Kosten pro Runde für Einheiten im Lager."
+                        :suffix "Geldeinheiten pro Runde"
                         :placeholder "Kosten pro Item im Lager."
                         :spec ::game-spec/stock-cost-factor
                         :transform js/parseInt
@@ -78,6 +81,7 @@
                         :on-change #(update-form [:game/data :game/settings :stock-cost-factor] %2)}
                        {:key :debt-cost-factor
                         :label "Kosten pro Runde für ausstehende Lieferungen."
+                        :suffix "Geldeinheiten pro Runde"
                         :placeholder "Kosten pro ausstehendes Item."
                         :spec ::game-spec/debt-cost-factor
                         :transform js/parseInt
