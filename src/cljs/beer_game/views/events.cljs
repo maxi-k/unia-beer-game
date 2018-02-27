@@ -221,6 +221,16 @@
              [event-role-list user-list]]]
            [sa/TableCell [event-actions event]]])]])))
 
+(defn event-explanation
+  []
+  [sa/Segment {:text true}
+   [:h3 "Eventübersicht"]
+   [:p
+    "Hier können neue Events erstellt werden.
+Spieler können diesen mit der zugewiesenen Event-ID beitreten, wobei sie eine Rolle auswählen müssen.
+Die Rolle des Kunden ist automatisiert - die Nachfrage wird vom Server gesteuert. Sobald die Rolle der Brauerei belegt ist, die Supply-Chain also einen Anfang hat, erscheint hier eine Option zum Starten des Events.
+"]])
+
 (defn events-panel
   "Renders the panel for the events view."
   []
@@ -232,4 +242,5 @@
       (fn []
         [:div
          [event-menu]
+         [event-explanation]
          [event-list]])})))
