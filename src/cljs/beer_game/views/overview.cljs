@@ -110,7 +110,7 @@
   "The part of the view that represents the mailbox of the current player."
   [round-data]
   [game-area {} :mail
-   "Nachrichten"
+   "Angefragt"
    [:div.message-data
     "Angefragt:"
     [:br]
@@ -146,7 +146,7 @@
   for the rounds given. "
   [rounds user-role]
   [game-area {} :cost
-   "Kosten"
+   "Gesamtkosten"
    [:div.message-data
     [:span.main-value
      (game-logic/overall-cost rounds user-role)]
@@ -205,7 +205,7 @@
   from react-key -> value."
   [icon-name description options children]
   [sa/GridRow (merge {:as (cutil/semantic-to-react sa/Segment)
-                      :class-name ""}
+                      :class-name "info-group"}
                      options)
    [info-group-icon icon-name description]
    (for [[key elem] children]
@@ -237,7 +237,7 @@
   "An infobox for the supply-chain element given by the user-role."
   [{:as options
     :keys [width user-role title]
-    :or {width 2}}]
+    :or {width 3}}]
   [sa/GridColumn {:width width}
    [game-area {} nil ;; No background icon
     (or title (config/user-role->title user-role))
@@ -267,18 +267,18 @@
   [{:as options
     :keys [direction]}
    content]
-  (let [corner-position (if (= (keyword direction) :down)
-                          "top right"
-                          "bottom right")]
-    [:div (merge {:class-name (str "cost-multiplier-arrow "
-                                   (:class-name options))}
-                 (dissoc options :direction :class-name))
-     [sa/IconGroup {:size "big"}
-      [sa/Icon {:name (str "arrow " (name direction))}]
-      [sa/Icon {:class-name corner-position
-                :corner true
-                :name "x"}
-       [:span.multiplier-string content]]]]))
+  (let [wrapper-opts (merge {:class-name (str "cost-multiplier-arrow "
+                                              (:class-name options))}
+                            (dissoc options :direction :class-name))
+        icon [sa/Icon {:name (str "arrow " (name direction))
+                       :class-name "arrow-icon"
+                       :size "huge"}]
+        string [:p.multiplier-string
+                [sa/Icon {:name "x" :fitted true :size "large"}]
+                content " Geldeinheiten/Stück"]]
+    (if (= (keyword direction) :down)
+      [:div wrapper-opts string icon]
+      [:div wrapper-opts icon string])))
 
 (defn round-view
   "Renders the game view for the current round."
@@ -304,12 +304,12 @@
       [supply-chain-column-box {:user-role (or supplier user-role)
                                 :title (when (= user-role (first supply-chain))
                                          "Produktion")}]
-      [sa/GridColumn {:width 3}]
+      [sa/GridColumn {:width 2}]
       [sa/GridColumn {:width 6}
        [cost-multiplier-arrow {:direction :down} debt-cost-factor]
        [cost (take cur-round rounds) user-role]
        [cost-multiplier-arrow {:direction :up} stock-cost-factor]]
-      [sa/GridColumn {:width 3}]
+      [sa/GridColumn {:width 2}]
       [supply-chain-column-box {:user-role (or customer user-role)
                                 :title (when (= user-role (last supply-chain))
                                          "Konsum")}]]
