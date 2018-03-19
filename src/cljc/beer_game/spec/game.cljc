@@ -47,19 +47,40 @@
   #_(s/or :constant ::demand
           :changing (s/coll-of ::demand)))
 (s/def :game/supply-chain
-  (s/coll-of :user/role))
+  (s/coll-of :user/role
+             :distinct true
+             :min-count 2
+             :into []))
+
 (s/def :game/settings
   (s/keys :req-un [::round-amount ::user-demands ::initial-stock
                    ::stock-cost-factor ::debt-cost-factor]
-          :opt [:game/supply-chain]))
+          :req [:game/supply-chain]))
 
 (s/def :game/round
-  (s/keys :opt [:game/roles]))
+  (s/keys :req [:game/roles]))
 
 (s/def ::game-round-bound
-  (s/or :round-zero #(zero? (:game/current-round %))
-        :round-in-bounds #(< (:game/current-round %)
-                             (count (:game/rounds %)))))
+  #(or (zero? (:game/current-round %))
+       (< (:game/current-round %)
+          (count (:game/rounds %)))))
+
+(s/def ::game-round-amount-bound
+  (fn [data]
+    (< (count (:game/rounds data))
+       (inc (get-in data [:game/settings :round-amount])))))
+
+(s/def ::game-rounds-supply-chain-bound
+  (fn [data]
+    (let [supply-chain (set (get-in data [:game/settings :game/supply-chain]
+                                    config/supply-chain))]
+      (every?
+       (fn [round]
+         (every?
+          (fn [role]
+            (contains? supply-chain role))
+          (keys (get round :game/roles {}))))
+       (:game/rounds data)))))
 
 (s/def :game/rounds (s/coll-of :game/round))
 (s/def :game/current-round nat-int?)
@@ -67,7 +88,8 @@
   (s/and
    (s/keys :req [:game/settings :game/rounds :game/current-round])
    ::game-round-bound
-   ))
+   ::game-round-amount-bound
+   ::game-rounds-supply-chain-bound))
 
 (s/def :game/round-commit
   (s/keys :req [:round/order :user/role]

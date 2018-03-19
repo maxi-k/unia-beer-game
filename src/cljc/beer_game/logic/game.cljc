@@ -4,6 +4,11 @@
             [beer-game.spec.game :as game-spec]
             [beer-game.config :as config]))
 
+(defn get-in0
+  "Like get-in but with 0 for a not found value"
+  [coll ks]
+  (get-in coll ks 0))
+
 (defn roles-around
   "Returns the roles before and after the passed role in the supply chain."
   [role supply-chain]
@@ -142,9 +147,10 @@
     user-role :user/role}]
   (let [update-map {:game/data cur-game-data
                     :update/diff {}
-                    :update/valid? true}]
+                    :update/valid? true}
+        supply-chain (set (get settings :game/supply-chain config/supply-chain))]
     (cond
-      (not (contains? (set (:game/supply-chain settings)) user-role))
+      (not (contains? supply-chain user-role))
       (assoc update-map
              :update/valid? false
              :update/reason {:game/supply-chain (:game/supply-chain settings)
@@ -188,12 +194,13 @@
     user-role :user/role}]
   (let [update-map {:game/data cur-game-data
                     :update/diff {}
-                    :update/valid? true}]
+                    :update/valid? true}
+        supply-chain (set (get settings :game/supply-chain config/supply-chain))]
     (cond
-      (not (contains? (set (:game/supply-chain settings)) user-role))
+      (not (contains? supply-chain user-role))
       (assoc update-map
              :update/valid? false
-             :update/reason {:game/supply-chain (:game/supply-chain settings)
+             :update/reason {:game/supply-chain supply-chain
                              :user/role user-role})
       ;; -----
       (>= cur-round (count cur-rounds))
@@ -264,9 +271,9 @@
   spec (like transforming strings to integers)."
 
   [settings]
-  (let [to-int #?(:clj #(Integer. %)
-                  :cljs js/parseInt)
-        transform-map {}]
+  (let [to-int #?(:clj #(if (nil? %) 0 (Integer. %))
+                  :cljs #(if (nil? %) 0 js/parseInt))
+        transform-map {:game/supply-chain identity}]
     (util/apply-transformations settings transform-map to-int)))
 
 (defn init-game-data
