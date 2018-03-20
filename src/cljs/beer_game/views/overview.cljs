@@ -80,13 +80,13 @@
   for the current-player for the previous round."
   [round-data cur-round]
   (let [acks (rf/subscribe [:game/acknowledgements])]
-    (fn [{:as round-data :keys [:round/demand :round/stock]}
+    (fn [{:as round-data :keys [:round/outgoing]}
         cur-round]
       [game-area {} :outgoing
        "Warenausgang"
        [:div.message-data
         [:span.main-value
-         (min demand stock)]
+         (or outgoing 0)]
         [unit-text "Einheiten"]
         [sa/Button
          {:disabled (get @acks cur-round)

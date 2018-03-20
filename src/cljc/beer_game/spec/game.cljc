@@ -18,6 +18,8 @@
 ;; The items that were incoming for the given player
 ;; in a round
 (s/def :round/incoming nat-int?)
+;; The items that a given player can deliver
+(s/def :round/outgoing nat-int?)
 ;; Indicates whether a piece of round-data has been
 ;; commited by the player
 (s/def :round/commited? boolean?)
@@ -29,8 +31,8 @@
 
 (s/def ::role-data
   (s/keys :opt [:round/stock :round/cost
-                :round/demand :round/incoming
-                :round/debt
+                :round/demand :round/debt
+                :round/incoming :round/outgoing
                 :round/commited? :round/ready?]))
 (s/def :user/role config/allowed-user-roles)
 (s/def :game/roles
@@ -58,7 +60,7 @@
           :req [:game/supply-chain]))
 
 (s/def :game/round
-  (s/keys :req [:game/roles]))
+  (s/keys :opt [:game/roles]))
 
 (s/def ::game-round-bound
   #(or (zero? (:game/current-round %))
@@ -89,7 +91,8 @@
    (s/keys :req [:game/settings :game/rounds :game/current-round])
    ::game-round-bound
    ::game-round-amount-bound
-   ::game-rounds-supply-chain-bound))
+   ;; ::game-rounds-supply-chain-bound
+   ))
 
 (s/def :game/round-commit
   (s/keys :req [:round/order :user/role]

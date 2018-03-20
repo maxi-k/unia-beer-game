@@ -59,6 +59,14 @@
       rounds
       (update-in rounds [next-round :game/roles] updater))))
 
+(defn calc-deliverable
+  "Calculates how much a the given unit can deliver,
+  and if possible, how much of its debt it can pay off."
+  [round-roles role]
+  (min (get-in0 round-roles [role :round/stock])
+       (+ (get-in0 round-roles [role :round/demand])
+          (get-in0 round-roles [role :round/debt]))))
+
 (defn apply-round-update
   "Applies a commit to the game rounds vector."
   [rounds cur-round {:as settings :keys [:game/supply-chain
@@ -71,31 +79,32 @@
         new-order (or order 0)
         ;; --- first role in supply chain
         ;; --- just gets its order fulfilled
+        outgoing (calc-deliverable old-data role)
         new-incoming (if (nil? pre)
                        new-order
-                       (min (get-in0 old-data [pre :round/stock])
-                            (+ (get-in0 old-data [pre :round/demand])
-                               (get-in0 old-data [pre :round/debt]))))
-        new-stock (+ (get-in0 old-data [role :round/stock])
-                     new-incoming)
-        new-debt (+ (get-in0 old-data [role :round/debt])
-                    (- (get-in0 old-data [role :round/demand])
-                       (get-in0 old-data [role :round/stock])))
+                       (calc-deliverable old-data pre))
+        new-stock (- (+ (get-in0 old-data [role :round/stock])
+                        new-incoming)
+                     outgoing)
         new-demand (if (nil? post)
                      0
                      (get-in0 old-data [post :round/order]))
+        new-debt (max 0
+                      (- (get-in0 old-data [role :round/debt])
+                         (- outgoing (get-in0 old-data [role :round/demand]))))
         new-cost (+ (* stock-cost-factor new-stock)
                     (* debt-cost-factor new-debt))]
     (cond-> rounds
       true (assoc-in [cur-round :game/roles role :round/commited?] true)
       ;; Place the order on the previous supply-chain-member
-      (and (not last-round?)
-           (some? pre))
-      (assoc-in [next-round :game/roles pre :round/order] new-order)
+      ;; (and (not last-round?)
+      ;;      (some? pre))
+      ;; (assoc-in [next-round :game/roles pre :round/order] new-order)
       ;; Update the values for the role which placed the order
       (not last-round?)
       (update-in [next-round :game/roles role] merge
                  #:round{:incoming new-incoming
+                         :outgoing outgoing
                          :demand new-demand
                          :order new-order
                          :debt new-debt
