@@ -31,7 +31,7 @@
           (let [supply-chain (get settings :game/supply-chain config/supply-chain)
                 role-key (:user/role commit-data)
                 old-data (get-in game-data [:game/rounds old-round :game/roles])
-                new-data (get-in res [:game/rounds new-round :game/roles])
+                new-data (get-in res [:game/rounds (inc old-round) :game/roles])
                 [pre-role post-role] (roles-around role-key supply-chain)
                 ;; Expected calculated according to mathematical formulas
                 ;; -> see external documentation
@@ -45,16 +45,21 @@
                 expected-debt (+ (get-in0 old-data [role-key :round/debt])
                                  (- (get-in0 old-data [role-key :round/demand])
                                     (get-in0 old-data [role-key :round/stock])))
-                expected {:round/demand (get-in0 old-data [post-role :round/order])
-                          :round/order (get commit-data :round/order 0)
-                          :round/debt expected-debt
-                          :round/stock expected-stock
-                          :round/cost (+ (* (get settings :stock-cost-factor 0)
-                                            expected-stock)
-                                         (* (get settings :debt-cost-factor 0)
-                                            expected-debt))}]
-            (when (< new-round (count (get game-data :game/rounds)))
+                expected-order (get commit-data :round/order 0)
+                expected #:round{:demand (get-in0 old-data [post-role :round/order])
+                                 :debt expected-debt
+                                 :stock expected-stock
+                                 :cost (+ (* (get settings :stock-cost-factor 0)
+                                             expected-stock)
+                                          (* (get settings :debt-cost-factor 0)
+                                             expected-debt))}]
+            (when (< (inc old-round) (count (get game-data :game/rounds)))
               (testing (str "Round data spec for role " role-key)
                 (is (=
-                     (select-keys (get new-data role-key) (keys expected))
-                     expected))))))))))
+                     (select-keys (get new-data role-key)
+                                  (keys expected))
+                     expected)))
+              (when (some? pre-role)
+                (testing (str "Round data spec for supplier " pre-role)
+                  (is (= (get-in new-data [pre-role :round/order] 0)
+                         expected-order)))))))))))

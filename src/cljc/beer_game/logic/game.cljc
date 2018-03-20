@@ -76,7 +76,7 @@
                        (min (get-in0 old-data [pre :round/stock])
                             (+ (get-in0 old-data [pre :round/demand])
                                (get-in0 old-data [pre :round/debt]))))
-        new-stock (+ (get-in0 old-data [role :role/stock])
+        new-stock (+ (get-in0 old-data [role :round/stock])
                      new-incoming)
         new-debt (+ (get-in0 old-data [role :round/debt])
                     (- (get-in0 old-data [role :round/demand])
@@ -84,18 +84,23 @@
         new-demand (if (nil? post)
                      0
                      (get-in0 old-data [post :round/order]))
-        new-cost (+ (* stock-cost-factor (get-in0 old-data [role :round/stock]))
-                    (* debt-cost-factor  (get-in0 old-data [role :round/debt])))]
+        new-cost (+ (* stock-cost-factor new-stock)
+                    (* debt-cost-factor new-debt))]
     (cond-> rounds
       true (assoc-in [cur-round :game/roles role :round/commited?] true)
+      ;; Place the order on the previous supply-chain-member
+      (and (not last-round?)
+           (some? pre))
+      (assoc-in [next-round :game/roles pre :round/order] new-order)
+      ;; Update the values for the role which placed the order
       (not last-round?)
       (update-in [next-round :game/roles role] merge
-                 {:round/incoming new-incoming
-                  :round/demand new-demand
-                  :round/order new-order
-                  :round/debt new-debt
-                  :round/cost new-cost
-                  :round/stock new-stock}))))
+                 #:round{:incoming new-incoming
+                         :demand new-demand
+                         :order new-order
+                         :debt new-debt
+                         :cost new-cost
+                         :stock new-stock}))))
 
 (defn apply-user-ready
   "Applies an update to the given round that signals
