@@ -7,7 +7,7 @@
 (defn get-in0
   "Like get-in but with 0 for a not found value"
   [coll ks]
-  (get-in coll ks 0))
+  (or (get-in coll ks 0) 0))
 
 (defn roles-around
   "Returns the roles before and after the passed role in the supply chain."
@@ -67,31 +67,35 @@
   (let [[pre post] (roles-around role supply-chain)
         next-round (inc cur-round)
         last-round? (>= next-round (count rounds))
-        role-data (get-in rounds [cur-round :game/roles role])
-        post-data (get-in rounds [cur-round :game/roles post])
-        cost (+ (* stock-cost-factor (or (:round/stock role-data) 0))
-                (* debt-cost-factor  (or (:round/debt role-data) 0)))
-        to-deliver (calc-to-deliver role-data)
-        delivered (min to-deliver
-                       (or (:round/stock role-data) 0))]
+        old-data (get-in rounds [cur-round :game/roles])
+        new-order (or order 0)
+        ;; --- first role in supply chain
+        ;; --- just gets its order fulfilled
+        new-incoming (if (nil? pre)
+                       new-order
+                       (min (get-in0 old-data [pre :round/stock])
+                            (+ (get-in0 old-data [pre :round/demand])
+                               (get-in0 old-data [pre :round/debt]))))
+        new-stock (+ (get-in0 old-data [role :role/stock])
+                     new-incoming)
+        new-debt (+ (get-in0 old-data [role :round/debt])
+                    (- (get-in0 old-data [role :round/demand])
+                       (get-in0 old-data [role :round/stock])))
+        new-demand (if (nil? post)
+                     0
+                     (get-in0 old-data [post :round/order]))
+        new-cost (+ (* stock-cost-factor (get-in0 old-data [role :round/stock]))
+                    (* debt-cost-factor  (get-in0 old-data [role :round/debt])))]
     (cond-> rounds
       true (assoc-in [cur-round :game/roles role :round/commited?] true)
-      true (assoc-in [cur-round :game/roles role :round/cost] cost)
-      ;; --- add the delivered to the next in the supply chain
-      ;; -- in the next round
-      (and (some? post)
-           (not last-round?))
-      (assoc-in [next-round :game/roles post :round/incoming] delivered)
-      ;; --- first role in supply chain
-      (and (nil? pre)
-           (not last-round?))
-      (assoc-in [next-round :game/roles role :round/incoming] order)
-      ;; --- if not first role in the supply chain
-      ;; -- place the order from the commit as demand on the previous element
-      (and (some? pre)
-           (not last-round?))
-      ;; place the own order
-      (assoc-in [next-round :game/roles pre :round/demand] order))))
+      (not last-round?)
+      (update-in [next-round :game/roles role] merge
+                 {:round/incoming new-incoming
+                  :round/demand new-demand
+                  :round/order new-order
+                  :round/debt new-debt
+                  :round/cost new-cost
+                  :round/stock new-stock}))))
 
 (defn apply-user-ready
   "Applies an update to the given round that signals
@@ -129,8 +133,8 @@
                    {:user/role :role/customer
                     :round/order (:user-demands settings)})
         ;; Update the stock of every role at the end
-        (update-in [:game/data :game/rounds]
-                   update-stocks cur-round settings)
+        #_(update-in [:game/data :game/rounds]
+                     update-stocks cur-round settings)
         (update-in [:game/data :game/current-round] inc)
         (#(assoc-in % [:update/diff :game/current-round]
                     (get-in % [:game/data :game/current-round]))))
