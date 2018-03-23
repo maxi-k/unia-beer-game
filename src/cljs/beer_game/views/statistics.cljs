@@ -1,10 +1,10 @@
 (ns beer-game.views.statistics
   (:require [reagent.core :as ra]
-            [cljsjs.plotly]
             [re-frame.core :as rf]
             [reagent.core :as ra]
             [beer-game.config :as config]
             [beer-game.util :as util]
+            [beer-game.components.plot :refer [draw-plot! make-plot-component]]
             [beer-game.components.event-selector :as event-selector]
             [beer-game.components.messages :as msgs]
             [soda-ash.core :as sa]))
@@ -26,41 +26,6 @@
        coll))
    {}
    rounds))
-
-(def default-plot-options
-  {:displaylogo false})
-
-(defn draw-plot!
-  "Draws a Plotly plot inside the element `ref`,
-  with the given data `data`. `layout` options can be
-  given optionally as a third argument."
-  ([ref data]
-   (draw-plot! ref data {}))
-  ([ref data layout]
-   (.plot js/Plotly
-          ref
-          ;; Data
-          (clj->js data)
-          ;; Layout Options
-          (clj->js layout)
-          ;; Plot Options
-          (clj->js default-plot-options))))
-
-(defn make-plot-component
-  "Creates a react component given a function `plot-fn`
-  that can draw a plot given a dom node. Takes a display-name
-  for the created component as a optional first argument."
-  ([plot-fn] (make-plot-component "automade-plot-component" plot-fn ))
-  ([display-name plot-fn]
-   (let [ref (atom nil)
-         wrapped-plot-fn #(plot-fn @ref)]
-     (ra/create-class
-      {:display-name display-name
-       :component-did-update wrapped-plot-fn
-       :component-did-mount wrapped-plot-fn
-       :reagent-render
-       (fn []
-         [:div {:ref (fn [com] (reset! ref com))}])}))))
 
 (defn per-round-plot! [x-data y-datas accessor layout]
   (fn [ref]

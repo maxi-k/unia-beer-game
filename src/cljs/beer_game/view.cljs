@@ -13,6 +13,7 @@
             [beer-game.views.login :as login]
             [beer-game.views.imprint :as imprint]
             [beer-game.views.game-data :as game-data-view]
+            [beer-game.views.devcards :as devcards]
             [re-frame.core :as rf]
             [reagent.core :as ra]))
 
@@ -31,7 +32,11 @@
          :imprint-panel {:title "Impressum"
                          :path "#imprint"
                          :icon "law"
-                         :comp imprint/imprint-panel}}
+                         :comp imprint/imprint-panel}
+         :devcards-panel {:title "DevCards"
+                          :path "#devcards"
+                          :icon "code"
+                          :comp devcards/devcards-panel}}
         player-panels
         {:overview-panel {:title "Übersicht"
                           :path "#overview"

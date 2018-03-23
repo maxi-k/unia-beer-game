@@ -1,5 +1,11 @@
 (ns beer-game.util)
 
+(defn bool-xor
+  "Xor on Booleans."
+  [a b]
+  (or (and a (not b))
+      (and b (not a))))
+
 (defn toggle-value
   "Returns the value from the two options that is not equal to `value`."
   [value [op1 op2]]
