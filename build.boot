@@ -1,7 +1,7 @@
 (set-env!
  :source-paths #{"src/clj" "src/cljc" "src/cljs" "src/less"}
  :resource-paths #{"resources"}
- :dependencies '[[org.clojure/clojure "1.9.0-RC2"]
+ :dependencies '[[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async "0.3.465"]
 
