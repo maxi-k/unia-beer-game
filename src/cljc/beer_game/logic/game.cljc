@@ -305,9 +305,9 @@
   (let [to-int #?(:clj #(if (nil? %) 0 (Integer. %))
                   :cljs #(if (nil? %) 0 js/parseInt))
         transform-map {:game/supply-chain identity
-                       :user-demands #(if (string? %)
-                                        (to-int %)
-                                        (vec %))}]
+                       :user-demands #(cond (string? %) (to-int %)
+                                            (sequential? %) (vec %)
+                                            :else %)}]
     (util/apply-transformations settings transform-map to-int)))
 
 (defn init-game-data
