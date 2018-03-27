@@ -45,9 +45,11 @@
 (s/def ::stock-cost-factor ::cost-factor)
 (s/def ::debt-cost-factor  ::cost-factor)
 (s/def ::user-demands
-  ::demand
-  #_(s/or :constant ::demand
-          :changing (s/coll-of ::demand)))
+  (s/or :constant ::demand
+        :changing (s/coll-of ::demand
+                             :min-count 1
+                             :into [])))
+
 (s/def :game/supply-chain
   (s/coll-of :user/role
              :distinct true

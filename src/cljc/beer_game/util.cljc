@@ -71,6 +71,15 @@
          (map sep-fn (range))
          coll)))
 
+(defn padded-data-range
+  "Returns the range of numbers contained within given
+  collection `coll`, padded on each side with `padding`
+  as a vector of two numbers [min-num max-num]."
+  ([coll] (padded-data-range coll 4))
+  ([coll padding]
+   [(- (apply min coll) padding)
+    (+ (apply max coll) padding)]))
+
 ;; DOMAIN SPECIFIC
 
 (def all-event-ids

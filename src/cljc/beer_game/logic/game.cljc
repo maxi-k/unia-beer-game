@@ -127,6 +127,19 @@
                   (get-in roles [% :round/ready?]))
             relevant-roles)))
 
+(defn calc-user-demand
+  "Returns the user-demand for the `current-round` given the
+  `settings` of the game."
+  [settings current-round]
+  (if-let [demands (:user-demands settings)]
+    (cond
+      (not (sequential? demands)) demands
+      (>= current-round (count demands)) (last demands)
+      :else (nth demands current-round (:user-demands config/default-game-settings)))
+    (calc-user-demand current-round
+                      (assoc settings :user-demands
+                             (:user-demands config/default-game-settings)))))
+
 (defn maybe-next-round
   "Takes an update data map and applies the transformations
   required to start the next round. Also requires the current-round
@@ -145,7 +158,7 @@
                    apply-round-update
                    cur-round settings
                    {:user/role :role/customer
-                    :round/order (:user-demands settings)})
+                    :round/order (calc-user-demand settings cur-round)})
         ;; Update the stock of every role at the end
         #_(update-in [:game/data :game/rounds]
                      update-stocks cur-round settings)
@@ -291,7 +304,10 @@
   [settings]
   (let [to-int #?(:clj #(if (nil? %) 0 (Integer. %))
                   :cljs #(if (nil? %) 0 js/parseInt))
-        transform-map {:game/supply-chain identity}]
+        transform-map {:game/supply-chain identity
+                       :user-demands #(if (string? %)
+                                        (to-int %)
+                                        (vec %))}]
     (util/apply-transformations settings transform-map to-int)))
 
 (defn init-game-data

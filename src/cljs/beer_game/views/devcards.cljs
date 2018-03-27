@@ -6,6 +6,9 @@
             [beer-game.components.plot :as plot]))
 
 (defn padded-data-range
+  "Returns the range of numbers contained within given
+  collection `coll`, padded on each side with `padding`
+  as a vector of two numbers [min-num max-num]."
   ([coll] (padded-data-range coll 4))
   ([coll padding]
    [(- (apply min coll) padding)
@@ -139,12 +142,10 @@
                            (:rounds @data-atom)
                            "")}]
          [:label
-          {:style {:display :block}}
           [:input {:type :checkbox
                    :value @update-all?
                    :on-change #(reset! update-all? (-> % .-target .-checked))}]
-          [:br]
-          "Alle zukünftigen ändern?"]
+          "Alle zukünftigen ändern? (= 'Shift')"]
          [plot]]))))
 
 
