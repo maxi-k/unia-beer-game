@@ -8,7 +8,8 @@
             [beer-game.components.inputs :as inputs]
             [beer-game.components.tables :as tables]
             [beer-game.spec.event]
-            [beer-game.spec.game :as game-spec]))
+            [beer-game.spec.game :as game-spec]
+            [beer-game.components.plot :as plot]))
 
 (defn- event-role-list
   ([user-list] (event-role-list {} user-list))
@@ -52,15 +53,15 @@
                         :invalid-msg "Bitte eine positive, ganze Zahl eingeben."
                         :value-fn #(:round-amount @game-settings)
                         :on-change #(update-form [:game/data :game/settings :round-amount] %2)}
-                       {:key :user-demands
-                        :label "Kundennachfrage"
-                        :suffix "Stück pro Runde"
-                        :placeholder "Nachfrage des Kunden."
-                        :spec ::game-spec/user-demands
-                        :transform js/parseInt
-                        :invalid-msg "Bitte eine ganze Zahl eingeben."
-                        :value-fn #(:user-demands @game-settings)
-                        :on-change #(update-form [:game/data :game/settings :user-demands] %2)}
+                       #_{:key :user-demands
+                          :label "Kundennachfrage"
+                          :suffix "Stück pro Runde"
+                          :placeholder "Nachfrage des Kunden."
+                          :spec ::game-spec/user-demands
+                          :transform js/parseInt
+                          :invalid-msg "Bitte eine ganze Zahl eingeben."
+                          :value-fn #(:user-demands @game-settings)
+                          :on-change #(update-form [:game/data :game/settings :user-demands] %2)}
                        {:key :initial-stock
                         :label "Anfänglicher Lagerbestand"
                         :suffix "Stück"
@@ -96,6 +97,26 @@
        (for [elem input-elements]
          ^{:key (:key elem)}
          [inputs/validated-input elem])
+       ^{:key "user-demands-plot"}
+       [plot/interactive-line-plot {:xaxis {:title "Runde"}
+                                    :yaxis {:title "Kundennachfrage (Stück)"}
+                                    :title "Nachfrage des Kunden pro Runde"
+                                    :plot-update-after #(.scrollIntoView % false)}
+        (vec (range (:round-amount @game-settings)))
+        (ra/wrap (let [demands (:user-demands @game-settings)
+                       rounds (:round-amount @game-settings)
+                       rounds (if (pos-int? rounds) rounds (js/parseInt rounds))
+                       rounds (if (pos-int? rounds) rounds (:round-amount config/default-game-settings))]
+                   (vec (take rounds
+                              (cond
+                                (not (sequential? demands))
+                                (repeat demands)
+
+                                (< (count demands) rounds)
+                                (into demands (take rounds (repeat (last demands))))
+
+                                :else demands))))
+                 #(swap! game-settings assoc :user-demands (vec %)))]
        [sa/FormButton {:key :btn
                        :primary true
                        :class-name :clearfloat

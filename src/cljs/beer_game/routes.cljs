@@ -4,7 +4,8 @@
   (:require [secretary.core :as secretary]
             [goog.events :as events]
             [goog.history.EventType :as EventType]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [beer-game.config :as config]))
 
 (defn hook-browser-navigation! []
   (doto (History.)
@@ -26,5 +27,8 @@
     (defroute "/game-data"  [] (set-panel :game-data-panel))
     (defroute "/statistics" [] (set-panel :statistics-panel))
     (defroute "/imprint"    [] (set-panel :imprint-panel))
+
+    (when config/development?
+      (defroute "/devcards" [] (set-panel :devcards-panel)))
     ;; -----------------------------
     (hook-browser-navigation!)))

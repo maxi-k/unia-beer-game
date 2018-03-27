@@ -18,6 +18,8 @@
 ;; The items that were incoming for the given player
 ;; in a round
 (s/def :round/incoming nat-int?)
+;; The items that a given player can deliver
+(s/def :round/outgoing nat-int?)
 ;; Indicates whether a piece of round-data has been
 ;; commited by the player
 (s/def :round/commited? boolean?)
@@ -29,8 +31,8 @@
 
 (s/def ::role-data
   (s/keys :opt [:round/stock :round/cost
-                :round/demand :round/incoming
-                :round/debt
+                :round/demand :round/debt
+                :round/incoming :round/outgoing
                 :round/commited? :round/ready?]))
 (s/def :user/role config/allowed-user-roles)
 (s/def :game/roles
@@ -43,23 +45,46 @@
 (s/def ::stock-cost-factor ::cost-factor)
 (s/def ::debt-cost-factor  ::cost-factor)
 (s/def ::user-demands
-  ::demand
-  #_(s/or :constant ::demand
-          :changing (s/coll-of ::demand)))
+  (s/or :constant ::demand
+        :changing (s/coll-of ::demand
+                             :min-count 1
+                             :into [])))
+
 (s/def :game/supply-chain
-  (s/coll-of :user/role))
+  (s/coll-of :user/role
+             :distinct true
+             :min-count 2
+             :into []))
+
 (s/def :game/settings
   (s/keys :req-un [::round-amount ::user-demands ::initial-stock
                    ::stock-cost-factor ::debt-cost-factor]
-          :opt [:game/supply-chain]))
+          :req [:game/supply-chain]))
 
 (s/def :game/round
   (s/keys :opt [:game/roles]))
 
 (s/def ::game-round-bound
-  (s/or :round-zero #(zero? (:game/current-round %))
-        :round-in-bounds #(< (:game/current-round %)
-                             (count (:game/rounds %)))))
+  #(or (zero? (:game/current-round %))
+       (< (:game/current-round %)
+          (count (:game/rounds %)))))
+
+(s/def ::game-round-amount-bound
+  (fn [data]
+    (< (count (:game/rounds data))
+       (inc (get-in data [:game/settings :round-amount])))))
+
+(s/def ::game-rounds-supply-chain-bound
+  (fn [data]
+    (let [supply-chain (set (get-in data [:game/settings :game/supply-chain]
+                                    config/supply-chain))]
+      (every?
+       (fn [round]
+         (every?
+          (fn [role]
+            (contains? supply-chain role))
+          (keys (get round :game/roles {}))))
+       (:game/rounds data)))))
 
 (s/def :game/rounds (s/coll-of :game/round))
 (s/def :game/current-round nat-int?)
@@ -67,6 +92,8 @@
   (s/and
    (s/keys :req [:game/settings :game/rounds :game/current-round])
    ::game-round-bound
+   ::game-round-amount-bound
+   ;; ::game-rounds-supply-chain-bound
    ))
 
 (s/def :game/round-commit

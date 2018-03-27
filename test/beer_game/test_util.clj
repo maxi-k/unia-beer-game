@@ -58,12 +58,12 @@
 
 (defn test-all-roles!
   [testing-fn]
-   (as-leader! testing-fn)
-   (with-test-event!
-      (fn [{event-id :event/id}]
-        (as-player!
-         {:event/id event-id :auth/key :role/brewery}
-         testing-fn))))
+  (as-leader! testing-fn)
+  (with-test-event!
+    (fn [{event-id :event/id}]
+      (as-player!
+       {:event/id event-id :auth/key :role/brewery}
+       testing-fn))))
 
 ;; Test Utility functions themselves shall be tested
 (deftest test-utility-functions

@@ -1,5 +1,11 @@
 (ns beer-game.util)
 
+(defn bool-xor
+  "Xor on Booleans."
+  [a b]
+  (or (and a (not b))
+      (and b (not a))))
+
 (defn toggle-value
   "Returns the value from the two options that is not equal to `value`."
   [value [op1 op2]]
@@ -64,6 +70,15 @@
         (interleave
          (map sep-fn (range))
          coll)))
+
+(defn padded-data-range
+  "Returns the range of numbers contained within given
+  collection `coll`, padded on each side with `padding`
+  as a vector of two numbers [min-num max-num]."
+  ([coll] (padded-data-range coll 4))
+  ([coll padding]
+   [(- (apply min coll) padding)
+    (+ (apply max coll) padding)]))
 
 ;; DOMAIN SPECIFIC
 

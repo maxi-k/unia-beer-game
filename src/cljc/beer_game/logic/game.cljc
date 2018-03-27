@@ -4,6 +4,11 @@
             [beer-game.spec.game :as game-spec]
             [beer-game.config :as config]))
 
+(defn get-in0
+  "Like get-in but with 0 for a not found value"
+  [coll ks]
+  (or (get-in coll ks 0) 0))
+
 (defn roles-around
   "Returns the roles before and after the passed role in the supply chain."
   [role supply-chain]
@@ -54,6 +59,14 @@
       rounds
       (update-in rounds [next-round :game/roles] updater))))
 
+(defn calc-deliverable
+  "Calculates how much a the given unit can deliver,
+  and if possible, how much of its debt it can pay off."
+  [round-roles role]
+  (min (get-in0 round-roles [role :round/stock])
+       (+ (get-in0 round-roles [role :round/demand])
+          (get-in0 round-roles [role :round/debt]))))
+
 (defn apply-round-update
   "Applies a commit to the game rounds vector."
   [rounds cur-round {:as settings :keys [:game/supply-chain
@@ -62,31 +75,41 @@
   (let [[pre post] (roles-around role supply-chain)
         next-round (inc cur-round)
         last-round? (>= next-round (count rounds))
-        role-data (get-in rounds [cur-round :game/roles role])
-        post-data (get-in rounds [cur-round :game/roles post])
-        cost (+ (* stock-cost-factor (or (:round/stock role-data) 0))
-                (* debt-cost-factor  (or (:round/debt role-data) 0)))
-        to-deliver (calc-to-deliver role-data)
-        delivered (min to-deliver
-                       (or (:round/stock role-data) 0))]
+        old-data (get-in rounds [cur-round :game/roles])
+        new-order (or order 0)
+        ;; --- first role in supply chain
+        ;; --- just gets its order fulfilled
+        outgoing (calc-deliverable old-data role)
+        new-incoming (if (nil? pre)
+                       new-order
+                       (calc-deliverable old-data pre))
+        new-stock (- (+ (get-in0 old-data [role :round/stock])
+                        new-incoming)
+                     outgoing)
+        new-demand (if (nil? post)
+                     0
+                     (get-in0 old-data [post :round/order]))
+        new-debt (max 0
+                      (- (get-in0 old-data [role :round/debt])
+                         (- outgoing (get-in0 old-data [role :round/demand]))))
+        new-cost (+ (* stock-cost-factor new-stock)
+                    (* debt-cost-factor new-debt))]
     (cond-> rounds
       true (assoc-in [cur-round :game/roles role :round/commited?] true)
-      true (assoc-in [cur-round :game/roles role :round/cost] cost)
-      ;; --- add the delivered to the next in the supply chain
-      ;; -- in the next round
-      (and (some? post)
-           (not last-round?))
-      (assoc-in [next-round :game/roles post :round/incoming] delivered)
-      ;; --- first role in supply chain
-      (and (nil? pre)
-           (not last-round?))
-      (assoc-in [next-round :game/roles role :round/incoming] order)
-      ;; --- if not first role in the supply chain
-      ;; -- place the order from the commit as demand on the previous element
-      (and (some? pre)
-           (not last-round?))
-      ;; place the own order
-      (assoc-in [next-round :game/roles pre :round/demand] order))))
+      ;; Place the order on the previous supply-chain-member
+      ;; (and (not last-round?)
+      ;;      (some? pre))
+      ;; (assoc-in [next-round :game/roles pre :round/order] new-order)
+      ;; Update the values for the role which placed the order
+      (not last-round?)
+      (update-in [next-round :game/roles role] merge
+                 #:round{:incoming new-incoming
+                         :outgoing outgoing
+                         :demand new-demand
+                         :order new-order
+                         :debt new-debt
+                         :cost new-cost
+                         :stock new-stock}))))
 
 (defn apply-user-ready
   "Applies an update to the given round that signals
@@ -103,6 +126,19 @@
     (every? #(and (get-in roles [% :round/commited?])
                   (get-in roles [% :round/ready?]))
             relevant-roles)))
+
+(defn calc-user-demand
+  "Returns the user-demand for the `current-round` given the
+  `settings` of the game."
+  [settings current-round]
+  (if-let [demands (:user-demands settings)]
+    (cond
+      (not (sequential? demands)) demands
+      (>= current-round (count demands)) (last demands)
+      :else (nth demands current-round (:user-demands config/default-game-settings)))
+    (calc-user-demand current-round
+                      (assoc settings :user-demands
+                             (:user-demands config/default-game-settings)))))
 
 (defn maybe-next-round
   "Takes an update data map and applies the transformations
@@ -122,10 +158,10 @@
                    apply-round-update
                    cur-round settings
                    {:user/role :role/customer
-                    :round/order (:user-demands settings)})
+                    :round/order (calc-user-demand settings cur-round)})
         ;; Update the stock of every role at the end
-        (update-in [:game/data :game/rounds]
-                   update-stocks cur-round settings)
+        #_(update-in [:game/data :game/rounds]
+                     update-stocks cur-round settings)
         (update-in [:game/data :game/current-round] inc)
         (#(assoc-in % [:update/diff :game/current-round]
                     (get-in % [:game/data :game/current-round]))))
@@ -142,9 +178,10 @@
     user-role :user/role}]
   (let [update-map {:game/data cur-game-data
                     :update/diff {}
-                    :update/valid? true}]
+                    :update/valid? true}
+        supply-chain (set (get settings :game/supply-chain config/supply-chain))]
     (cond
-      (not (contains? (set (:game/supply-chain settings)) user-role))
+      (not (contains? supply-chain user-role))
       (assoc update-map
              :update/valid? false
              :update/reason {:game/supply-chain (:game/supply-chain settings)
@@ -188,12 +225,13 @@
     user-role :user/role}]
   (let [update-map {:game/data cur-game-data
                     :update/diff {}
-                    :update/valid? true}]
+                    :update/valid? true}
+        supply-chain (set (get settings :game/supply-chain config/supply-chain))]
     (cond
-      (not (contains? (set (:game/supply-chain settings)) user-role))
+      (not (contains? supply-chain user-role))
       (assoc update-map
              :update/valid? false
-             :update/reason {:game/supply-chain (:game/supply-chain settings)
+             :update/reason {:game/supply-chain supply-chain
                              :user/role user-role})
       ;; -----
       (>= cur-round (count cur-rounds))
@@ -264,9 +302,12 @@
   spec (like transforming strings to integers)."
 
   [settings]
-  (let [to-int #?(:clj #(Integer. %)
-                  :cljs js/parseInt)
-        transform-map {}]
+  (let [to-int #?(:clj #(if (nil? %) 0 (Integer. %))
+                  :cljs #(if (nil? %) 0 js/parseInt))
+        transform-map {:game/supply-chain identity
+                       :user-demands #(cond (string? %) (to-int %)
+                                            (sequential? %) (vec %)
+                                            :else %)}]
     (util/apply-transformations settings transform-map to-int)))
 
 (defn init-game-data
