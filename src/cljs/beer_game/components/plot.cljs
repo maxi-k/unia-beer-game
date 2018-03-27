@@ -118,7 +118,7 @@
                                           (.getAttribute "height")
                                           js/parseInt)
                                       (catch js/Error e 0))
-                   point (-> this .-__data__)
+                   point (aget this "__data__")
                    y-px (if (zero? client-height)
                           (:mouse-frac @tmp-data)
                           (/ (- client-height ymouse) client-height))
@@ -137,7 +137,7 @@
                             (str "translate("xorig "," (max 0 ymouse) ")"))))))))
     (.on drag "dragend"
          (fn [] (this-as this
-                 (commit-drag! (-> d3 .-event .-sourceEvent .-shiftKey))
+                 (commit-drag! (-> d3 .-event (aget "sourceEvent") .-shiftKey))
                  (js-delete this "originalCoords"))))
     (-> d3
         (.selectAll "path.point")
