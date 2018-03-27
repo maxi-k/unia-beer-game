@@ -18,6 +18,8 @@
                  [binaryage/devtools          "0.9.4"  :scope "test"]
                  [tolitius/boot-check         "0.1.6"  :scope "test"]
                  [org.clojure/test.check      "0.9.0"  :scope "test"]
+                 ;; Documentation generator
+                 [boot-codox                  "0.10.3" :scope "test"]
                  ;; Other development dependencies
                  [org.danielsz/system "0.4.0"]
 
@@ -46,6 +48,7 @@
  '[adzerk.boot-cljs-repl :refer [cljs-repl start-repl repl-env]]
  '[adzerk.boot-reload    :refer [reload]]
  '[tolitius.boot-check   :as    check]
+ '[codox.boot            :refer [codox]]
  '[system.boot           :refer [system run]]
  '[beer-game.server      :refer [server-system]])
 
@@ -163,6 +166,20 @@
    (cljs :source-map true :optimizations :none)
    (notify :visual true
            :audible false)))
+
+(deftask doc
+  "Generates the documentation for the project."
+  []
+  (comp
+   (dev-env)
+   (codox :name "beer-game.server"
+          :metadata {:doc/format :markdown}
+          :output-path "server")
+   (codox :name "beer-game.client"
+          :metadata {:doc/format :markdown}
+          :output-path "client"
+          :language :clojurescript)
+   (target :dir #{"doc/code"})))
 
 (deftask package
   []
