@@ -37,6 +37,18 @@ This will start a development server with auto-reloading code, as well
 as a repl with project-context (which can be connected to using the
 printed port). The webapp can then be accessed on port `3000` by default.
 
+As this project uses `less` as a css preprocessor, the `boot dev`
+command requires `less` and `less-plugin-clean-css` to be installed on
+the machine, which are best installed using `npm`.
+
+### Generating Documentation
+
+To generate static html pages from the in-code documentation strings,
+run the following command:
+```
+boot doc
+```
+
 ### Production Build
 
 Run the following command in the project directory:
