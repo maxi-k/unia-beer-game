@@ -48,6 +48,9 @@ run the following command:
 ```
 boot doc
 ```
+The resulting pages will appear in `doc/code`. They are split into
+documentation sites for the client- and the server-part of the
+application, which reside in folders of the same name.
 
 ### Production Build
 
