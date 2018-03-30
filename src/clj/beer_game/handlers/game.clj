@@ -1,4 +1,7 @@
 (ns beer-game.handlers.game
+  "The message handler that deals with game-level things, like
+  fetching game data and players applying round updates.
+  Used by [[beer-game.message-handler]]."
   (:require [beer-game.store :as store]
             [beer-game.config :as config]
             [beer-game.util :as util]

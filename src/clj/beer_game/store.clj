@@ -1,4 +1,6 @@
 (ns beer-game.store
+  "Contains the store used by the server to persist data,
+  as well as various functions to access and update it."
   (:require [beer-game.config :as config]
             [beer-game.util :as cutil]
             [beer-game.server-utils :as util]
@@ -8,16 +10,28 @@
             [clojure.spec.alpha :as spec]))
 
 (defn create-store
+  "Returns a ref containing the initial store data, where
+    :clients/authorized
+     is a map from {client-id -> user-id}
+
+    :user/data is a map from {user-id -> user-data}
+      where user-data must contain {
+       :user/realm      :: one of #{:player :leader}
+       :user/role       :: one of config/allowed-user-ids
+       :event/id        :: event-id
+      }
+
+
+    :event/data is a map from {event-id -> event-data}
+      where event-data must contain {
+       :event/id        :: id of the event (same as map key)
+       :event/name      :: human readable event name
+       :game/data       :: the data associated with the game
+      }
+  "
   []
   (ref {
-        ;; :clients/authorized is a map from {client-id -> user-id}
         :clients/authorized {}
-        ;; Users need the following information {
-        ;; :user/realm      :: one of #{:player :leader}
-        ;; :user/role       :: one of config/allowed-user-ids
-        ;; :event/id        :: event-id
-        ;; }
-        ;; where :user/data points to a map from {user-id -> user-data}
         :user/data {}
         ;; A map from {event-id -> event-data}
         ;; where event-data must contains
@@ -27,7 +41,8 @@
         :event/data {}}))
 
 (def data-map
-  "User model:"
+  "An instance of the ref created by the [[create-store]] function.
+  Used as the store (\"database\") of the system."
   (create-store))
 
 #_(if config/development?
@@ -66,6 +81,7 @@
    message->user-id))
 
 (def client-id->user-data
+  "Takes a client-id and returns the user-data stored."
   (comp
    user-id->user-data
    client-id->user-id))
@@ -98,6 +114,9 @@
    (filter-user-data f (:user/data @data-map))))
 
 (defn event-id-user-role-filter
+  "Given an `event-id` and a `user-role`, returns a filtering function
+  as used by `filter-user-data` that filters data items with that
+  event-id and that user-role."
   [event-id user-role]
   (fn [[user-id data]]
     (and (= event-id  (:event/id  data))
@@ -143,6 +162,8 @@
   (get-in @data-map [:user/data user-id :event/id]))
 
 (def client-id->event-id
+  "Given a `client-id`, returns the `event-id` of the event
+  that client is currently participating in."
   (comp
    user-id->event-id
    client-id->user-id))
@@ -248,7 +269,9 @@
 ;;;
 
 (defn events
-  "Returns a list of events stored."
+  "Returns a list of events stored as a map as stored in the store.
+  If an `id` is passed which designates a single event, only returns
+  the data for that event."
   ([] (get @data-map :event/data))
   ([id]
    (if (cutil/single-event? id)
@@ -256,7 +279,7 @@
      (events))))
 
 (defn event->users
-  "Returns a map from user-id -> user-data where the user is part of given event-id"
+  "Returns a map from user-id -> user-data where the user is part of given event-id."
   [event-id]
   (filter-user-data
    (fn [[user-id user-data]]

@@ -1,11 +1,15 @@
 (ns beer-game.logic.game
+  "The domain-specific game logic. Used to initialize, interpret and
+  update the game data maps according to the beer-game algorithms.
+  This namespace is available on both client and server, though it is currently
+  only really used from the server side."
   (:require [clojure.spec.alpha :as spec]
             [beer-game.util :as util]
             [beer-game.spec.game :as game-spec]
             [beer-game.config :as config]))
 
 (defn get-in0
-  "Like get-in but with 0 for a not found value"
+  "Like `clojure.core/get-in` but with 0 for a not-found or `nil` value."
   [coll ks]
   (or (get-in coll ks 0) 0))
 
@@ -28,6 +32,8 @@
      (or (:round/debt role-data) 0)))
 
 (defn role-stock-update-fn
+  "Update all the stocks after all players have commited to a round."
+  {:deprecated true}
   [rounds cur-round]
   (fn [roles]
     (reduce
@@ -168,7 +174,8 @@
     update-data))
 
 (defn handle-commit
-  "Handles the game-round commit requested by a client."
+  "Handles the game-round commit requested by a client.
+  Endpoint for calls from the outside."
   [{:as cur-game-data
     cur-round :game/current-round
     cur-rounds :game/rounds
@@ -258,6 +265,8 @@
           maybe-next-round))))
 
 (defn start-game
+  "Updates the given `game-data` map by adding all the data
+  required to start the game."
   [game-data user-roles]
   (let [all-roles (conj user-roles (last config/supply-chain))
         supply-chain (filter #(contains? all-roles %) config/supply-chain)]

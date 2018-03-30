@@ -1,4 +1,6 @@
 (ns beer-game.store-test
+  "Tests for the accessors and update-functions for the
+  [[beer-game.store]] store of the server"
   (:require [beer-game.store :as store]
             [beer-game.test-util :as test-util]
             [clojure.test :refer :all]))

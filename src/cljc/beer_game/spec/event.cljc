@@ -1,4 +1,6 @@
 (ns beer-game.spec.event
+  "Specifications for the data structures representing events,
+  as in the domain events holding games."
   #?(:clj (:require [clojure.spec.gen.alpha :as gen]))
   (:require [clojure.spec.alpha :as s]
             [beer-game.spec.game]))

@@ -1,4 +1,6 @@
 (ns beer-game.handlers.auth
+  "The message handler that deals with user authentication (login, logout)
+  for both player- and leader accounts. Used by [[beer-game.message-handler]]."
   (:require [beer-game.config :as config]
             [beer-game.store :as store]
             [beer-game.messages :as msgs]))

@@ -1,4 +1,6 @@
 (ns beer-game.logic.game-logic-test
+  "Tests the game logic in [[beer-game.logic.game]]
+  using the specs in [[beer-game.spec.game]]."
   (:require [beer-game.logic.game :refer :all]
             [beer-game.config :as config]
             [beer-game.store :as store]

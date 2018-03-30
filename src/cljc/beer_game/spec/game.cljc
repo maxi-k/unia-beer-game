@@ -1,4 +1,5 @@
 (ns beer-game.spec.game
+  "Specifications for the data-structures represeting a game instance."
   #?(:clj (:require [clojure.spec.gen.alpha :as gen]
                     [clojure.spec.alpha :as spec]))
   (:require [clojure.spec.alpha :as s]

@@ -1,4 +1,5 @@
 (ns beer-game.server-utils
+  "Server-Side-Only utility functions."
   (:require [clojure.java.io :as io]))
 
 (defmacro read-resource

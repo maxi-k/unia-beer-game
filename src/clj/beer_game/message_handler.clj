@@ -1,4 +1,9 @@
 (ns beer-game.message-handler
+  "Dynamic message handler that dispatches all incoming websocket messages
+  to the respective handlers, and sends the result to the clients that are
+  supposed to receive them.
+  Also serves as an internal message dispatcher using a `clojure.core/async` csp
+  channel [[msg-chan]] for communication between the domain-specific handlers."
   (:require [clojure.core.async :as async]
             [beer-game
              [config :as config]
@@ -22,9 +27,13 @@
 
   ;; ASYNC INTERNAL MESSAGES
   (declare handle-internally-dispatched)
-  (def msg-chan (async/chan 20))
+  (def msg-chan
+    "The `core.async` csp channel where internal messages arrive.
+  Continually listened to by [[receive-internal]]."
+    (async/chan 20))
+
   (defn receive-internal
-    "Handles internal messages my listening to msg-chan
+    "Handles internal messages my listening to [[msg-chan]]
     and passing on the messages to `handle-internally-dispatched`"
     []
     (async/go-loop []

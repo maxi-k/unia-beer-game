@@ -1,12 +1,20 @@
 (ns beer-game.config
+  "Various configuration options - defined as a map in [[definitions]] - for
+  system-level things like websocket routes and resource paths, as well as
+  domain-level things like the default supply chain or route colors.
+  This namespace is accessible from both the server and the client, and provides
+  the server-side settings as well on the server (from server-config.edn)."
   #?(:cljs
      (:require-macros [beer-game.server-utils :refer [read-resource]]))
   #?(:clj (:require [config.core :refer [env]])))
 
-
 ;; On the client, yogthos/config is not available.
 ;; Thus, just read the config file
-#?(:cljs (def env (read-resource "config.edn")))
+#?(:cljs
+   (def env
+     "The settings from the `config.edn` files *read at compile time*
+  for the client-side clojurescript."
+     (read-resource "config.edn")))
 
 (def environment
   "Returns all environment variables in the config."
@@ -21,6 +29,8 @@
   development?)
 
 (def debug?
+  "Returns whether we are in debugging mode on the client.
+  Is an alias for [[development?]] on the server."
   #?(:cljs ^boolean goog.DEBUG
      :clj development?))
 
@@ -92,22 +102,38 @@
   "The path were general icons are stored"
   (:icon-path definitions))
 
-(def realms (definitions :realms))
-(def player-realm :realm/player)
-(def leader-realm :realm/leader)
-(def player-realm-data (-> player-realm :realms player-realm))
-(def leader-realm-data (-> leader-realm :realms leader-realm))
+(def realms
+  "The list of available realms."
+  (definitions :realms))
+(def player-realm
+  "The key of the player realm."
+  :realm/player)
+(def leader-realm
+  "The key of the leader realm."
+  :realm/leader)
+(def player-realm-data
+  "The config-data associated with the player-realm."
+  (-> player-realm :realms player-realm))
+(def leader-realm-data
+  "The config-data associated with the leader-realm."
+  (-> leader-realm :realms leader-realm))
 
-(def user-roles (definitions :user-roles))
-(def allowed-user-roles (-> definitions :user-roles keys set))
+(def user-roles
+  "A map of available user roles, from the role-keys to the associated data."
+  (definitions :user-roles))
+(def allowed-user-roles
+  "A list of the user role keys."
+  (-> definitions :user-roles keys set))
 (def player-user-roles
+  "A list of user role keys the players are allowed to act as."
   (disj allowed-user-roles :role/customer))
 
 (def user-role-image-path
+  "The base path for where the images associated with the user roles are stored."
   (:user-role-image-path definitions))
 
 (def game-title
-  "The name of the game"
+  "The name of the game."
   (:game-title definitions))
 
 (defn user-role->image
@@ -116,11 +142,11 @@
   [role-key]
   (if-let [img (get-in user-roles [role-key :icon])]
     (let [path (if (vector? img) (rand-nth img) img)]
-         (str public-root "/" user-role-image-path "/" path ".svg"))
+      (str public-root "/" user-role-image-path "/" path ".svg"))
     ""))
 
 (defn user-role->title
-  "Returns the title of given user Role."
+  "Returns the title of given user role."
   [user-role]
   (get-in user-roles [user-role :title]))
 
@@ -138,5 +164,6 @@
        (read-string (slurp "server-config.edn")))
 
      (def leader-password
-       "The password for the game leader."
+       "The password for the game leader.
+  Only available on the server."
        (:leader-password server-config))))

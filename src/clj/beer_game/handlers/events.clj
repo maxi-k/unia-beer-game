@@ -1,9 +1,14 @@
 (ns beer-game.handlers.events
+  "The message handler that deals with event-level things, like event creation,
+  deletion, event-data fetching, and starting the associated game.
+  Used by [[beer-game.message-handler]]."
   (:require [beer-game.store :as store]
             [beer-game.config :as config]
             [beer-game.messages :as msgs]))
 
 (defn- with-auth
+  "Utility function for assuring an endpoint (message) is only
+  avaiable to someone authenticated as the leader account."
   ([msg reply-fn] (with-auth msg nil reply-fn))
   ([msg event-id reply-fn]
    (let [{:as user-data :keys [:user/realm :event/id]}
@@ -19,7 +24,7 @@
 
 
 (defmulti handle-event-msg
-  "Dispatches all 'events' messages"
+  "Dispatches all 'events' messages."
   :internal-id)
 
 (defmethod handle-event-msg

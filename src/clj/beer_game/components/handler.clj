@@ -1,4 +1,7 @@
 (ns beer-game.components.handler
+  "Defines the ring handlers used to answer requests,
+  as well as the [[com.stuartsierra.component]] used in the server system
+  (see [[beer-game.server/server-system]])."
   (:require
    [com.stuartsierra.component :as component]
    [ring.middleware
@@ -21,7 +24,7 @@
   (-> routes handler-core wrap-reload))
 
 (defn- prod-handler
-  "Handler function for production."
+  "Handler function for the production server."
   [routes]
   (handler-core routes))
 
@@ -39,6 +42,6 @@
     (dissoc component :handler)))
 
 (defn new-handler
-  "Creates a new handler component instance."
+  "Creates a new [[HandlerComponent]] instance."
   []
   (map->HandlerComponent {:development? config/development?}))

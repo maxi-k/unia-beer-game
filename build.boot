@@ -134,9 +134,9 @@
   "Check the code using boot-check"
   []
   (comp
-    (check/with-eastwood)
-    (check/with-kibit)
-    (check/with-bikeshed)))
+   (check/with-eastwood)
+   (check/with-kibit)
+   (check/with-bikeshed)))
 
 (deftask auto-test
   "Run the tests and watch files."
@@ -170,16 +170,31 @@
 (deftask doc
   "Generates the documentation for the project."
   []
+  (let [version "master"
+        source-uri
+        "https://git.rz.uni-augsburg.de/pi-m/beer_game/blob/{version}/{filepath}#L{line}"]
+    (comp
+     (test-env)
+     (codox :name "beer-game.server"
+            :version version
+            :metadata {:doc/format :markdown}
+            :output-path "server"
+            :source-uri source-uri)
+     (codox :name "beer-game.client"
+            :version version
+            :metadata {:doc/format :markdown}
+            :output-path "client"
+            :language :clojurescript
+            :source-uri source-uri)
+     (target :dir #{"doc/code"}))))
+
+(deftask auto-doc
+  "Watches the source files and continuously updates the documentation."
+  []
   (comp
-   (dev-env)
-   (codox :name "beer-game.server"
-          :metadata {:doc/format :markdown}
-          :output-path "server")
-   (codox :name "beer-game.client"
-          :metadata {:doc/format :markdown}
-          :output-path "client"
-          :language :clojurescript)
-   (target :dir #{"doc/code"})))
+   (test-env)
+   (watch :verbose true)
+   (doc)))
 
 (deftask package
   []
@@ -189,7 +204,8 @@
          :compiler-options {:pretty-print false
                             :preloads nil})
    (less-js :input "site.less"
-            :output "public/css/site.css")
+            :output "public/css/site.css"
+            )
    (aot)
    (pom)
    (uber)

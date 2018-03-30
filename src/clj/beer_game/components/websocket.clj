@@ -1,4 +1,7 @@
 (ns beer-game.components.websocket
+  "Defines the `component` for the websocket used in the server
+  system (see [[beer-game.server/server-system]]), the routes of which
+  are defined in [[beer-game.components.routes]]."
   (:require [com.stuartsierra.component :as component]
             [taoensso.sente :as ws]
             [beer-game.config :as config]))

@@ -1,4 +1,5 @@
 (ns beer-game.handlers.events-test
+  "Tests for the events message-handler [[beer-game.handlers.events]]."
   (:require [beer-game.test-util :as test-util]
             [beer-game.handlers.events :as events]
             [beer-game.config :as config]

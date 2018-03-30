@@ -1,4 +1,5 @@
 (ns beer-game.handlers.auth-test
+  "Tests for the auth message-handler [[beer-game.handlers.auth]]."
   (:require [beer-game.handlers.auth :as auth]
             [beer-game.config :as config]
             [beer-game.store :as store]

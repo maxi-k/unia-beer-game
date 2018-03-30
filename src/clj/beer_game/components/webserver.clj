@@ -1,4 +1,6 @@
 (ns beer-game.components.webserver
+  "Defines the `component` for the `http-kit` webserver,
+  used in [[beer-game.server/server-system]] system."
   (:require [com.stuartsierra.component :as component]
             [org.httpkit.server :as http-kit]
             [config.core :refer [env]]))

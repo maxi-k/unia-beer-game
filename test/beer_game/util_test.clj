@@ -1,4 +1,5 @@
 (ns beer-game.util-test
+  "Tests for the utility functions from [[beer-game.util]]."
   (:require [beer-game.util :as util]
             [beer-game.config :as config]
             [beer-game.spec.game]

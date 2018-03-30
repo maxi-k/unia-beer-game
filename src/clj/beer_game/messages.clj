@@ -1,4 +1,6 @@
 (ns beer-game.messages
+  "Utility functions all about (websocket) messages:
+  Message templates,transformations and associated data."
   (:require [beer-game.store :as store]
             [beer-game.util :as util]))
 

@@ -1,4 +1,7 @@
 (ns beer-game.components.routes
+  "Defines the [[routes]] used by the handler of the webserver
+  to accept and answer requests, as well as the `component`
+  used in the server system (see [[beer-game.server/server-system]])."
   (:require [com.stuartsierra.component :as component]
             [ring.util.response :refer [resource-response]]
             [compojure
@@ -28,5 +31,6 @@
     (dissoc component :routes)))
 
 (defn new-routes
+  "Creates a new [[RoutesComponent]] instance."
   []
   (map->RoutesComponent {}))

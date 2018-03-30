@@ -1,7 +1,9 @@
-(ns beer-game.util)
+(ns beer-game.util
+  "Various utility functions.
+  This namespace is used by both client and server.")
 
 (defn bool-xor
-  "Xor on Booleans."
+  "Implements logical xor on Booleans."
   [a b]
   (or (and a (not b))
       (and b (not a))))
@@ -42,7 +44,7 @@
 
 (defn keyword->string
   "Turns a (qualified) keyword into a string,
-  which can be turned into an equal keyword again with `clojure.core/keyword`"
+  which can be turned into an equal keyword again with `clojure.core/keyword`."
   [kw]
   {:pre [(keyword? kw)]}
   (if (qualified-keyword? kw)
@@ -83,6 +85,8 @@
 ;; DOMAIN SPECIFIC
 
 (def all-event-ids
+  "A set containing all possible event-id keys that
+  designate 'all' events."
   #{:all :event/all})
 
 (defn multiple-events?
