@@ -89,7 +89,7 @@
     fileset))
 
 ;; REQUIRES less-js and less-plugin-clean-css
-;; npm install -g less less-plugin-clean-css
+;; npm install -g less@2.7.1 less-plugin-clean-css@1.5.1
 (deftask less-js
   "Compiles the less files using lessc,
   because boot-less / less4j can't seem to handle compiling Semantic-UI.
