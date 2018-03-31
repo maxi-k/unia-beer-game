@@ -1,4 +1,6 @@
 (ns beer-game.routes
+  "Setting up the client-side routes, connecting them to the
+  re-frame client-side store as well as the browser navigation."
   (:require-macros [secretary.core :refer [defroute]])
   (:import goog.History)
   (:require [secretary.core :as secretary]
@@ -7,7 +9,11 @@
             [re-frame.core :as rf]
             [beer-game.config :as config]))
 
-(defn hook-browser-navigation! []
+(defn hook-browser-navigation!
+  "Hooks the browser navigation, so that the
+  history and back buttons work with client-side
+  routing."
+  []
   (doto (History.)
     (events/listen
      EventType/NAVIGATE
@@ -15,7 +21,10 @@
        (secretary/dispatch! (.-token event))))
     (.setEnabled true)))
 
-(defn app-routes []
+(defn app-routes
+  "Sets up the routes of the app, connecting them to the re-frame
+  store."
+  []
   (secretary/set-config! :prefix "#")
   (letfn [(set-panel [name]
             (rf/dispatch [:set-active-panel name]))]

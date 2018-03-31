@@ -1,4 +1,9 @@
 (ns beer-game.subs
+  "Contains Subscriptions to the client-side store for the
+  user-view to use, which provide a part of the data stored.
+  As these are not actual clojure definitions, they will
+  not show up in the html-documentation. They are, however,
+  mostly self-explanatory in the code."
   (:require-macros [reagent.ratom :refer [reaction]])
   (:require [re-frame.core :as rf]
             [beer-game.util :as util]))

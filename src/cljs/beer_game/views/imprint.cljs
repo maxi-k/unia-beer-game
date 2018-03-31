@@ -1,7 +1,9 @@
 (ns beer-game.views.imprint
+  "Imprint panel. Required for the 3rd party resources used"
   (:require [soda-ash.core :as sa]))
 
 (def images
+  "Definition for the source declarations of the images and icons used."
   [{:creator {:name "Freepik"
               :link "www.freepik.com"}
     :source {:name "Flaticon"
@@ -10,6 +12,7 @@
               :link "http://creativecommons.org/licenses/by/3.0/"}}])
 
 (defn imprint-images
+  "The imprint for the images used."
   []
   [:div
    [sa/ListSA {:divided true :relaxed true}
@@ -25,6 +28,7 @@
 
 
 (defn imprint-panel
+  "The panel for the imprint."
   []
   [:div
    [:h2 "Impressum"]

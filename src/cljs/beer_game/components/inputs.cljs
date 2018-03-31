@@ -1,11 +1,14 @@
 (ns beer-game.components.inputs
+  "Components all about user inputs, notably validated inputs
+  that can validate the user input based on associated `clojure.spec`s."
   (:require [clojure.spec.alpha :as spec]
             [soda-ash.core :as sa]
             [reagent.core :as ra]
             [re-frame.core :as rf]))
 
 (defn make-validated-input
-  "Creates the data required for a validated-input-element."
+  "Creates the data required for a validated-input-element.
+  Provides default values for all options passed in the option-map."
   [{:as options
     :keys [spec as invalid-msg transform on-change]
     :or {spec (constantly true)
@@ -51,7 +54,9 @@
      :input-options input-options}))
 
 (defn validated-input
-  "A validated input element given a map from `make-validated-input`."
+  "A validated input element given a map from `make-validated-input`.
+  Uses the data defined in the passed map to generate a `spec`-validated
+  input component."
   ([input-obj]
    (validated-input input-obj nil))
   ([{:as obj :keys [field-state change-fn as invalid-msg

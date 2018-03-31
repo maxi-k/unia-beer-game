@@ -1,17 +1,23 @@
 (ns beer-game.components.sidebar
+  "Components managing the sidebar-menu
+  on the left side of the screen."
   (:require [re-frame.core :as rf]
             [soda-ash.core :as sa]
             [beer-game.client-util :as util]
             [beer-game.config :as config]))
 
 (def sidebar-actions
+  "The actions on the bottom of the sidebar."
   [{:icon "theme"
     :action #(rf/dispatch [:set-theme])}
    {:icon "log out"
     :title "Logout"
     :action #(rf/dispatch [:auth/logout true])}])
 
-(defn app-menu-link [{:keys [icon path title]} active]
+(defn app-menu-link
+  "Generic compoonent rendering a link
+  in the app menu."
+  [{:keys [icon path title]} active]
   [sa/MenuItem {:key path
                 :href path
                 :icon icon
@@ -20,7 +26,10 @@
                 :name title
                 :active active}])
 
-(defn app-menu-action [{:keys [icon title action]}]
+(defn app-menu-action
+  "Generic component rendering an action
+  in the app menu."
+  [{:keys [icon title action]}]
   [sa/MenuItem {:key (or title icon)
                 :icon icon
                 :content title
@@ -29,13 +38,19 @@
                 :on-click action
                 :position "right"}])
 
-(defn role-string [{:keys [:user/realm :user/role]}]
+(defn role-string
+  "The string that should be displayed for
+  the given user-role in the sidebar."
+  [{:keys [:user/realm :user/role]}]
   (let [role-title (get-in config/user-roles [(keyword role) :title] "Keine Rolle")]
     (if (= config/leader-realm (keyword realm))
       (str role-title " (" (str (get-in config/realms [realm :title]) ")"))
       role-title)))
 
-(defn app-menu [links active-item]
+(defn app-menu
+  "The main component rendering the sidebar.
+  Connected to the re-frame store."
+  [links active-item]
   (let [color (rf/subscribe [:client/theme])
         user (rf/subscribe [:user])
         title (rf/subscribe [:name])]

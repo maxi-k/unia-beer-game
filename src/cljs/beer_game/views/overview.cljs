@@ -1,4 +1,5 @@
 (ns beer-game.views.overview
+  "The main overview for the game information for running games."
   (:require [re-frame.core :as rf]
             [reagent.core :as ra]
             [soda-ash.core :as sa]
@@ -57,6 +58,7 @@
         (str "Runde " (:game/current-round game))]])))
 
 (defn game-area
+  "A single block of information about the game."
   ([options area title child]
    (let [area-str (if area (name area) "")]
      [sa/SegmentGroup (merge {:class-name (str "game-area " area-str)}
@@ -153,6 +155,7 @@
     [unit-text "Dollar"]]])
 
 (defn commit-round-btn
+  "Button Component for commiting the round (ordering)."
   [submit-fn commited?]
   [sa/Button {:key :btn
               :primary true
@@ -223,6 +226,8 @@
    [sa/Icon {:name (str "arrow " direction)}]])
 
 (defn grid-curved-arrow-column
+  "A curved arrow indicating the flow of products/information.
+  Is passed the rotation as an argument."
   [{:as opts
     :keys [rotation width]
     :or {rotation 0
@@ -248,6 +253,7 @@
       :as-elem :div}]]])
 
 (defn next-round-button
+  "Button for signaling that the player is ready for the next round."
   [cur-round ready? commited?]
   (let [acks (rf/subscribe [:game/acknowledgements])]
     (fn [cur-round ready? commited?]
@@ -264,6 +270,8 @@
            :else "Nächste Runde")]))))
 
 (defn cost-multiplier-arrow
+  "Arrow indicating how much the stock/debt contributes to the cost of
+  a single round."
   [{:as options
     :keys [direction]}
    content]
@@ -351,6 +359,7 @@
           [round-view rounds current-round user-role settings])))))
 
 (defn overview-panel
+  "The panel that wraps all of the game-view and is connected to the store."
   []
   (let [user (rf/subscribe [:user])
         game (rf/subscribe [:game])

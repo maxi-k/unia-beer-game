@@ -1,4 +1,6 @@
 (ns beer-game.components.modals
+  "Components for displaying modals (dialogs that are
+  displayed on top of the rest of the page)."
   (:require [reagent.core :as ra]
             [soda-ash.core :as sa]
             [beer-game.client-util :as cutil]))

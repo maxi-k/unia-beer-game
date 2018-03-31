@@ -1,4 +1,5 @@
 (ns beer-game.views.events
+  "Leader-only view for viewing, creating and deleting events."
   (:require [re-frame.core :as rf]
             [reagent.core :as ra]
             [soda-ash.core :as sa]
@@ -12,6 +13,7 @@
             [beer-game.components.plot :as plot]))
 
 (defn- event-role-list
+  "Lists all the user-roles participating in one event."
   ([user-list] (event-role-list {} user-list))
   ([options user-list]
    [sa/ListSA (merge {:bulleted true} options)
@@ -20,6 +22,8 @@
       [sa/ListItem {:key (:user/role user)} title])]))
 
 (defn- create-event-form
+  "Form for creating an event.
+  Uses the [[beer-game.components.inputs]] validated form."
   [modal-close-fn]
   (let [form-values (ra/atom {:event/id (cutil/gen-event-id)
                               :event/name ""
@@ -125,6 +129,7 @@
                        :onClick #(@submit-form)}]])))
 
 (defn- create-event-modal
+  "Modal which displays (wraps) the [[create-event-form]] for creating a new event."
   [trigger]
   [modals/generic-modal trigger
    "Neues Event erstellen"
@@ -133,6 +138,7 @@
    {}])
 
 (defn- show-event-modal
+  "Modal for displaying the top-level event-data associated with an existing event."
   [trigger event-data]
   [modals/generic-modal trigger
    (:event/name event-data)
@@ -247,6 +253,7 @@
            [sa/TableCell [event-actions event]]])]])))
 
 (defn event-explanation
+  "Explainer-Text component for how the event view works."
   []
   (let [theme (rf/subscribe [:client/theme])
         inverted (= :dark @theme)]

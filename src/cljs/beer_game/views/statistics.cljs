@@ -1,4 +1,6 @@
 (ns beer-game.views.statistics
+  "Statistics about a running or finished game using
+  the plots defined in [[beer-game.components.plots]]."
   (:require [reagent.core :as ra]
             [re-frame.core :as rf]
             [reagent.core :as ra]
@@ -27,7 +29,10 @@
    {}
    rounds))
 
-(defn per-round-plot! [x-data y-datas accessor layout]
+(defn per-round-plot!
+  "A generic function drawing a plot that contains only data
+  associated with one round."
+  [x-data y-datas accessor layout]
   (fn [ref]
     (draw-plot! ref
                 (map
@@ -41,7 +46,9 @@
                 layout
                 )))
 
-(defn stock-statistic [rounds round-data]
+(defn stock-statistic
+  "Statistic for the stock of each round."
+  [rounds round-data]
   (let [plot (make-plot-component
               "stock"
               (per-round-plot! rounds round-data :round/stock
@@ -52,7 +59,9 @@
      [:h2 "Lagerbestand"]
      [plot]]))
 
-(defn cost-per-round-statistic [rounds round-data]
+(defn cost-per-round-statistic
+  "Statistic for the cost of each round (not the overall accumulated cost!)"
+  [rounds round-data]
   (let [plot (make-plot-component
               "cost-per-round"
               (per-round-plot! rounds round-data :round/cost
@@ -63,7 +72,9 @@
      [:h2 "Kosten pro Runde"]
      [plot]]))
 
-(defn incoming-statistic [rounds round-data]
+(defn incoming-statistic
+  "Statistic for the incoming product per round."
+  [rounds round-data]
   (let [plot (make-plot-component
               "incoming-per-round"
               (per-round-plot! rounds round-data :round/incoming
@@ -74,7 +85,9 @@
      [:h2 "Wareneingang"]
      [plot]]))
 
-(defn demand-statistic [rounds round-data]
+(defn demand-statistic
+  "Statistic for the demand per round."
+  [rounds round-data]
   (let [plot (make-plot-component
               "outgoing-per-round"
               (per-round-plot! rounds round-data :round/demand
@@ -85,7 +98,9 @@
      [:h2 "Anfragen"]
      [plot]]))
 
-(defn debt-per-round-statistic [rounds round-data]
+(defn debt-per-round-statistic
+  "Statistic for the debt per round."
+  [rounds round-data]
   (let [plot (make-plot-component
               "debt-per-round"
               (per-round-plot! rounds round-data :round/debt
@@ -96,7 +111,10 @@
      [:h2 "Ausstehend"]
      [plot]]))
 
-(defn statistics [event-data]
+(defn statistics
+  "Displays all statistics. Also displays messages for when
+  the selected event does not exist or has not been started."
+  [event-data]
   (cond
     (nil? event-data)
     [msgs/render-message (msgs/no-such-event)]
@@ -117,7 +135,10 @@
        [demand-statistic rounds round-data]
        ])))
 
-(defn statistics-panel []
+(defn statistics-panel
+  "The Component which wraps all statistics and is connected
+  to the client-side re-frame store."
+  []
   (let [user (rf/subscribe [:user])
         events (rf/subscribe [:events])
         single-event? (util/single-event? (:event/id @user))

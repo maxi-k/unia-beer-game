@@ -1,4 +1,5 @@
 (ns beer-game.client-util
+  "Client-Side-Only utility functions."
   (:require [goog.events :as events]
             [reagent.core :as ra]))
 
@@ -30,6 +31,8 @@
   (.-name semantic-component))
 
 (defn native-component
+  "Turns the given reagent `component` into a 'native'
+  react component."
   [component]
   (-> component
       ra/reactify-component
@@ -49,12 +52,13 @@
   [name (merge own-options options) children])
 
 (defn with-options
-  "Returns the given component with the given option map merged."
+  "Returns the given `component` with the given option map `options` merged
+  into the components."
   [options component]
   (fn [own-options & children]
     [component (merge own-options options) children]))
 
 (defn gen-event-id
-  "Generates a random event id."
+  "Generates a random four-character event id."
   []
   (subs (str (random-uuid)) 0 4))

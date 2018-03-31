@@ -1,11 +1,15 @@
 (ns beer-game.api
+  "Message handling from server->client. Passes server
+  messages from [[beer-game.client] to the client dispatcher."
   (:require [re-frame.core :as rf]
             [beer-game.components.messages :as msgs]
             [beer-game.config :as config]))
 
 (defn dispatch-server-event
   "Dispatches a server event using re-frame in the form of
-  {:id event-id :data event-data}"
+  {:id event-id :data event-data}. All server-side messages
+  from [[beer-game.client]] are passed through here and converted
+  into re-frame settings."
   [{:keys [id data] :as params}]
   (condp = id
     :auth/login-invalid  (rf/dispatch [:auth/login-invalid data])
@@ -32,7 +36,8 @@
   (rf/dispatch [:server/echo-test message]))
 
 (defn logout!
-  "Logs out the current user."
+  "Logs out the current user by dispatching the respective message
+  to the re-frame central dispatch."
   ([server-side?]
    (rf/dispatch [:auth/logout server-side?]))
   ([] (logout! false)))

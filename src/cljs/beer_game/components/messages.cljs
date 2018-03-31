@@ -1,4 +1,6 @@
 (ns beer-game.components.messages
+  "Various message components to inform the user as well as
+  utility functions for displaying messages."
   (:require [clojure.string :as string]
             [reagent.core :as ra]
             [soda-ash.core :as sa]

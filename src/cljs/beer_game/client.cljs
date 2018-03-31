@@ -1,10 +1,13 @@
 (ns beer-game.client
+  "Websocket connector. Handles all messages from- and to the server."
   (:require [taoensso.sente  :as ws :refer (cb-success?)]
             [beer-game.config :as config]
             [beer-game.api :as api]))
 
-(defn init-websocket []
-  ;; Set up websocket communication
+(defn init-websocket
+  "Set up the websocket communication by dynamically binding
+  the necessary functions in this namespace once called."
+  []
   (defonce channel-socket
     (ws/make-channel-socket! config/websocket-endpoint
                              ;; e/o #{:auto :ajax :ws}

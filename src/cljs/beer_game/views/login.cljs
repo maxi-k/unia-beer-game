@@ -1,4 +1,6 @@
 (ns beer-game.views.login
+  "View for logging in. Also the standard view if
+  the user is not logged in."
   (:require [re-frame.core :as rf]
             [soda-ash.core :as sa]
             [reagent.core :as ra]
@@ -8,6 +10,7 @@
             [beer-game.components.game-title :as game-title]))
 
 (defn login-button
+  "The button triggering the login action."
   [on-click]
   (-> sa/Button
       (#(util/with-options {:primary true
@@ -16,6 +19,8 @@
       util/native-render-fn))
 
 (def user-options
+  "The list of user-roles available for login for players,
+  formated as someting that can be passed to a select."
   (reduce
    (fn [coll [key value]]
      (let [k (keyword->string key)]
@@ -25,7 +30,9 @@
    #{}
    config/user-roles))
 
-(defn login-user-pane []
+(defn login-user-pane
+  "The part of the user login that is for players."
+  []
   (let [data (ra/atom {:event/id ""
                        :auth/key ""})]
     (fn []
@@ -41,7 +48,9 @@
                        :on-change #(swap! data assoc :auth/key (.-value %2))}]
        [sa/FormField {:control (login-button #(rf/dispatch [:auth/login :realm/player @data]))}]])))
 
-(defn login-leader-pane []
+(defn login-leader-pane
+  "The part of the user login that is for leaders."
+  []
   (let [pw (ra/atom "")]
     (fn []
       [sa/Form
@@ -52,33 +61,44 @@
                       :on-change #(reset! pw (.. % -target -value))}]
        [sa/FormField {:control (login-button #(rf/dispatch [:auth/login :realm/leader {:auth/key @pw}]))}]])))
 
-(defn wrap-tab-pane [options child]
+(defn wrap-tab-pane
+  "Wraps the given child in a tab pane for selecting."
+  [options child]
   (fn []
     [sa/TabPane options
      [child]]))
 
 
 (def invalid-credentials-msg
+  "The definition for the message indicating that the login
+  credentials were invalid."
   {:header "Schlüssel ungültig"
    :content "Der eingegebene Schlüssel war nicht gültig."
    :icon "exclamation circle"})
 
 (def invalid-event-msg
+  "The definition for the message indicating that the given
+  event-id does not exist."
   {:header "Event-ID ungültig"
    :content "Das gewählte Event existiert nicht."
    :icon "exclamation circle"})
 
 (def event-started-msg
+  "Message indicating that the selected event has started already
+  without the selected role."
   {:header "Event läuft ohne gewählte Rolle"
    :content "Das gewählte Event wurde bereits ohne die gewählte Rolle gestartet."
    :icon "info circle"})
 
 (def successful-logout-msg
+  "Message indicating that the logout was successful."
   {:header "Ausloggen erfolgreich"
    :content "Du wurdest erfolgreich abgemeldet."
    :icon "check circle"})
 
-(defn auth-message [auth-data]
+(defn auth-message
+  "Displays a message indicating the result of the login/logout action."
+  [auth-data]
   (if-let [options (cond
                      (:auth-failure @auth-data)
                      (condp #(contains? %2 %1) (:auth-failure-reason @auth-data)
@@ -92,7 +112,10 @@
     [sa/Divider {:horizontal true} "Login"]))
 
 
-(defn login-card [auth-data]
+(defn login-card
+  "The card that contains all of the login view (player, leader, messages...)
+  and the logo."
+  [auth-data]
   (let [pane-opts {:as "div"}
         wrap-fn (comp util/native-render-fn
                       #(wrap-tab-pane pane-opts %))

@@ -1,9 +1,11 @@
 (ns beer-game.components.plot
+  "Components for drawing plots using Plotly."
   (:require [cljsjs.plotly]
             [reagent.core :as ra]
             [beer-game.util :as util]))
 
 (def default-plot-options
+  "The default plot options that are shared by all plots."
   {:displaylogo false})
 
 (defn draw-plot!
@@ -66,7 +68,14 @@
 
 
 
-(defn setup-drag-behavior! [ref y-atom update-all?]
+(defn setup-drag-behavior!
+  "Sets up the drag behavior for the [[interactive-line-plot]] using
+  the d3 instance of Plotly and its drag behavior utilities.
+  Requires a reference `ref` of the element containing the plot,
+  an atom(-like) `y-atom` for reading and updating the de-facto plot values,
+  as well as a boolean argument `update-all?` which indicates whether all future
+  plot points after the dragged one should be updated."
+  [ref y-atom update-all?]
   (let [d3 (.-d3 js/Plotly)
         drag (-> d3 .-behavior .drag)
         tmp-data (atom {:y @y-atom

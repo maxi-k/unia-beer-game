@@ -1,4 +1,5 @@
 (ns beer-game.listeners
+  "All about attaching listeners to the dom and window."
   (:require [re-frame.core :as rf]
             [beer-game.client-util :as util]))
 

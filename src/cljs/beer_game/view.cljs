@@ -1,4 +1,6 @@
 (ns beer-game.view
+  "The main namespace containing the entrypoint for the
+  client-side views."
   (:require [re-frame.core :as re-frame]
             [reagent.core :as reagent]
             [beer-game.client-util :as util]
@@ -18,6 +20,9 @@
             [reagent.core :as ra]))
 
 (defn user->panels
+  "Defines the user-panels as data. Depending on whether the logged-in
+  user is a player or a leader, returns different panels to display.
+  Is also used by the sidebar to define which menu items should be used."
   [{:as user-data :keys [:user/realm]}]
   (let [default-panels
         {:game-data-panel {:title "Spieldaten"
@@ -33,10 +38,11 @@
                          :path "#imprint"
                          :icon "law"
                          :comp imprint/imprint-panel}
-         :devcards-panel {:title "DevCards"
-                          :path "#devcards"
-                          :icon "code"
-                          :comp devcards/devcards-panel}}
+         ;; :devcards-panel {:title "DevCards"
+         ;;                  :path "#devcards"
+         ;;                  :icon "code"
+         ;;                  :comp devcards/devcards-panel}
+         }
         player-panels
         {:overview-panel {:title "Übersicht"
                           :path "#overview"
@@ -56,7 +62,10 @@
       (merge leader-panels default-panels)
       (merge player-panels default-panels))))
 
-(defn show-panel [panels panel-name user-data]
+(defn show-panel
+  "Shows the panel given by `panel-name`. If the user (specified by `user-data`)
+  does not have permission to view it, displays a `no-permission` message instead."
+  [panels panel-name user-data]
   (let [;; Recursively look up the panel to show
         active-panel (loop [selected-panel panel-name]
                        (if (keyword? selected-panel)
@@ -69,6 +78,8 @@
        "Du hast leider keine Berechtigung für diese Seite."))))
 
 (defn connection-widget
+  "Component for the widget at the bottom right that
+  indicates whether the client is connected to the server."
   [color icon options]
   (->
    sa/Icon
@@ -80,7 +91,10 @@
                                 :size :large} options) %))
    util/native-component))
 
-(defn connection-state []
+(defn connection-state
+  "Renders the connection-state widget indicating a working connection
+  to the server. Takes its data from the client-side store."
+  []
   (let [connected? (re-frame/subscribe [:client/connected])]
     (fn []
       (if @connected?
@@ -97,6 +111,7 @@
           [:strong "Lass es am Besten den Spielleiter wissen!"]]]))))
 
 (defn messages
+  "Displays the user-message tray at the bottom right of the screen."
   []
   (let [msgs (re-frame/subscribe [:messages])]
     (fn []
@@ -114,11 +129,16 @@
                       :icon icon
                       :onDismiss #(rf/dispatch [:message/remove msg-id])}])))))
 
-(defn app-wrapper [& children]
+(defn app-wrapper
+  "Wraps the app in a div of id `app-wrapper` with the passed children inside"
+  [& children]
   [:div#app-wrapper
    (util/keyify children)])
 
-(defn main-panel []
+(defn main-panel
+  "The main panel of the app. Displays the sidebar to the left,
+  as well as the the currently active panel on the right."
+  []
   (let [active-panel (re-frame/subscribe [:active-panel])
         window-size (re-frame/subscribe [:client/window])
         user-data (re-frame/subscribe [:user])]

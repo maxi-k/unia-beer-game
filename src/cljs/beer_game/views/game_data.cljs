@@ -1,4 +1,5 @@
 (ns beer-game.views.game-data
+  "View for the tables displaying all sorts of data around a running game."
   (:require [reagent.core :as ra]
             [re-frame.core :as rf]
             [soda-ash.core :as sa]
@@ -17,6 +18,8 @@
           :incoming "Eingang"})
 
 (defn user-role-title
+  "Displays the title for a role displayed in the top left
+  corner of the game-data table."
   [role]
   [:div {:class-name "game-data--user-role-title"}
    [:img {:src (config/user-role->image role)}]
@@ -24,6 +27,8 @@
    [:div {:class-name "clearfloat"}]])
 
 (defn game-data-table
+  "Component for the table which contains the game-data for a
+  running game. Displays the data associated with all the roles in `role-list`."
   [event-data role-list]
   (fn [{:as event-data
        {:as game-data :keys [:game/rounds :game/current-round]}
@@ -68,6 +73,9 @@
 
 
 (defn game-data-panel
+  "Panel that wraps the game selector an the table for the role(s)
+  and their game data. For any given player, only their own data
+  is displayed, while the leaders sees the data associated with all roles."
   []
   (let [events (rf/subscribe [:events])
         user (rf/subscribe [:user])

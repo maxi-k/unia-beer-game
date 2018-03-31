@@ -1,4 +1,7 @@
 (ns beer-game.views.devcards
+  "A devcards view for various components and views in the development stage,
+  which can be developed in concept here before having to be integrated into the
+  the app and connected to the client-store."
   (:require [reagent.core :as ra]
             [soda-ash.core :as sa]
             [beer-game.util :as util]
