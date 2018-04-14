@@ -75,7 +75,7 @@
                                   :stock "Wie viel hat diese Einheit im Lager (in Stück)?"
                                   :cost "Wie viel Kosten hat diese Einheit (in Dollar)?"
                                   :debt "Wie viel Schulden hat diese Einheit bei der nächsten Einheit (in Stück)?"
-                                  :incoming "Wie viel hat diese Einheit von der vorherigen Einheit bekommen (in Stück)?"
+                                  :incoming "Wie viel hat diese Einheit von der vorherigen Einheit (bzw. der Produktion) bekommen (in Stück)?"
                                   :outgoing "Wie viel hat diese Einheit der nächsten Einheit geliefert?"
                                   :commited? "Hat diese Einheit bereits bestellt?"
                                   :ready? "Ist diese Einheit bereit für die nächste Runde?"}})
