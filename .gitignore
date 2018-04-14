@@ -9,5 +9,7 @@ out
 /beer-game.iml
 /.idea
 /.lein-repl-history
+/project.clj
 scripts/deploy.sh
+scripts/deploy-doc.sh
 /.nrepl-history
