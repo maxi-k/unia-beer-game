@@ -45,7 +45,7 @@
 
 (require
  '[boot.lein]
- '[clojure.java.io       :as io]
+ '[clojure.java.io       :as    io]
  '[adzerk.boot-test      :refer [test]]
  '[adzerk.boot-cljs      :refer [cljs]]
  '[adzerk.boot-cljs-repl :refer [cljs-repl start-repl repl-env]]
@@ -53,7 +53,8 @@
  '[tolitius.boot-check   :as    check]
  '[codox.boot            :refer [codox]]
  '[system.boot           :refer [system run]]
- '[beer-game.server      :refer [server-system]])
+ '[beer-game.server      :refer [server-system]]
+ '[user                  :as    user])
 
 ;; Generate a leiningen config (project.clj) based on this
 ;; build file for tooling that does not support boot (cursive)
