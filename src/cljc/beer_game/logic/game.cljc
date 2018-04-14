@@ -57,6 +57,7 @@
 
 (defn update-stocks
   "Update all the stock values when a round is done."
+  {:deprecated true}
   [rounds cur-round {:as settings :keys [:game/supply-chain]}]
   (let [next-round (inc cur-round)
         last-round? (>= next-round (count rounds))

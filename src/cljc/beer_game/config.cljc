@@ -69,7 +69,16 @@
                            :initial-stock 5
                            :stock-cost-factor 5
                            :debt-cost-factor 10}
-   :user-role-image-path "img/roles"})
+   :user-role-image-path "img/roles"
+   :property-descriptions #:round{:order "Wie viel hat diese Einheit bestellt (in Stück)?"
+                                  :demand "Wie viel wurde von dieser Einheit bestellt (in Stück)?"
+                                  :stock "Wie viel hat diese Einheit im Lager (in Stück)?"
+                                  :cost "Wie viel Kosten hat diese Einheit (in Dollar)?"
+                                  :debt "Wie viel Schulden hat diese Einheit bei der nächsten Einheit (in Stück)?"
+                                  :incoming "Wie viel hat diese Einheit von der vorherigen Einheit bekommen (in Stück)?"
+                                  :outgoing "Wie viel hat diese Einheit der nächsten Einheit geliefert?"
+                                  :commited? "Hat diese Einheit bereits bestellt?"
+                                  :ready? "Ist diese Einheit bereit für die nächste Runde?"}})
 
 (def supply-chain
   "Define the order in which the roles form a supply chain."
@@ -118,6 +127,9 @@
   "The config-data associated with the leader-realm."
   (-> leader-realm :realms leader-realm))
 
+(def customer-role
+  "The key for the customer role (which the server acts as)."
+  :role/customer)
 (def user-roles
   "A map of available user roles, from the role-keys to the associated data."
   (definitions :user-roles))
@@ -126,7 +138,7 @@
   (-> definitions :user-roles keys set))
 (def player-user-roles
   "A list of user role keys the players are allowed to act as."
-  (disj allowed-user-roles :role/customer))
+  (disj allowed-user-roles customer-role))
 
 (def user-role-image-path
   "The base path for where the images associated with the user roles are stored."
@@ -135,6 +147,16 @@
 (def game-title
   "The name of the game."
   (:game-title definitions))
+
+(def property-descriptions
+  "Descriptions for each property the data for a role can have (per round)."
+  (:property-descriptions definitions))
+
+(defn round-property->description
+  "Takes a round-property key and returns its description."
+  ([key] (round-property->description key "Keine Beschreibung vorhanden."))
+  ([key default]
+   (get property-descriptions key default)))
 
 (defn user-role->image
   "Takes the name of a user role and returns a path

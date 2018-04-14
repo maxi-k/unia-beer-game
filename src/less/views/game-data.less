@@ -3,8 +3,8 @@
     span {
         color: #000;
         float: left;
-        font-weight: bold;
         font-size: 1.3rem;
+        font-weight: bold;
         line-height: 1.3rem;
         padding-top: 0.5rem;
         padding-left: 0.8rem;
@@ -16,6 +16,28 @@
     }
 
     clear: both;
+}
+
+.game-data--role-property-header {
+    &:after {
+        clear: both;
+    }
+}
+
+.game-data--role-property-header-text {
+    &>* {
+        display: block;
+        font-weight: normal;
+    }
+
+    &>:first-child {
+        font-weight: bold;
+    }
+    float: left;
+}
+
+.game-data--role-property-header-info {
+    float: right;
 }
 
 .game-data--supply-chain-arrow {

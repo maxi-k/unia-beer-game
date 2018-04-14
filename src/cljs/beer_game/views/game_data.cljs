@@ -8,14 +8,23 @@
             [beer-game.config :as config]
             [beer-game.util :as util]))
 
-(def game-data-columns
+(def game-data-player-columns
   "A map describing the entries for the header rows of a game table.
   Keys are the map keys in a game role-data map, values are the
-  respective titles to be displayed."
-  #:round{:stock "Lager"
-          :cost "Kosten"
-          :demand "Nachfrage"
-          :incoming "Eingang"})
+  respective titles to be displayed.
+  This is the one for all players."
+  #:round{:stock ["Lager" "(Stück, Gesamt)"]
+          :cost ["Kosten" "(Dollar, je Runde)"]
+          :demand ["Warennachfrage" "(Stück, je Runde)"]
+          :incoming ["Wareneingang" "(Stück, je Runde)"]})
+
+(def game-data-customer-columns
+  "A map describing the entries for the header rows of a game table.
+  Keys are the map keys in a game role-data map, values are the
+  respective titles to be displayed.
+  This is the one for the customer (the computer)."
+  #:round{:order ["Bestellung" "(Stück, je Runde)"]
+          :incoming ["Wareneingang" "(Stück, je Runde)"]})
 
 (defn user-role-title
   "Displays the title for a role displayed in the top left
@@ -43,16 +52,31 @@
       :else
       [:div
        (->>
-        (for [role role-list]
+        (for [role role-list
+              :let [columns (if (= role config/customer-role)
+                              game-data-customer-columns
+                              game-data-player-columns)]]
           [sa/Segment {:key role}
            [sa/Table {:definition true :compact true}
             [sa/TableHeader
              [sa/TableRow
               [sa/TableHeaderCell {:width 5}
                [user-role-title role]]
-              (for [[key title] game-data-columns]
-                [sa/TableHeaderCell {:key key}
-                 title])]]
+              (for [[key title] columns]
+                [sa/Popup
+                 {:key key
+                  :content (config/round-property->description key)
+                  :hoverable true
+                  :trigger
+                  (ra/as-element
+                   [sa/TableHeaderCell {:key key}
+                    [:div {:class-name "game-data--role-property-header-text"}
+                     (if (vector? title)
+                       (for [item title]
+                         [:span {:key item} item])
+                       title)]
+                    [sa/Icon {:class-name "game-data--role-property-header-info"
+                              :name "question circle outline"}]])}])]]
             [sa/TableBody
              (for [[idx {:as round
                          roles :game/roles}]
@@ -60,7 +84,7 @@
                    :let [round-data (get roles role {})]]
                [sa/TableRow {:key idx}
                 [sa/TableCell {:key idx} "Runde " idx]
-                (for [[key _] game-data-columns]
+                (for [[key _] columns]
                   [sa/TableCell {:key (str idx "-" key)}
                    (get round-data key "-")])])]]])
         (util/interpose-indexed
