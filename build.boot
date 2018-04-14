@@ -18,6 +18,8 @@
                  [binaryage/devtools          "0.9.4"  :scope "test"]
                  [tolitius/boot-check         "0.1.6"  :scope "test"]
                  [org.clojure/test.check      "0.9.0"  :scope "test"]
+                 [onetom/boot-lein-generate   "0.1.3"  :scope "test"]
+
                  ;; Documentation generator
                  [boot-codox                  "0.10.3" :scope "test"]
                  ;; Other development dependencies
@@ -42,6 +44,7 @@
 
 
 (require
+ '[boot.lein]
  '[clojure.java.io       :as io]
  '[adzerk.boot-test      :refer [test]]
  '[adzerk.boot-cljs      :refer [cljs]]
@@ -52,7 +55,9 @@
  '[system.boot           :refer [system run]]
  '[beer-game.server      :refer [server-system]])
 
-
+;; Generate a leiningen config (project.clj) based on this
+;; build file for tooling that does not support boot (cursive)
+(boot.lein/generate)
 
 (task-options!
  pom {:project 'beer-game
