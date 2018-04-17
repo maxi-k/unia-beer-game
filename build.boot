@@ -53,8 +53,7 @@
  '[tolitius.boot-check   :as    check]
  '[codox.boot            :refer [codox]]
  '[system.boot           :refer [system run]]
- '[beer-game.server      :refer [server-system]]
- '[user                  :as    user])
+ '[beer-game.server      :refer [server-system]])
 
 ;; Generate a leiningen config (project.clj) based on this
 ;; build file for tooling that does not support boot (cursive)
