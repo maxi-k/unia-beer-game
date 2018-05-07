@@ -342,3 +342,17 @@
  :game/acknowledge-round
  (fn [db [_ round]]
    (assoc-in db [:game-state :acknowledgements round] true)))
+
+;; Sets the round state so that the incoming items are (visually)
+;; transferred to the stock in the gui
+(rf/reg-event-db
+ :game/round-incoming->stock
+ (fn [db [_ round]]
+   (assoc-in db [:game-state :incoming->stock round] true)))
+
+;; Sets the round state so that the outgoing items are (visually)
+;; transferred out of the stock in the gui
+(rf/reg-event-db
+ :game/round-stock->outgoing
+ (fn [db [_ round]]
+   (assoc-in db [:game-state :stock->outgoing round] true)))

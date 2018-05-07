@@ -118,7 +118,7 @@
  :<- [:game/rounds]
  :<- [:game/current-round]
  (fn [rounds current-round]
-   (nth rounds current-round)))
+   (get rounds current-round)))
 
 (rf/reg-sub
  :game/acknowledgements

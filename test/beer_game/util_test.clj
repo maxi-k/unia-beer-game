@@ -9,7 +9,7 @@
             [clojure.spec.test.alpha :as stest]))
 
 (deftest filter-role-data
-  (testing "The role-data filter-function only leaves the specified user-role data in the rounds vector."
+  (testing "The role-data filter-function only leaves the specified user-role data in the rounds list."
     (let [test-data (gen/generate (spec/gen :game/rounds))
           user-role (rand-nth (keys config/user-roles))
           other-roles (-> config/user-roles keys set (disj user-role))

@@ -293,7 +293,7 @@
   [rounds cur-round user-role {:as settings :keys [:game/supply-chain
                                                    stock-cost-factor
                                                    debt-cost-factor]}]
-  (let [round-data (get-in (nth rounds cur-round)
+  (let [round-data (get-in (get rounds cur-round)
                            [:game/roles user-role])
         [supplier customer] (game-logic/roles-around user-role supply-chain)]
     [sa/Grid {:class-name "game-view-grid"

@@ -5,7 +5,6 @@
   (:require [clojure.spec.alpha :as s]
             [beer-game.config :as config]))
 
-;; TODO: Stub
 ;; The stock one player has in a round
 (s/def :round/stock nat-int?)
 ;; The items that are still due, aka the ones the player has
@@ -39,12 +38,22 @@
 (s/def :game/roles
   (s/map-of :user/role ::role-data))
 
+
+(s/def ::initial-stock nat-int?)
+(s/def ::initial-incoming :round/incoming)
+(s/def ::initial-outgoing :round/outgoing)
+
 (s/def ::round-amount pos-int?)
 (s/def ::demand nat-int?)
-(s/def ::initial-stock nat-int?)
+
 (s/def ::cost-factor pos-int?)
 (s/def ::stock-cost-factor ::cost-factor)
 (s/def ::debt-cost-factor  ::cost-factor)
+
+(s/def ::delay pos-int?)
+(s/def ::goods-delay ::delay)
+(s/def ::communication-delay ::delay)
+
 (s/def ::user-demands
   (s/or :constant ::demand
         :changing (s/coll-of ::demand
@@ -58,8 +67,10 @@
              :into []))
 
 (s/def :game/settings
-  (s/keys :req-un [::round-amount ::user-demands ::initial-stock
-                   ::stock-cost-factor ::debt-cost-factor]
+  (s/keys :req-un [::round-amount ::user-demands
+                   ::stock-cost-factor ::debt-cost-factor
+                   ::initial-stock ::initial-incoming ::initial-outgoing
+                   ::goods-delay ::communication-delay]
           :req [:game/supply-chain]))
 
 (s/def :game/round

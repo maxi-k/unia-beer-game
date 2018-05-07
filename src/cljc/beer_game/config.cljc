@@ -67,8 +67,12 @@
    :default-game-settings {:round-amount 20
                            :user-demands 5
                            :initial-stock 5
+                           :initial-incoming 5
+                           :initial-outgoing 5
                            :stock-cost-factor 5
-                           :debt-cost-factor 10}
+                           :debt-cost-factor 10
+                           :goods-delay 2
+                           :communication-delay 2}
    :user-role-image-path "img/roles"
    :property-descriptions #:round{:order "Wie viel hat diese Einheit bestellt (in Stück)?"
                                   :demand "Wie viel wurde von dieser Einheit bestellt (in Stück)?"

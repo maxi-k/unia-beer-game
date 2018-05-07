@@ -92,7 +92,43 @@
                         :transform js/parseInt
                         :invalid-msg "Bitte eine positive, ganze Zahl eingeben."
                         :value-fn #(:debt-cost-factor @game-settings)
-                        :on-change #(update-form [:game/data :game/settings :debt-cost-factor] %2)}]
+                        :on-change #(update-form [:game/data :game/settings :debt-cost-factor] %2)}
+                       {:key :initial-incoming
+                        :label "Anfängliche eingehende Waren"
+                        :suffix "Stück pro Runde"
+                        :placeholder "Anfängliche eingehende Waren"
+                        :spec ::game-spec/initial-incoming
+                        :transform js/parseInt
+                        :invalid-msg "Bitte eine ganze Zahl eingeben."
+                        :value-fn #(:initial-incoming @game-settings)
+                        :on-change #(update-form [:game/data :game/settings :initial-incoming] %2)}
+                       {:key :initial-outgoing
+                        :label "Anfängliche ausgehende Waren"
+                        :suffix "Stück pro Runde"
+                        :placeholder "Anfängliche ausgehende Waren"
+                        :spec ::game-spec/initial-outgoing
+                        :transform js/parseInt
+                        :invalid-msg "Bitte eine ganze Zahl eingeben."
+                        :value-fn #(:initial-outgoing @game-settings)
+                        :on-change #(update-form [:game/data :game/settings :initial-outgoing] %2)}
+                       {:key :goods-delay
+                        :label "Verzögerungszeit für Warenlieferungen zwischen Akteuren"
+                        :suffix "Runden"
+                        :placeholder "Verzögerungszeit für Warenlieferungen zwischen Akteuren"
+                        :spec ::game-spec/goods-delay
+                        :transform js/parseInt
+                        :invalid-msg "Bitte eine positive, ganze Zahl eingeben."
+                        :value-fn #(:goods-delay @game-settings)
+                        :on-change #(update-form [:game/data :game/settings :goods-delay] %2)}
+                       {:key :communication-delay
+                        :label "Verzögerungszeit für Bestellungen zwischen Akteuren"
+                        :suffix "Runden"
+                        :placeholder "Verzögerungszeit für Bestellungen zwischen Akteuren"
+                        :spec ::game-spec/communication-delay
+                        :transform js/parseInt
+                        :invalid-msg "Bitte eine positive, ganze Zahl eingeben."
+                        :value-fn #(:communication-delay @game-settings)
+                        :on-change #(update-form [:game/data :game/settings :communication-delay] %2)}]
         input-elements (doall (map inputs/make-validated-input input-options))]
     (fn []
       [inputs/validated-form
@@ -184,7 +220,7 @@
   (let [modal-state (ra/atom {:delete false
                               :start false})]
     (fn [{:as event
-         user-list :user/list}]
+          user-list :user/list}]
       [:div.clearfloat
        [sa/ButtonGroup {:floated :right}
         (if (contains? (set (map :user/role user-list))
