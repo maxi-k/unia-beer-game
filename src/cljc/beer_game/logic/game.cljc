@@ -69,52 +69,62 @@
 (defn calc-deliverable
   "Calculates how much a the given unit can deliver,
   and if possible, how much of its debt it can pay off."
-  [round-roles role]
-  (min (get-in0 round-roles [role :round/stock])
-       (+ (get-in0 round-roles [role :round/demand])
-          (get-in0 round-roles [role :round/debt]))))
+  ([round-roles role]
+   (min (get-in0 round-roles [role :round/stock])
+        (+ (get-in0 round-roles [role :round/demand])
+           (get-in0 round-roles [role :round/debt]))))
+  ([role-data]
+   (min (get role-data :round/stock 0)
+        (+ (get role-data :round/demand 0)
+           (get role-data :round/debt 0)))))
+
 
 (defn apply-round-update
   "Applies a commit to the game rounds vector."
   [rounds cur-round {:as settings :keys [:game/supply-chain
-                                         stock-cost-factor debt-cost-factor]}
+                                         stock-cost-factor debt-cost-factor
+                                         communication-delay goods-delay]}
    {:as commit :keys [:round/order :user/role]}]
   (let [[pre post] (roles-around role supply-chain)
         next-round (inc cur-round)
-        last-round? (>= next-round (count rounds))
+        round-count (count rounds)
+        goods-round (+ cur-round goods-delay)
+        communication-round (+ cur-round communication-delay)
         old-data (get-in rounds [cur-round :game/roles])
         new-order (or order 0)
         ;; --- first role in supply chain
         ;; --- just gets its order fulfilled
         outgoing (calc-deliverable old-data role)
-        new-incoming (if (nil? pre)
-                       new-order
-                       (calc-deliverable old-data pre))
-        new-stock (- (+ (get-in0 old-data [role :round/stock])
-                        new-incoming)
-                     outgoing)
-        new-demand (if (nil? post)
-                     0
-                     (get-in0 old-data [post :round/order]))
+        other-incoming outgoing
+        other-demand new-order
+        new-stock (+ (get-in0 old-data [role :round/stock])
+                     (- (get-in0 old-data [role :round/incoming])
+                        outgoing))
         new-debt (max 0
-                      (- (get-in0 old-data [role :round/debt])
-                         (- outgoing (get-in0 old-data [role :round/demand]))))
+                      (+ (get-in0 old-data [role :round/debt])
+                         (- (get-in0 old-data [role :round/demand]) outgoing)))
         new-cost (+ (* stock-cost-factor new-stock)
                     (* debt-cost-factor new-debt))]
     (cond-> rounds
       true (assoc-in [cur-round :game/roles role :round/commited?] true)
-      ;; Place the order on the previous supply-chain-member
-      ;; (and (not last-round?)
-      ;;      (some? pre))
-      ;; (assoc-in [next-round :game/roles pre :round/order] new-order)
-      ;; Update the values for the role which placed the order
-      (not last-round?)
+      true (assoc-in [cur-round :game/roles role :round/outgoing] outgoing)
+
+      (and (some? pre)
+           (< communication-round round-count))
+      (assoc-in [communication-round :game/roles pre :round/demand] other-demand)
+
+      (and (some? post)
+           (< goods-round round-count))
+      (assoc-in [goods-round :game/roles post :round/incoming] other-incoming)
+
+      ;; we are the brewery
+      (and (nil? pre)
+           (< goods-round round-count))
+      (assoc-in [goods-round :game/roles role :round/incoming] order)
+
+      (not (>= next-round round-count))
       (update-in [next-round :game/roles role] merge
-                 #:round{:incoming new-incoming
-                         :outgoing outgoing
-                         :demand new-demand
-                         :order new-order
-                         :debt new-debt
+                 #:round{:debt new-debt
                          :cost new-cost
                          :stock new-stock}))))
 
@@ -276,12 +286,16 @@
 
 (defn init-round-role
   "Initializes the round role information for one user."
-  [{:as settings :keys [initial-stock]} user-role]
+  [{:as settings :keys [initial-stock
+                        initial-incoming
+                        initial-outgoing]} user-role]
   (let [data {:round/stock initial-stock
               :round/debt 0
               :round/cost  0
-              :round/demand 0
-              :round/order 0}]
+              :round/incoming initial-incoming
+              :round/outgoing initial-outgoing
+              :round/demand initial-outgoing
+              :round/order initial-incoming}]
     (if (= (last config/supply-chain) user-role)
       (assoc data :round/demand (:user-demand settings))
       data)))
@@ -303,9 +317,9 @@
 (defn init-game-rounds
   "Initializes the rounds-vector for a game."
   [{:as settings :keys [round-amount]}]
-  (-> (repeat round-amount {})
-      vec
-      (assoc 0 (init-game-round settings))))
+  (let [game-round (init-game-round settings)]
+    (-> (repeat round-amount game-round)
+        vec)))
 
 (defn transform-game-settings
   "Transforms the game settings, trying to make it adhere to the

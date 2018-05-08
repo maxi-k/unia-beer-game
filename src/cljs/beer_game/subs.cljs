@@ -121,6 +121,11 @@
    (get rounds current-round)))
 
 (rf/reg-sub
+ :game/game-state
+ (fn [db]
+   (get db :game-state)))
+
+(rf/reg-sub
  :game/acknowledgements
  (fn [db]
    (get-in db [:game-state :acknowledgements])))
@@ -131,3 +136,17 @@
  :<- [:game/current-round]
  (fn [acks cur-round]
    (get acks cur-round false)))
+
+(rf/reg-sub
+ :game/round-incoming->stock
+ :<- [:game/game-state]
+ :<- [:game/current-round]
+ (fn [[game-state cur-round]]
+   (get-in game-state [:incoming->stock cur-round] false)))
+
+(rf/reg-sub
+ :game/round-stock->outgoing
+ :<- [:game/game-state]
+ :<- [:game/current-round]
+ (fn [[game-state cur-round]]
+   (get-in game-state [:stock->outgoing cur-round] false)))

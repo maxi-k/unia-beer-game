@@ -81,32 +81,44 @@
   "The part of the view that represents the outgoing items
   for the current-player for the previous round."
   [round-data cur-round]
-  (let [acks (rf/subscribe [:game/acknowledgements])]
+  (let [transferred? (rf/subscribe [:game/round-stock->outgoing])]
     (fn [{:as round-data :keys [:round/outgoing]}
         cur-round]
       [game-area {} :outgoing
        "Warenausgang"
        [:div.message-data
         [:span.main-value
-         (or outgoing 0)]
+         (if @transferred?
+           (or outgoing 0)
+           "--")]
         [unit-text "Einheiten"]
         [sa/Button
-         {:disabled (get @acks cur-round)
+         {:disabled @transferred?
           :primary true
-          :on-click #(rf/dispatch [:game/acknowledge-round cur-round])}
-         "OK"]]])))
+          :on-click #(do (rf/dispatch [:game/acknowledge-round cur-round])
+                         (rf/dispatch [:game/round-stock->outgoing cur-round]))}
+         "Aus dem Lager holen"]]])))
 
 (defn incoming
   "The part of the view that represents the production / incoming items
   for the current player."
-  [{:as round-data :keys [:round/incoming]}]
-  [game-area {} :incoming
-   "Wareneingang"
-   [:div.message-data
-    [:span.main-value
-     (or incoming "-")]
-    (when incoming
-      [unit-text "Einheiten"])]])
+  [cur-round]
+  (let [transferred? (rf/subscribe [:game/round-incoming->stock])]
+    (fn [{:as round-data :keys [:round/incoming]} cur-round]
+      (.log js/console @transferred?)
+      [game-area {} :incoming
+       "Wareneingang"
+       [:div.message-data
+        [:span.main-value
+         (if @transferred?
+           "--"
+           (or incoming 0))]
+        [unit-text "Einheiten"]
+        [sa/Button
+         {:disabled @transferred?
+          :primary true
+          :on-click #(rf/dispatch [:game/round-incoming->stock cur-round])}
+         "In das Lager stellen"]]])))
 
 (defn mail
   "The part of the view that represents the mailbox of the current player."
@@ -124,12 +136,17 @@
   "The part of the view that represents the stock of the current player.
   For the round given."
   [round-data]
-  [game-area {} :stock
-   "Lager"
-   [:div.message-data
-    [:span.main-value
-     (:round/stock round-data)]
-    [unit-text "Einheiten"]]])
+  (let [stock->outgoing? (rf/subscribe [:game/round-stock->outgoing])
+        incoming->stock? (rf/subscribe [:game/round-incoming->stock])]
+    (fn [round-data]
+      [game-area {} :stock
+       "Lager"
+       [:div.message-data
+        [:span.main-value
+         (cond-> (:round/stock round-data)
+           @incoming->stock? (+ (:round/incoming round-data))
+           @stock->outgoing? (- (game-logic/calc-deliverable round-data)))]
+        [unit-text "Einheiten"]]])))
 
 (defn debt
   "The part of the view that represents the overall debt of the current player
@@ -255,19 +272,21 @@
 (defn next-round-button
   "Button for signaling that the player is ready for the next round."
   [cur-round ready? commited?]
-  (let [acks (rf/subscribe [:game/acknowledgements])]
+  (let [stock->outgoing? (rf/subscribe [:game/round-stock->outgoing])
+        incoming->stock? (rf/subscribe [:game/round-incoming->stock])]
     (fn [cur-round ready? commited?]
-      (let [acknowledged? (get @acks cur-round)]
-        [sa/Button {:on-click #(rf/dispatch [:game/round-ready {:target-round cur-round}])
-                    :disabled (or (not commited?)
-                                  (not acknowledged?)
-                                  ready?)
-                    :primary true}
-         (cond
-           (not commited?) "Bitte zuerst bestellen"
-           (not acknowledged?) "Bitte zuerst Warenausgang bestätigen"
-           ready? "Warten auf andere Spieler..."
-           :else "Nächste Runde")]))))
+      [sa/Button {:on-click #(rf/dispatch [:game/round-ready {:target-round cur-round}])
+                  :disabled (or (not commited?)
+                                (not @stock->outgoing?)
+                                (not @incoming->stock?)
+                                ready?)
+                  :primary true}
+       (cond
+         (not commited?) "Bitte zuerst bestellen"
+         (not @incoming->stock?) "Bitte zuerst Wareneingang bestätigen"
+         (not @stock->outgoing?) "Bitte zuerst Warenausgang bestätigen"
+         ready? "Warten auf andere Spieler..."
+         :else "Nächste Runde")])))
 
 (defn cost-multiplier-arrow
   "Arrow indicating how much the stock/debt contributes to the cost of
@@ -293,8 +312,7 @@
   [rounds cur-round user-role {:as settings :keys [:game/supply-chain
                                                    stock-cost-factor
                                                    debt-cost-factor]}]
-  (let [round-data (get-in (get rounds cur-round)
-                           [:game/roles user-role])
+  (let [round-data (get-in (nth rounds cur-round) [:game/roles user-role])
         [supplier customer] (game-logic/roles-around user-role supply-chain)]
     [sa/Grid {:class-name "game-view-grid"
               :vertical-align "middle"
@@ -326,7 +344,7 @@
       "Der Warenfluss Deiner Firma."
       {}
       [[:arrow-in1 [grid-curved-arrow-column {:rotation "down-right"}]]
-       [:incoming [sa/GridColumn {:width 3} [incoming round-data]]]
+       [:incoming [sa/GridColumn {:width 3} [incoming round-data cur-round]]]
        [:arrow-in2 [grid-arrow-column {:direction "right"}]]
        [:stock [sa/GridColumn {:width 4} [stock round-data]]]
        [:arrow-out1 [grid-arrow-column {:direction "right"}]]

@@ -30,32 +30,53 @@
           ;; the rounds vector should be the same
           (is (= (:game/rounds game-data)
                  (:game/rounds res)))
-          (let [supply-chain (get settings :game/supply-chain config/supply-chain)
+          (let [{:keys [:goods-delay :communication-delay :game/supply-chain :round-amount]
+                 :or {goods-delay (:goods-delay config/default-game-settings)
+                      communication-delay (:communication-delay config/default-game-settings)
+                      supply-chain config/supply-chain
+                      round-amount (:round-amount config/default-game-settings)}} settings
                 role-key (:user/role commit-data)
                 old-data (get-in game-data [:game/rounds old-round :game/roles])
-                new-data (get-in res [:game/rounds (inc old-round) :game/roles])
+                new-rounds (get-in res [:game/rounds])
+                new-data (get-in new-rounds [(inc old-round) :game/roles])
                 [pre-role post-role] (roles-around role-key supply-chain)
                 ;; Expected calculated according to mathematical formulas
                 ;; -> see external documentation
                 expected-outgoing (calc-deliverable old-data role-key)
-                expected-incoming (if (nil? pre-role)
-                                    (get commit-data :round/order 0)
-                                    (calc-deliverable old-data pre-role))
-                expected-stock (- (+ (get-in0 old-data [role-key :round/stock])
-                                     expected-incoming)
-                                  expected-outgoing)
+                incoming-round (+ old-round goods-delay)
+                demand-round (+ old-round communication-delay)
+                expected-delivered (calc-deliverable old-data pre-role)
+                ;; Expected incoming which is set in the 'post' role data at incoming round
+                expected-incoming (cond (nil? post-role) nil
+                                        (>= incoming-round round-amount) nil
+                                        :else expected-outgoing)
+                expected-stock (+ (get-in0 old-data [role-key :round/stock])
+                                  (- (get-in0 old-data [role-key :round/incoming])
+                                     expected-outgoing))
                 expected-debt (max 0
-                                   (- (get-in0 old-data [role-key :round/debt])
-                                      (- expected-outgoing (get-in0 old-data [role-key :round/demand]))))
+                                   (+ (get-in0 old-data [role-key :round/debt])
+                                      (- (get-in0 old-data [role-key :round/demand]) expected-outgoing)))
                 expected-order (get commit-data :round/order 0)
-                expected #:round{:demand (get-in0 old-data [post-role :round/order])
-                                 :outgoing expected-outgoing
-                                 :debt expected-debt
+                expected-demand (cond (nil? pre-role) nil
+                                      (>= demand-round round-amount) nil
+                                      :else expected-order)
+                expected #:round{:debt expected-debt
                                  :stock expected-stock
                                  :cost (+ (* (get settings :stock-cost-factor 0)
                                              expected-stock)
                                           (* (get settings :debt-cost-factor 0)
                                              expected-debt))}]
+            (testing (str "Incoming for other supply-chain member is set properly" post-role)
+              (println expected-incoming incoming-round post-role (get-in new-rounds [incoming-round]))
+              (is (= expected-incoming
+                     (get-in new-rounds [incoming-round post-role :round/incoming]))))
+            (if (some? pre-role)
+              (testing (str "Demand for other supply-chain member is set properly " pre-role)
+                (is (= expected-demand
+                       (get-in new-rounds [demand-round pre-role :round/demand]))))
+              (testing (str "Production for first supply-chain member is is set properly")
+                (is (= expected-order
+                       (get-in new-rounds [incoming-round role-key :round/incoming])))))
             (when (< (inc old-round) (count (get game-data :game/rounds)))
               (testing (str "Round data spec for role " role-key)
                 (is (=
