@@ -1,3 +1,3 @@
 #!/bin/sh
 
-cloc --exclude-dir=out,target,vendor --exclude-ext=iml,idea,xml ./
+cloc --exclude-dir=out,target,vendor,doc --exclude-ext=iml,idea,xml ./
